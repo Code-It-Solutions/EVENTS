@@ -102,7 +102,6 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <h2><i class="fas fa-layer-group me-2"></i>Session Attendance</h2>
-                    <p class="text-muted mb-0">Track attendance across different event sessions</p>
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{{ url_for('checkin.dashboard') }}" class="btn btn-outline-primary">
@@ -213,7 +212,6 @@
                 <div class="card-body text-center py-5">
                     <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
                     <h5 class="text-muted">No Session Data</h5>
-                    <p class="text-muted">No check-ins recorded for the selected date and event.</p>
                     <a href="{{ url_for('checkin.qr_scanner') }}" class="btn btn-primary">
                         <i class="fas fa-qrcode me-1"></i>Start Checking In
                     </a>

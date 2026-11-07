@@ -124,7 +124,6 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h2><i class="fas fa-qrcode me-2"></i>QR Code Scanner</h2>
-                    <p class="text-muted mb-0">Scan delegate badges for quick check-in</p>
                 </div>
                 <div>
                     <a href="{{ url_for('checkin.dashboard') }}" class="btn btn-outline-primary">
@@ -415,7 +414,7 @@ function showResult(result) {
                     <p class="mb-1"><strong>Category:</strong> ${result.delegate.category || 'Delegate'}</p>
                 </div>
                 <div class="col-6">
-                    <p class="mb-1"><strong>Parish:</strong> ${result.delegate.parish || 'N/A'}</p>
+                    ${result.delegate.parish ? `<p class="mb-1"><strong>Parish:</strong> ${result.delegate.parish}</p>` : ''}
                     <p class="mb-1"><strong>Time:</strong> ${result.check_in.time}</p>
                 </div>
             </div>

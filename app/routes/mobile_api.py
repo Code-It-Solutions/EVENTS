@@ -290,6 +290,9 @@ def mobile_register():
         email = data['email'].strip().lower()
         if '@' not in email:
             return jsonify({'success': False, 'error': 'Invalid email format'}), 400
+        from app.utils.disposable_email import is_disposable
+        if is_disposable(email):
+            return jsonify({'success': False, 'error': 'Please use a permanent email address, not a temporary one.'}), 400
         
         # Check if email exists
         if User.query.filter_by(email=email).first():

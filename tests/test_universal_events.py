@@ -2,9 +2,6 @@
 import os
 import tempfile
 
-_db = tempfile.NamedTemporaryFile(suffix='.db', delete=False).name
-os.environ['DATABASE_URL'] = f'sqlite:///{_db}'
-
 import pytest
 from datetime import date, timedelta
 from app import create_app, db
@@ -17,6 +14,9 @@ SECRETS = ['Kayo Secret Person', 'Legacy Secret Person', 'Bob Attendee Zed']
 def app():
     app = create_app()
     app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
+    # never drop a real database: refuse unless bound to the temp file set in conftest.py
+    uri = app.config['SQLALCHEMY_DATABASE_URI']
+    assert uri == os.environ['DATABASE_URL'] and tempfile.gettempdir().replace('\\', '/') in uri.replace('\\', '/'), uri
     with app.app_context():
         db.drop_all()
         db.create_all()
@@ -35,7 +35,6 @@ def app():
     yield app
     with app.app_context():
         db.engine.dispose()
-    os.remove(_db)
 
 
 def login(app, email, password):
@@ -179,3 +178,15 @@ def test_organiser_budgets_are_private(app):
     # Bob can still budget for his own event
     assert b.post('/budget/create', data={'name': 'Meetup budget', 'event_id': b_ev}).status_code == 302
     assert b'Meetup budget' in b.get('/budget/').data and b'Fest budget' in a.get('/budget/').data
+
+
+def test_organisers_cannot_open_kayo_pages(app):
+    a = login(app, 'alice@example.com', 'password1')
+    for url in ['/delegates/', '/delegates/register', '/payments/', '/funds/pledges', '/admin/',
+                '/help', '/complete-profile', '/finance/', '/communications/']:
+        r = a.get(url)
+        assert r.status_code == 302 and r.location.endswith('/events/'), (url, r.status_code, r.location)
+    assert a.get('/events/').status_code == 200
+    assert b'KAYO' not in a.get('/login').data
+    r = app.test_client().post('/signup', data={'name': 'T', 'email': 't@yopmail.com', 'password': 'password1'})
+    assert b'permanent email' in r.data

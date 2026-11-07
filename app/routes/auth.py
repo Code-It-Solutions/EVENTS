@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.session import UserSession
 from app.forms import LoginForm, RegistrationForm, OTPVerificationForm
 from app.utils.email import send_otp_email
+from app.utils.disposable_email import is_disposable
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -185,6 +186,10 @@ def register():
     
     form = RegistrationForm()
     if form.validate_on_submit():
+        if is_disposable(form.email.data):
+            flash('Please use a permanent email address, not a temporary one.', 'danger')
+            return render_template('auth/register.html', form=form)
+
         # Check if email already exists
         existing_user = User.query.filter_by(email=form.email.data).first()
         if existing_user:
@@ -252,6 +257,8 @@ def organizer_signup():
             error = 'Please enter your name.'
         elif not email_ok:
             error = 'Please enter a valid email address.'
+        elif is_disposable(email):
+            error = 'Please use a permanent email address, not a temporary one.'
         elif len(password) < 8:
             error = 'Password must be at least 8 characters.'
         elif User.query.filter(db.func.lower(User.email) == email).first():

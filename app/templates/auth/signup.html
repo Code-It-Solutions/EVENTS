@@ -23,8 +23,7 @@
 
     <main class="container py-5" style="max-width: 440px;">
         <div class="auth-card p-4 p-sm-5">
-            <h1 class="h3 mb-1">Host your <em class="afx-accent" style="color: var(--afx-teal);">event.</em></h1>
-            <p class="small mb-4" style="color: var(--afx-muted);">Free. Registration link, check-in, badges and budgets.</p>
+            <h1 class="h4 mb-4">Host your <em class="afx-accent" style="color: var(--afx-teal);">event.</em></h1>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% for category, message in messages %}
@@ -47,7 +46,7 @@
                     <input id="password" name="password" type="password" class="form-control" minlength="8" required autocomplete="new-password" aria-describedby="password-hint">
                     <div id="password-hint" class="form-text">At least 8 characters.</div>
                 </div>
-                <button class="btn afx-btn-cta w-100 py-2">Create account</button>
+                <button class="btn afx-btn-cta px-4">Create account</button>
             </form>
         </div>
         <p class="text-center small mt-4"><a href="{{ url_for('auth.login') }}">Already have an account? Log in</a></p>

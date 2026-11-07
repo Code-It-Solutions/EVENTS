@@ -40,9 +40,8 @@
                 <input id="publicLink" class="form-control" readonly value="{{ url_for('public.event_register', slug=event.slug, _external=True) }}">
                 <button class="btn btn-outline-primary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('publicLink').value); this.textContent='Copied';">Copy</button>
             </div>
-            <small class="text-muted">Share this with attendees. Registration is free; each person gets a ticket with a QR code for check-in.</small>
             {% else %}
-            <p class="text-muted mb-0">This event isn't published yet. <a href="{{ url_for('events.edit_event', event_id=event.id) }}">Edit the event</a> and tick "Published" to get a shareable link.</p>
+            <p class="text-muted mb-0">Not published · <a href="{{ url_for('events.edit_event', event_id=event.id) }}">Publish</a></p>
             {% endif %}
         </div>
     </div>
@@ -74,6 +73,7 @@
             </div>
         </div>
         
+        {% if current_user.is_admin() %}{# payments only exist for KAYO's paid events #}
         <div class="col-md-3">
             <div class="card border-left-success">
                 <div class="card-body">
@@ -94,6 +94,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
         
         <div class="col-md-3">
             <div class="card border-left-info">

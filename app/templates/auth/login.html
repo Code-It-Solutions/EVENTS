@@ -28,8 +28,7 @@
 
     <main class="container py-5" style="max-width: 440px;">
         <div class="auth-card p-4 p-sm-5">
-            <h1 class="h3 mb-1">Welcome <em class="afx-accent" style="color: var(--afx-teal);">back.</em></h1>
-            <p class="small mb-4" style="color: var(--afx-muted);">Organisers, KAYO chairs and staff all sign in here.</p>
+            <h1 class="h4 mb-4">Welcome <em class="afx-accent" style="color: var(--afx-teal);">back.</em></h1>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% for category, message in messages %}
@@ -50,12 +49,12 @@
                     {{ form.password(class="form-control", id="password", autocomplete="current-password", **({'aria-invalid': 'true', 'aria-describedby': 'password-error'} if form.password.errors else {})) }}
                     {% for error in form.password.errors %}<div id="password-error" class="text-danger small mt-1">{{ error }}</div>{% endfor %}
                 </div>
-                <button type="submit" class="btn afx-btn-cta w-100 py-2">Log in</button>
+                <button type="submit" class="btn afx-btn-cta px-4">Log in</button>
             </form>
 
             <div class="divider my-4">or</div>
 
-            <a href="{{ url_for('auth.google_login') }}" class="btn btn-google w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+            <a href="{{ url_for('auth.google_login') }}" class="btn btn-google btn-sm px-3 d-inline-flex align-items-center justify-content-center gap-2">
                 <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -66,10 +65,7 @@
             </a>
         </div>
 
-        <div class="text-center small mt-4" style="color: var(--afx-muted);">
-            <p class="mb-1">Hosting an event? <a href="{{ url_for('auth.organizer_signup') }}">Create an organiser account</a></p>
-            <p class="mb-0">KAYO parish chair? <a href="{{ url_for('auth.register') }}">Register here</a></p>
-        </div>
+        <p class="text-center small mt-4"><a href="{{ url_for('auth.organizer_signup') }}">Create an account</a></p>
     </main>
 
     <footer class="text-center small pb-4" style="color: var(--afx-muted);">

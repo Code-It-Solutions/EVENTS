@@ -85,6 +85,14 @@ class BadgeDesigner:
         except:
             return ImageFont.load_default()
     
+    @staticmethod
+    def _subtitle(event):
+        from app.models.user import User
+        owner = User.query.get(event.created_by) if event and event.created_by else None
+        if owner and owner.role == 'organizer':
+            return event.venue or ''
+        return "ACK Diocese of Nambale"
+
     def _draw_standard_template(self, draw, img, delegate, event, primary_color, secondary_color, include_qr):
         """Draw standard badge template"""
         # Header bar
@@ -95,9 +103,9 @@ class BadgeDesigner:
         title_font = self._get_font('title', 36)
         draw.text((30, 20), event_name, fill='white', font=title_font)
         
-        # Diocese subtitle
+        # Subtitle: diocese for KAYO's own events, venue for organisers' events
         subtitle_font = self._get_font('details', 18)
-        draw.text((30, 65), "ACK Diocese of Nambale", fill=(255, 255, 255, 204), font=subtitle_font)
+        draw.text((30, 65), self._subtitle(event), fill=(255, 255, 255, 204), font=subtitle_font)
         
         # Delegate name (large)
         name_font = self._get_font('name', 60)

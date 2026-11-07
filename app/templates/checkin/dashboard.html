@@ -82,7 +82,6 @@
                         <i class="fas fa-clipboard-check me-2"></i>Check-in Dashboard
                         <span class="live-indicator ms-2" title="Live updates"></span>
                     </h2>
-                    <p class="text-muted mb-0">Real-time attendance tracking</p>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
                     <a href="{{ url_for('checkin.qr_scanner') }}" class="btn btn-primary">
@@ -267,7 +266,6 @@
                             <div class="text-center py-5">
                                 <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
                                 <h5 class="text-muted">No arrivals yet</h5>
-                                <p class="text-muted">Check-ins will appear here in real-time</p>
                                 <a href="{{ url_for('checkin.qr_scanner') }}" class="btn btn-primary">
                                     <i class="fas fa-qrcode me-1"></i>Start Scanning
                                 </a>

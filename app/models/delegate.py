@@ -200,7 +200,8 @@ class Delegate(db.Model):
             # Return a placeholder if qrcode module not available
             return None
         
-        qr_data = f"KAYO|{self.ticket_number}|{self.name}|{self.phone_number or 'N/A'}"
+        # neutral prefix; the scanner reads any "PREFIX|ticket|..." so old KAYO| codes still scan
+        qr_data = f"TICKET|{self.ticket_number}|{self.name}|{self.phone_number or 'N/A'}"
         qr = qrcode.QRCode(version=1, box_size=10, border=4)
         qr.add_data(qr_data)
         qr.make(fit=True)

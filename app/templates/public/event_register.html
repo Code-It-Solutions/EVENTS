@@ -66,7 +66,7 @@
         </div>
         {% endfor %}
 
-        <button class="btn btn-primary w-100" style="background: {{ event.primary_color or '#4e73df' }}; border-color: {{ event.primary_color or '#4e73df' }};">Register (free)</button>
+        <button class="btn btn-primary px-4" style="background: {{ event.primary_color or '#4e73df' }}; border-color: {{ event.primary_color or '#4e73df' }};">Register (free)</button>
     </form>
     {% endif %}
     <p class="text-center small text-muted mt-4 mb-0">Powered by <a href="{{ url_for('auth.organizer_signup') }}" class="text-reset fw-semibold">Afrionex Events</a></p>

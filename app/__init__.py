@@ -112,6 +112,28 @@ def create_app(config_class=Config):
         from flask_wtf.csrf import generate_csrf
         return dict(csrf_token=generate_csrf)
     
+    # Organisers may only use organiser features; KAYO-only pages (delegates, payments,
+    # funds, finance, admin, help, chair profile...) send them back to their events.
+    ORGANIZER_BLUEPRINTS = {'events', 'checkin', 'badges', 'budget', 'api', 'static'}
+    ORGANIZER_ENDPOINTS = {
+        'main.index', 'main.dashboard', 'main.app_home', 'main.favicon',
+        'auth.login', 'auth.logout', 'auth.organizer_signup',
+        'public.event_register',
+        'settings.my_sessions', 'settings.revoke_session', 'settings.revoke_all_sessions',
+    }
+
+    @app.before_request
+    def keep_organizers_in_their_area():
+        from flask import request, redirect, url_for
+        if not (current_user.is_authenticated and current_user.role == 'organizer'):
+            return None
+        if request.endpoint is None or request.blueprint in ORGANIZER_BLUEPRINTS \
+                or request.endpoint in ORGANIZER_ENDPOINTS:
+            return None
+        if request.blueprint in ('api_v1', 'mobile_api') or request.path.startswith('/api/'):
+            return None  # JSON APIs do their own scoping
+        return redirect(url_for('events.list_events'))
+
     # Organisers get the Afrionex Events brand; KAYO roles keep KAYO
     @app.context_processor
     def inject_brand():

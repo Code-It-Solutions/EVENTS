@@ -22,12 +22,16 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Favicon -->
+    {% if afx %}
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23172443'/%3E%3Cpath d='M11.5 20.5 20.5 11.5' stroke-width='2.4' stroke-linecap='round' stroke='%232dd4bf'/%3E%3Ccircle cx='10.5' cy='21.5' r='4' fill='%23fff'/%3E%3Ccircle cx='21.5' cy='10.5' r='4' fill='%232dd4bf'/%3E%3C/svg%3E">
+    {% else %}
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    {% endif %}
     
     <style>
         :root {
-            /* KAYO Green Theme Colors */
+            /* Theme colours */
             --kayo-green: #1a5f2a;
             --kayo-green-dark: #0d4a1c;
             --kayo-green-light: #2d8f42;
@@ -59,7 +63,7 @@
             min-height: 100vh;
         }
         
-        /* Navbar - KAYO Green */
+        /* Navbar */
         .navbar {
             background: linear-gradient(135deg, var(--kayo-green) 0%, var(--kayo-green-dark) 100%) !important;
             box-shadow: 0 2px 15px rgba(26, 95, 42, 0.3);
@@ -70,7 +74,7 @@
             font-size: 1.4rem;
         }
         
-        /* Diocese Logo Hover Effect */
+        /* Logo hover */
         .navbar-brand img {
             transition: all 0.3s ease;
         }
@@ -80,7 +84,7 @@
             filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
         }
         
-        /* Sidebar - KAYO Theme */
+        /* Sidebar */
         .sidebar {
             min-height: calc(100vh - 56px);
             background: linear-gradient(180deg, var(--kayo-green-dark) 0%, #0a3815 100%);
@@ -256,7 +260,7 @@
             font-weight: 600;
         }
         
-        /* Buttons - KAYO Theme */
+        /* Buttons */
         .btn-primary {
             background: linear-gradient(135deg, var(--kayo-green) 0%, var(--kayo-green-light) 100%);
             border: none;
@@ -598,6 +602,11 @@
         body.afx .card { border: 1px solid #e2e8f0; box-shadow: none; }
         body.afx .card:hover { transform: none; box-shadow: none; }
         body.afx .card-header { background-color: #fff; color: #172443; border-bottom: 1px solid #e2e8f0; }
+        /* compact buttons everywhere (base styles use 10-12px x 24px padding) */
+        body.afx .btn { padding: .35rem .9rem; font-size: .875rem; border-radius: 999px; }
+        body.afx .btn-sm { padding: .2rem .65rem; font-size: .8rem; }
+        body.afx .btn-lg { padding: .45rem 1.1rem; font-size: .95rem; }
+        body.afx .form-control, body.afx .form-select { padding: .45rem .75rem; }
         body.afx .btn-primary { background-color: #c2410c; border-radius: 999px; font-weight: 700; }
         body.afx .btn-primary:hover { background-color: #9a3412; transform: none; }
         body.afx .btn-secondary { background-color: #f1f5f9; color: #172443; border-radius: 999px; }
