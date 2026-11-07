@@ -115,7 +115,7 @@ def create_app(config_class=Config):
     # Organisers may only use organiser features; KAYO-only pages (delegates, payments,
     # funds, finance, admin, help, chair profile...) send them back to their events.
     ORGANIZER_BLUEPRINTS = {'events', 'checkin', 'badges', 'budget', 'api', 'static'}
-    ORGANIZER_ENDPOINTS = {
+    ORGANIZER_ENDPOINTS = {'static',  # app-level static files have no blueprint
         'main.index', 'main.dashboard', 'main.app_home', 'main.favicon',
         'auth.login', 'auth.logout', 'auth.organizer_signup',
         'public.event_register',

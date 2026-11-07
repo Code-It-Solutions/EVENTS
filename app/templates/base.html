@@ -595,7 +595,17 @@
         body.afx .progress-bar, body.afx .sidebar .nav-link.active, body.afx footer, body.afx .alert-success {
             background-image: none !important; box-shadow: none !important;
         }
-        body.afx .navbar { background-color: #172443 !important; }
+        body.afx .navbar { background: linear-gradient(rgba(23,36,67,.72), rgba(23,36,67,.72)), #172443 url("{{ url_for('static', filename='images/wave-blue.webp') }}") center 45% / cover no-repeat !important; padding-top: .4rem; padding-bottom: .4rem; }
+        body.afx .main-content { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+        body.afx .main-content .card { margin-bottom: .75rem; border-radius: .9rem; }
+        body.afx .main-content .card-body { padding: .9rem 1rem; }
+        body.afx .main-content .card-header { padding: .6rem 1rem; font-weight: 700; }
+        body.afx .main-content h1, body.afx .main-content .h1, body.afx .main-content h2, body.afx .main-content .h2 { font-size: 1.35rem; margin-bottom: .75rem; }
+        body.afx .main-content .row { --bs-gutter-y: .75rem; --bs-gutter-x: .75rem; }
+        body.afx .main-content .mb-4 { margin-bottom: .75rem !important; }
+        body.afx .main-content .table > :not(caption) > * > * { padding: .45rem .6rem; vertical-align: middle; }
+        body.afx .sidebar .nav-link { padding: .45rem .9rem; }
+        body.afx footer { padding-top: .9rem !important; padding-bottom: .9rem !important; margin-top: 1rem !important; }
         body.afx .sidebar { background-color: #172443; }
         body.afx .sidebar .nav-link:hover { transform: none; }
         body.afx .sidebar .nav-link.active { background-color: #0d9488; color: #fff; }
@@ -603,7 +613,7 @@
         body.afx .card:hover { transform: none; box-shadow: none; }
         body.afx .card-header { background-color: #fff; color: #172443; border-bottom: 1px solid #e2e8f0; }
         /* compact buttons everywhere (base styles use 10-12px x 24px padding) */
-        body.afx .btn { padding: .35rem .9rem; font-size: .875rem; border-radius: 999px; }
+        body.afx .btn { white-space: nowrap; padding: .35rem .9rem; font-size: .875rem; border-radius: 999px; }
         body.afx .btn-sm { padding: .2rem .65rem; font-size: .8rem; }
         body.afx .btn-lg { padding: .45rem 1.1rem; font-size: .95rem; }
         body.afx .form-control, body.afx .form-select { padding: .45rem .75rem; }
@@ -1644,7 +1654,7 @@
             <div class="row">
                 <div class="col-12">
                     {% if afx %}
-                    <p class="mb-0 small">© Afrionex Solutions · Afrionex Events</p>
+                    <p class="mb-0 small"><a class="text-white text-decoration-none" href="https://www.afrionexsolutions.com">© Afrionex Solutions</a> · <a class="text-white text-decoration-none" href="https://connect.afrionexsolutions.com">Connect</a></p>
                     {% else %}
                     <img src="{{ url_for('static', filename='images/logo.png') }}" height="40" class="mb-2" alt="KAYO" onerror="this.style.display='none'">
                     <p class="mb-1 small">

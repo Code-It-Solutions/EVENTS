@@ -9,6 +9,13 @@
   .afx-accent { font-family:Georgia, 'Times New Roman', serif; font-style:italic; font-weight:400; letter-spacing:0; }
   .afx-btn-cta { background:var(--afx-cta); color:#fff; border:0; border-radius:999px; font-weight:700; }
   .afx-btn-cta:hover, .afx-btn-cta:focus { background:var(--afx-cta-hover); color:#fff; }
+  /* flat navy tint over the wave keeps text readable */
+  .afx-band { background:linear-gradient(rgba(23,36,67,.55), rgba(23,36,67,.55)), var(--afx-navy) url("{{ url_for('static', filename='images/wave-blue.webp') }}") center 45% / cover no-repeat; color:#fff; }
+  .afx-band a { color:#fff; }
+  .afx-band .afx-band-title { font-family:'Sora','Manrope',sans-serif; font-weight:700; letter-spacing:-0.03em; margin:0; }
+  .afx-band .afx-band-meta { color:#cbd5e1; font-size:.875rem; margin:.25rem 0 0; }
+  .afx-site-link { color:var(--afx-muted); text-decoration:none; }
+  .afx-site-link:hover { color:var(--afx-teal); }
 </style>
 {% endmacro %}
 

@@ -1,0 +1,10 @@
+.git
+.venv
+instance
+__pycache__
+*.db
+*.zip
+.env
+tests
+build
+dist

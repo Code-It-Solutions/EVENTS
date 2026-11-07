@@ -187,6 +187,7 @@ def test_organisers_cannot_open_kayo_pages(app):
         r = a.get(url)
         assert r.status_code == 302 and r.location.endswith('/events/'), (url, r.status_code, r.location)
     assert a.get('/events/').status_code == 200
+    assert a.get('/static/images/wave-blue.webp').mimetype == 'image/webp'
     assert b'KAYO' not in a.get('/login').data
     r = app.test_client().post('/signup', data={'name': 'T', 'email': 't@yopmail.com', 'password': 'password1'})
     assert b'permanent email' in r.data

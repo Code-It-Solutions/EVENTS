@@ -11,19 +11,22 @@
     <style>
         body { background: var(--afx-bg); color: var(--afx-navy); }
         .auth-card { border: 1px solid var(--afx-border); border-radius: 1.5rem; background: #fff; }
-        .form-control { border-radius: .75rem; padding: .7rem .9rem; }
+        .form-control { border-radius: .75rem; padding: .5rem .8rem; }
         .form-control:focus { border-color: var(--afx-teal); box-shadow: 0 0 0 .2rem rgba(13,148,136,.2); }
         a { color: var(--afx-teal); font-weight: 600; }
     </style>
 </head>
 <body class="afx-font">
-    <header class="border-bottom bg-white">
-        <div class="container py-3" style="max-width: 440px;">{{ afx_logo() }}</div>
+    <header class="afx-band">
+        <div class="container d-flex align-items-center justify-content-between py-3" style="max-width: 440px;">
+            <a href="https://www.afrionexsolutions.com" class="text-decoration-none" aria-label="Afrionex Solutions">{{ afx_logo('light', 28) }}</a>
+            <a href="https://www.afrionexsolutions.com" class="small fw-semibold text-decoration-none">afrionexsolutions.com</a>
+        </div>
     </header>
 
-    <main class="container py-5" style="max-width: 440px;">
-        <div class="auth-card p-4 p-sm-5">
-            <h1 class="h4 mb-4">Host your <em class="afx-accent" style="color: var(--afx-teal);">event.</em></h1>
+    <main class="container py-4" style="max-width: 440px;">
+        <div class="auth-card p-4">
+            <h1 class="h5 mb-3">Host your <em class="afx-accent" style="color: var(--afx-teal);">event.</em></h1>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% for category, message in messages %}
@@ -41,7 +44,7 @@
                     <label for="email" class="form-label fw-semibold">Email</label>
                     <input id="email" name="email" type="email" class="form-control" value="{{ email }}" maxlength="120" required autocomplete="email">
                 </div>
-                <div class="mb-4">
+                <div class="mb-3">
                     <label for="password" class="form-label fw-semibold">Password</label>
                     <input id="password" name="password" type="password" class="form-control" minlength="8" required autocomplete="new-password" aria-describedby="password-hint">
                     <div id="password-hint" class="form-text">At least 8 characters.</div>
@@ -49,7 +52,11 @@
                 <button class="btn afx-btn-cta px-4">Create account</button>
             </form>
         </div>
-        <p class="text-center small mt-4"><a href="{{ url_for('auth.login') }}">Already have an account? Log in</a></p>
+        <p class="text-center small mt-3 mb-0"><a href="{{ url_for('auth.login') }}">Already have an account? Log in</a></p>
     </main>
+
+    <footer class="text-center small pb-3">
+        <a class="afx-site-link" href="https://www.afrionexsolutions.com">© Afrionex Solutions</a>
+    </footer>
 </body>
 </html>

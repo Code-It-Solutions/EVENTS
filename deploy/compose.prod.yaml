@@ -1,0 +1,14 @@
+services:
+  app:
+    build: ..
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DATABASE_URL: sqlite:////data/events.db
+      SESSION_COOKIE_SECURE: "true"
+    volumes:
+      - events-data:/data
+    ports:
+      - "127.0.0.1:3130:8000"
+volumes:
+  events-data:

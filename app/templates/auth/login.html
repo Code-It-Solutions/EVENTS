@@ -12,7 +12,7 @@
     <style>
         body { background: var(--afx-bg); color: var(--afx-navy); }
         .auth-card { border: 1px solid var(--afx-border); border-radius: 1.5rem; background: #fff; }
-        .form-control { border-radius: .75rem; padding: .7rem .9rem; }
+        .form-control { border-radius: .75rem; padding: .5rem .8rem; }
         .form-control:focus { border-color: var(--afx-teal); box-shadow: 0 0 0 .2rem rgba(13,148,136,.2); }
         .btn-google { border: 1px solid var(--afx-border); border-radius: 999px; background: #fff; color: #334155; font-weight: 600; }
         .btn-google:hover { background: var(--afx-bg); }
@@ -22,13 +22,16 @@
     </style>
 </head>
 <body class="afx-font">
-    <header class="border-bottom bg-white">
-        <div class="container py-3" style="max-width: 440px;">{{ afx_logo() }}</div>
+    <header class="afx-band">
+        <div class="container d-flex align-items-center justify-content-between py-3" style="max-width: 440px;">
+            <a href="https://www.afrionexsolutions.com" class="text-decoration-none" aria-label="Afrionex Solutions">{{ afx_logo('light', 28) }}</a>
+            <a href="https://www.afrionexsolutions.com" class="small fw-semibold text-decoration-none">afrionexsolutions.com</a>
+        </div>
     </header>
 
-    <main class="container py-5" style="max-width: 440px;">
-        <div class="auth-card p-4 p-sm-5">
-            <h1 class="h4 mb-4">Welcome <em class="afx-accent" style="color: var(--afx-teal);">back.</em></h1>
+    <main class="container py-4" style="max-width: 440px;">
+        <div class="auth-card p-4">
+            <h1 class="h5 mb-3">Welcome <em class="afx-accent" style="color: var(--afx-teal);">back.</em></h1>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% for category, message in messages %}
@@ -44,7 +47,7 @@
                     {{ form.email(class="form-control", id="email", autocomplete="email", **({'aria-invalid': 'true', 'aria-describedby': 'email-error'} if form.email.errors else {})) }}
                     {% for error in form.email.errors %}<div id="email-error" class="text-danger small mt-1">{{ error }}</div>{% endfor %}
                 </div>
-                <div class="mb-4">
+                <div class="mb-3">
                     <label class="form-label fw-semibold" for="password">Password</label>
                     {{ form.password(class="form-control", id="password", autocomplete="current-password", **({'aria-invalid': 'true', 'aria-describedby': 'password-error'} if form.password.errors else {})) }}
                     {% for error in form.password.errors %}<div id="password-error" class="text-danger small mt-1">{{ error }}</div>{% endfor %}
@@ -52,7 +55,7 @@
                 <button type="submit" class="btn afx-btn-cta px-4">Log in</button>
             </form>
 
-            <div class="divider my-4">or</div>
+            <div class="divider my-3">or</div>
 
             <a href="{{ url_for('auth.google_login') }}" class="btn btn-google btn-sm px-3 d-inline-flex align-items-center justify-content-center gap-2">
                 <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
@@ -65,11 +68,12 @@
             </a>
         </div>
 
-        <p class="text-center small mt-4"><a href="{{ url_for('auth.organizer_signup') }}">Create an account</a></p>
+        <p class="text-center small mt-3 mb-0"><a href="{{ url_for('auth.organizer_signup') }}">Create an account</a></p>
     </main>
 
-    <footer class="text-center small pb-4" style="color: var(--afx-muted);">
-        © {{ now().year if now is defined else '2026' }} Afrionex Solutions
+    <footer class="text-center small pb-3">
+        <a class="afx-site-link" href="https://www.afrionexsolutions.com">© Afrionex Solutions</a> ·
+        <a class="afx-site-link" href="https://connect.afrionexsolutions.com">Connect</a>
     </footer>
 </body>
 </html>
