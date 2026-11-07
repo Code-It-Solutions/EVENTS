@@ -132,3 +132,50 @@ def test_unpublished_event_has_no_public_page(app):
 def test_admin_still_sees_kayo(app):
     admin = login(app, 'admin@example.com', 'x')
     assert b'KAYO' in admin.get('/events/').data
+
+
+def test_organiser_budgets_are_private(app):
+    """Runs after test_organiser_flow_and_isolation (Alice/Bob and their events exist)."""
+    from app.models.budget import Budget, BudgetItem
+    a = login(app, 'alice@example.com', 'password1')
+    b = login(app, 'bob@example.com', 'password1')
+    with app.app_context():
+        a_ev = Event.query.filter_by(slug='alice-fest').one().id
+        b_ev = Event.query.filter_by(slug='bob-meetup').one().id
+
+    # Bob cannot attach a budget to Alice's event; an organiser budget must have an event
+    b.post('/budget/create', data={'name': 'Sneaky', 'event_id': a_ev})
+    b.post('/budget/create', data={'name': 'Unlinked', 'event_id': ''})
+    with app.app_context():
+        assert Budget.query.filter(Budget.name.in_(['Sneaky', 'Unlinked'])).count() == 0
+
+    r = a.post('/budget/create', data={'name': 'Fest budget', 'event_id': a_ev})
+    assert r.status_code == 302
+    with app.app_context():
+        bid = Budget.query.filter_by(name='Fest budget').one().id
+
+    # items: junk numbers are a 400, not a crash
+    assert a.post(f'/budget/{bid}/item/add', data={'name': 'Tent', 'budgeted_amount': 'abc'}).status_code == 400
+    assert a.post(f'/budget/{bid}/item/add', data={'name': 'Tent', 'budgeted_amount': '-5'}).status_code == 400
+    a.post(f'/budget/{bid}/item/add', data={'name': 'Tent', 'category': 'venue', 'quantity': '2', 'unit_cost': '1500'})
+    a.post(f'/budget/{bid}/activate')
+    with app.app_context():
+        item_id = BudgetItem.query.filter_by(budget_id=bid).one().id
+    a.post(f'/budget/item/{item_id}/expenditure/add',
+           data={'date': date.today().isoformat(), 'description': 'Deposit', 'amount': '1000'})
+    with app.app_context():
+        budget = db.session.get(Budget, bid)
+        assert budget.total_budgeted == 3000 and budget.total_spent == 1000  # organiser entries auto-approved
+
+    # Bob sees none of it
+    assert b'Fest budget' not in b.get('/budget/').data
+    for url in [f'/budget/{bid}', f'/budget/{bid}/report', f'/budget/{bid}/edit', f'/budget/item/{item_id}/edit']:
+        assert b.get(url).status_code == 404, url
+    assert b.post(f'/budget/{bid}/delete').status_code == 404
+    assert b.post(f'/budget/{bid}/item/add', data={'name': 'x', 'budgeted_amount': '1'}).status_code == 404
+    with app.app_context():
+        assert db.session.get(Budget, bid) is not None and BudgetItem.query.filter_by(budget_id=bid).count() == 1
+
+    # Bob can still budget for his own event
+    assert b.post('/budget/create', data={'name': 'Meetup budget', 'event_id': b_ev}).status_code == 302
+    assert b'Meetup budget' in b.get('/budget/').data and b'Fest budget' in a.get('/budget/').data

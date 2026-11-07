@@ -1,471 +1,79 @@
+{% from "_afx_brand.html" import afx_head, afx_logo %}
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1a5f2a">
-    <title>Login - KAYO</title>
-    
-    <!-- Bootstrap 5 CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#172443">
+    <title>Log in · Afrionex Events</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
-    
+    {{ afx_head() }}
     <style>
-        :root {
-            --kayo-green: #1a5f2a;
-            --kayo-green-dark: #0d4a1c;
-            --kayo-green-light: #2d8f42;
-            --kayo-gold: #c9a227;
-            --kayo-gold-light: #e6c456;
-        }
-        
-        * {
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        
-        body {
-            min-height: 100vh;
-            background: linear-gradient(135deg, var(--kayo-green-dark) 0%, var(--kayo-green) 50%, var(--kayo-green-light) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .login-container {
-            width: 100%;
-            max-width: 450px;
-        }
-        
-        .login-card {
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-        
-        .login-header {
-            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-            padding: 30px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .login-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            opacity: 0.5;
-        }
-        
-        .logo-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 5px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .logo-container img {
-            height: 130px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-            cursor: pointer;
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0);
-                filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-            }
-            50% {
-                transform: translateY(-10px);
-                filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));
-            }
-        }
-        
-        .logo-container img:hover {
-            animation-play-state: paused;
-            transform: scale(1.1) translateY(-5px);
-            filter: drop-shadow(0 12px 20px rgba(0,0,0,0.3));
-        }
-        
-        .brand-name {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--kayo-green);
-            margin: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            position: relative;
-            z-index: 1;
-        }
-        
-        .brand-subtitle {
-            color: #666;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .brand-motto {
-            color: var(--kayo-green);
-            font-style: italic;
-            font-size: 0.85rem;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .login-body {
-            padding: 30px;
-        }
-        
-        .form-control {
-            border-radius: 12px;
-            padding: 14px 18px;
-            border: 2px solid #e9ecef;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus {
-            border-color: var(--kayo-green);
-            box-shadow: 0 0 0 4px rgba(26, 95, 42, 0.1);
-        }
-        
-        .form-label {
-            font-weight: 500;
-            color: #444;
-            margin-bottom: 8px;
-        }
-        
-        .input-group {
-            position: relative;
-        }
-        
-        .input-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #aaa;
-            z-index: 10;
-        }
-        
-        .input-group .form-control {
-            padding-left: 45px;
-        }
-        
-        .btn-login {
-            background: linear-gradient(135deg, var(--kayo-green) 0%, var(--kayo-green-light) 100%);
-            border: none;
-            border-radius: 12px;
-            padding: 14px 30px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: white;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-login:hover {
-            background: linear-gradient(135deg, var(--kayo-green-dark) 0%, var(--kayo-green) 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(26, 95, 42, 0.4);
-            color: white;
-        }
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 25px 0;
-        }
-        
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #dee2e6;
-        }
-        
-        .divider span {
-            padding: 0 15px;
-            color: #999;
-            font-size: 0.9rem;
-        }
-        
-        .btn-google {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #444;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-google:hover {
-            background: #f8f9fa;
-            border-color: #ddd;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-        
-        .btn-google img {
-            width: 22px;
-            height: 22px;
-        }
-        
-        .register-link {
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-top: 1px solid #eee;
-        }
-        
-        .register-link a {
-            color: var(--kayo-green);
-            font-weight: 600;
-            text-decoration: none;
-        }
-        
-        .register-link a:hover {
-            text-decoration: underline;
-        }
-        
-        .alert {
-            border-radius: 12px;
-            border: none;
-            margin-bottom: 20px;
-        }
-        
-        .alert-danger {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        /* Floating elements */
-        .floating-shapes {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 0;
-        }
-        
-        .shape {
-            position: absolute;
-            background: rgba(255,255,255,0.05);
-            border-radius: 50%;
-        }
-        
-        .shape-1 {
-            width: 300px;
-            height: 300px;
-            top: -100px;
-            right: -100px;
-        }
-        
-        .shape-2 {
-            width: 200px;
-            height: 200px;
-            bottom: -50px;
-            left: -50px;
-        }
-        
-        .shape-3 {
-            width: 150px;
-            height: 150px;
-            top: 50%;
-            right: 10%;
-        }
-        
-        /* Mobile Responsive */
-        @media (max-width: 576px) {
-            body {
-                padding: 15px;
-            }
-            
-            .login-header {
-                padding: 25px 20px;
-            }
-            
-            .logo-container img {
-                height: 80px;
-            }
-            
-            .brand-name {
-                font-size: 2rem;
-            }
-            
-            .login-body {
-                padding: 25px 20px;
-            }
-            
-            .form-control {
-                padding: 12px 15px;
-            }
-            
-            .input-group .form-control {
-                padding-left: 42px;
-            }
-        }
-        
-        /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-            .login-card {
-                background: #1a1d20;
-            }
-            
-            .brand-name {
-                color: var(--kayo-green-light);
-            }
-            
-            .brand-subtitle {
-                color: #aaa;
-            }
-            
-            .form-control {
-                background: #2d3238;
-                border-color: #3d4248;
-                color: #fff;
-            }
-            
-            .form-label {
-                color: #ddd;
-            }
-            
-            .register-link {
-                background: #15171a;
-            }
-            
-            .btn-google {
-                background: #2d3238;
-                border-color: #3d4248;
-                color: #fff;
-            }
-        }
+        body { background: var(--afx-bg); color: var(--afx-navy); }
+        .auth-card { border: 1px solid var(--afx-border); border-radius: 1.5rem; background: #fff; }
+        .form-control { border-radius: .75rem; padding: .7rem .9rem; }
+        .form-control:focus { border-color: var(--afx-teal); box-shadow: 0 0 0 .2rem rgba(13,148,136,.2); }
+        .btn-google { border: 1px solid var(--afx-border); border-radius: 999px; background: #fff; color: #334155; font-weight: 600; }
+        .btn-google:hover { background: var(--afx-bg); }
+        .divider { display: flex; align-items: center; gap: .75rem; color: var(--afx-muted); font-size: .85rem; }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--afx-border); }
+        a { color: var(--afx-teal); font-weight: 600; }
     </style>
 </head>
-<body>
-    <!-- Floating Shapes -->
-    <div class="floating-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-    </div>
-    
-    <div class="login-container">
-        <div class="login-card">
-            <!-- Header -->
-            <div class="login-header">
-                <div class="logo-container">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="KAYO" onerror="this.style.display='none'">
+<body class="afx-font">
+    <header class="border-bottom bg-white">
+        <div class="container py-3" style="max-width: 440px;">{{ afx_logo() }}</div>
+    </header>
+
+    <main class="container py-5" style="max-width: 440px;">
+        <div class="auth-card p-4 p-sm-5">
+            <h1 class="h3 mb-1">Welcome <em class="afx-accent" style="color: var(--afx-teal);">back.</em></h1>
+            <p class="small mb-4" style="color: var(--afx-muted);">Organisers, KAYO chairs and staff all sign in here.</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} py-2" role="alert">{{ message }}</div>
+            {% endfor %}
+            {% endwith %}
+
+            {# no ?next passthrough: auth.login redirects to it unvalidated #}
+            <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="email">Email</label>
+                    {{ form.email(class="form-control", id="email", autocomplete="email", **({'aria-invalid': 'true', 'aria-describedby': 'email-error'} if form.email.errors else {})) }}
+                    {% for error in form.email.errors %}<div id="email-error" class="text-danger small mt-1">{{ error }}</div>{% endfor %}
                 </div>
-                <h1 class="brand-name">KAYO</h1>
-                <p class="brand-subtitle">Kenya Anglican Youth Organization</p>
-                <p class="brand-subtitle mb-1">ACK Diocese of Nambale</p>
-                <p class="brand-motto">"Be Strong in the Lord" - Ephesians 6:10</p>
-            </div>
-            
-            <!-- Body -->
-            <div class="login-body">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">
-                            <i class="bi bi-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %} me-2"></i>
-                            {{ message }}
-                        </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-                
-                <form method="POST" action="{{ url_for('auth.login') }}">
-                    {{ form.hidden_tag() }}
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Email Address</label>
-                        <div class="input-group">
-                            <i class="bi bi-envelope input-icon"></i>
-                            {{ form.email(class="form-control", placeholder="Enter your email") }}
-                        </div>
-                        {% for error in form.email.errors %}
-                        <div class="text-danger small mt-1">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="form-label">Password</label>
-                        <div class="input-group">
-                            <i class="bi bi-lock input-icon"></i>
-                            {{ form.password(class="form-control", placeholder="Enter your password") }}
-                        </div>
-                        {% for error in form.password.errors %}
-                        <div class="text-danger small mt-1">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    
-                    <button type="submit" class="btn btn-login">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
-                    </button>
-                </form>
-                
-                <div class="divider">
-                    <span>or continue with</span>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold" for="password">Password</label>
+                    {{ form.password(class="form-control", id="password", autocomplete="current-password", **({'aria-invalid': 'true', 'aria-describedby': 'password-error'} if form.password.errors else {})) }}
+                    {% for error in form.password.errors %}<div id="password-error" class="text-danger small mt-1">{{ error }}</div>{% endfor %}
                 </div>
-                
-                <a href="{{ url_for('auth.google_login') }}" class="btn btn-google">
-                    <svg width="22" height="22" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    Continue with Google
-                </a>
-            </div>
-            
-            <!-- Register Link -->
-            <div class="register-link">
-                <p class="mb-0">
-                    Don't have an account? 
-                    <a href="{{ url_for('auth.register') }}">Register here</a>
-                </p>
-                <p class="mb-0 mt-2">
-                    Hosting your own event?
-                    <a href="{{ url_for('auth.organizer_signup') }}">Create an organiser account</a>
-                </p>
-            </div>
+                <button type="submit" class="btn afx-btn-cta w-100 py-2">Log in</button>
+            </form>
+
+            <div class="divider my-4">or</div>
+
+            <a href="{{ url_for('auth.google_login') }}" class="btn btn-google w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+            </a>
         </div>
-        
-        <!-- Footer -->
-        <p class="text-center text-white-50 mt-4 small">
-            &copy; {{ now().year if now is defined else '2025' }} KAYO - ACK Diocese of Nambale
-        </p>
-    </div>
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+        <div class="text-center small mt-4" style="color: var(--afx-muted);">
+            <p class="mb-1">Hosting an event? <a href="{{ url_for('auth.organizer_signup') }}">Create an organiser account</a></p>
+            <p class="mb-0">KAYO parish chair? <a href="{{ url_for('auth.register') }}">Register here</a></p>
+        </div>
+    </main>
+
+    <footer class="text-center small pb-4" style="color: var(--afx-muted);">
+        © {{ now().year if now is defined else '2026' }} Afrionex Solutions
+    </footer>
 </body>
 </html>

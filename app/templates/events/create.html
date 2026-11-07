@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Create Event - KAYO{% endblock %}
+{% block title %}Create Event - {{ brand_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -16,12 +16,12 @@
                             <div class="col-md-8 mb-3">
                                 <label class="form-label">Event Name *</label>
                                 <input type="text" name="name" class="form-control" required
-                                       placeholder="e.g., KAYO Annual Conference 2025">
+                                       placeholder="e.g., Nairobi Youth Summit 2026">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Slug (URL) *</label>
                                 <input type="text" name="slug" class="form-control" required
-                                       placeholder="e.g., kayo-2025" pattern="[a-z0-9\-]+">
+                                       placeholder="e.g., youth-summit-2026" pattern="[a-z0-9\-]+">
                                 <small class="text-muted">Used in URLs and ticket numbers</small>
                             </div>
                         </div>

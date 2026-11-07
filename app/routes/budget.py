@@ -2,7 +2,7 @@
 Budget Management Routes
 Upload, parse, and track budget implementation
 """
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, abort
 from flask_login import login_required, current_user
 from functools import wraps
 from datetime import datetime
@@ -22,11 +22,49 @@ def admin_required(f):
         if not current_user.is_authenticated:
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('auth.login'))
-        if current_user.role not in ['admin', 'super_admin', 'finance']:
+        if current_user.role not in ['admin', 'super_admin', 'finance', 'organizer']:
             flash('You do not have permission to access this page.', 'danger')
             return redirect(url_for('main.dashboard'))
         return f(*args, **kwargs)
     return decorated_function
+
+
+# --- access scoping: every lookup goes through Budget.visible_to ---
+
+def _budget_or_404(budget_id):
+    return Budget.visible_to(current_user).filter_by(id=budget_id).first_or_404()
+
+
+def _item_or_404(item_id):
+    item = BudgetItem.query.get_or_404(item_id)
+    _budget_or_404(item.budget_id)
+    return item
+
+
+def _events():
+    from app.models.event import Event
+    return Event.managed_by(current_user).filter_by(is_active=True).all()
+
+
+def _form_event_id():
+    """(event_id, error). Organisers must link one of their own events."""
+    raw = request.form.get('event_id') or None
+    if raw is None:
+        return (None, 'Choose one of your events for this budget.') if current_user.role == 'organizer' else (None, None)
+    if raw not in {str(e.id) for e in _events()}:
+        return None, 'Choose one of your events for this budget.'
+    return int(raw), None
+
+
+def _num(field, default=0.0):
+    """Non-negative number from the form; 400 on junk input instead of a crash."""
+    try:
+        value = float(request.form.get(field) or default)
+    except (TypeError, ValueError):
+        abort(400, f'"{field}" must be a number.')
+    if value < 0:
+        abort(400, f'"{field}" cannot be negative.')
+    return value
 
 
 @budget_bp.route('/')
@@ -34,7 +72,7 @@ def admin_required(f):
 @admin_required
 def index():
     """List all budgets"""
-    budgets = Budget.query.order_by(Budget.created_at.desc()).all()
+    budgets = Budget.visible_to(current_user).order_by(Budget.created_at.desc()).all()
     return render_template('budget/index.html', budgets=budgets)
 
 
@@ -43,16 +81,15 @@ def index():
 @admin_required
 def create():
     """Create a new budget manually or upload file"""
-    from app.models.event import Event
-    events = Event.query.filter_by(is_active=True).all()
+    events = _events()
     
     if request.method == 'POST':
         name = request.form.get('name')
         description = request.form.get('description')
-        event_id = request.form.get('event_id') or None
+        event_id, error = _form_event_id()
         
-        if not name:
-            flash('Budget name is required.', 'danger')
+        if not name or error:
+            flash(error or 'Budget name is required.', 'danger')
             return redirect(url_for('budget.create'))
         
         budget = Budget(
@@ -77,16 +114,15 @@ def create():
 @admin_required
 def upload():
     """Upload and parse a budget file"""
-    from app.models.event import Event
-    events = Event.query.filter_by(is_active=True).all()
+    events = _events()
     
     if request.method == 'POST':
         name = request.form.get('name')
         description = request.form.get('description')
-        event_id = request.form.get('event_id') or None
+        event_id, error = _form_event_id()
         
-        if not name:
-            flash('Budget name is required.', 'danger')
+        if not name or error:
+            flash(error or 'Budget name is required.', 'danger')
             return redirect(url_for('budget.upload'))
         
         if 'budget_file' not in request.files:
@@ -180,7 +216,7 @@ def upload():
 @admin_required
 def view(id):
     """View budget details and items"""
-    budget = Budget.query.get_or_404(id)
+    budget = _budget_or_404(id)
     
     # Group items by category
     items_by_category = {}
@@ -207,14 +243,17 @@ def view(id):
 @admin_required
 def edit(id):
     """Edit budget details"""
-    budget = Budget.query.get_or_404(id)
-    from app.models.event import Event
-    events = Event.query.filter_by(is_active=True).all()
+    budget = _budget_or_404(id)
+    events = _events()
     
     if request.method == 'POST':
+        event_id, error = _form_event_id()
+        if error:
+            flash(error, 'danger')
+            return redirect(url_for('budget.edit', id=id))
         budget.name = request.form.get('name', budget.name)
         budget.description = request.form.get('description')
-        budget.event_id = request.form.get('event_id') or None
+        budget.event_id = event_id
         budget.status = request.form.get('status', budget.status)
         
         db.session.commit()
@@ -229,7 +268,7 @@ def edit(id):
 @admin_required
 def delete(id):
     """Delete a budget"""
-    budget = Budget.query.get_or_404(id)
+    budget = _budget_or_404(id)
     
     if budget.status == 'active' and budget.total_spent > 0:
         flash('Cannot delete an active budget with recorded expenditures.', 'danger')
@@ -248,7 +287,7 @@ def delete(id):
 @admin_required
 def activate(id):
     """Activate a budget for tracking"""
-    budget = Budget.query.get_or_404(id)
+    budget = _budget_or_404(id)
     
     if budget.items.count() == 0:
         flash('Cannot activate a budget with no items.', 'danger')
@@ -269,7 +308,7 @@ def activate(id):
 @admin_required
 def add_item(budget_id):
     """Add a new item to budget"""
-    budget = Budget.query.get_or_404(budget_id)
+    budget = _budget_or_404(budget_id)
     
     if request.method == 'POST':
         item = BudgetItem(
@@ -278,10 +317,10 @@ def add_item(budget_id):
             category=request.form.get('category', 'other'),
             name=request.form.get('name'),
             description=request.form.get('description'),
-            quantity=float(request.form.get('quantity', 1)),
+            quantity=_num('quantity', 1),
             unit=request.form.get('unit'),
-            unit_cost=float(request.form.get('unit_cost', 0)),
-            budgeted_amount=float(request.form.get('budgeted_amount', 0)),
+            unit_cost=_num('unit_cost'),
+            budgeted_amount=_num('budgeted_amount'),
             priority=request.form.get('priority', 'medium'),
             assigned_to=request.form.get('assigned_to'),
             status='pending'
@@ -306,16 +345,16 @@ def add_item(budget_id):
 @admin_required
 def edit_item(id):
     """Edit a budget item"""
-    item = BudgetItem.query.get_or_404(id)
+    item = _item_or_404(id)
     
     if request.method == 'POST':
         item.category = request.form.get('category', item.category)
         item.name = request.form.get('name', item.name)
         item.description = request.form.get('description')
-        item.quantity = float(request.form.get('quantity', item.quantity))
+        item.quantity = _num('quantity', item.quantity)
         item.unit = request.form.get('unit')
-        item.unit_cost = float(request.form.get('unit_cost', item.unit_cost))
-        item.budgeted_amount = float(request.form.get('budgeted_amount', item.budgeted_amount))
+        item.unit_cost = _num('unit_cost', item.unit_cost)
+        item.budgeted_amount = _num('budgeted_amount', item.budgeted_amount)
         item.priority = request.form.get('priority', item.priority)
         item.assigned_to = request.form.get('assigned_to')
         item.status = request.form.get('status', item.status)
@@ -338,7 +377,7 @@ def edit_item(id):
 @admin_required
 def delete_item(id):
     """Delete a budget item"""
-    item = BudgetItem.query.get_or_404(id)
+    item = _item_or_404(id)
     budget_id = item.budget_id
     
     if item.actual_spent > 0:
@@ -361,23 +400,28 @@ def delete_item(id):
 @admin_required
 def add_expenditure(item_id):
     """Record an expenditure against a budget item"""
-    item = BudgetItem.query.get_or_404(item_id)
+    item = _item_or_404(item_id)
     
     if item.budget.status != 'active':
         flash('Cannot record expenditures on an inactive budget.', 'danger')
         return redirect(url_for('budget.view', id=item.budget_id))
     
     if request.method == 'POST':
+        try:
+            spent_on = datetime.strptime(request.form.get('date') or '', '%Y-%m-%d').date()
+        except ValueError:
+            abort(400, 'Enter the date as YYYY-MM-DD.')
         expenditure = BudgetExpenditure(
             budget_item_id=item_id,
-            date=datetime.strptime(request.form.get('date'), '%Y-%m-%d').date(),
+            date=spent_on,
             description=request.form.get('description'),
-            amount=float(request.form.get('amount', 0)),
+            amount=_num('amount'),
             payment_method=request.form.get('payment_method'),
             reference_number=request.form.get('reference_number'),
             vendor=request.form.get('vendor'),
             recorded_by=current_user.id,
-            status='approved' if current_user.role in ['admin', 'super_admin'] else 'pending'
+            # organisers own their event's budget, so their entries need no second approver
+            status='approved' if current_user.role in ['admin', 'super_admin', 'organizer'] else 'pending'
         )
         
         # Auto-approve for admins
@@ -406,6 +450,7 @@ def add_expenditure(item_id):
 def approve_expenditure(id):
     """Approve an expenditure"""
     expenditure = BudgetExpenditure.query.get_or_404(id)
+    _budget_or_404(expenditure.budget_item.budget_id)
     
     expenditure.status = 'approved'
     expenditure.approved_by = current_user.id
@@ -424,6 +469,7 @@ def approve_expenditure(id):
 def reject_expenditure(id):
     """Reject an expenditure"""
     expenditure = BudgetExpenditure.query.get_or_404(id)
+    _budget_or_404(expenditure.budget_item.budget_id)
     
     expenditure.status = 'rejected'
     expenditure.rejection_reason = request.form.get('reason', 'Rejected by admin')
@@ -441,7 +487,7 @@ def reject_expenditure(id):
 @admin_required
 def update_item_status(id):
     """Update item status via AJAX"""
-    item = BudgetItem.query.get_or_404(id)
+    item = _item_or_404(id)
     data = request.get_json()
     
     item.status = data.get('status', item.status)
@@ -496,7 +542,7 @@ def parse_preview():
 @admin_required
 def report(id):
     """Generate budget implementation report"""
-    budget = Budget.query.get_or_404(id)
+    budget = _budget_or_404(id)
     
     # Calculate statistics
     stats = {

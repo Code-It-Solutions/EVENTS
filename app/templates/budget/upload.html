@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Upload Budget - KAYO{% endblock %}
+{% block title %}Upload Budget - {{ brand_name }}{% endblock %}
 
 {% block content %}
 <div class="mb-4 mt-3">
@@ -24,7 +24,7 @@
                     <div class="mb-4">
                         <label class="form-label">Budget Name <span class="text-danger">*</span></label>
                         <input type="text" name="name" class="form-control" required 
-                               placeholder="e.g., KAYO 2025 Annual Conference Budget">
+                               placeholder="e.g., Youth Summit 2026 budget">
                     </div>
                     
                     <div class="mb-4">
@@ -34,11 +34,11 @@
                     </div>
                     
                     <div class="mb-4">
-                        <label class="form-label">Event (Optional)</label>
-                        <select name="event_id" class="form-select">
-                            <option value="">-- Not linked to any event --</option>
+                        <label class="form-label" for="event_id">Event{% if current_user.role != 'organizer' %} (optional){% endif %}</label>
+                        <select name="event_id" id="event_id" class="form-select" {% if current_user.role == 'organizer' %}required{% endif %}>
+                            {% if current_user.role != 'organizer' %}<option value="">-- Not linked to any event --</option>{% endif %}
                             {% for event in events %}
-                            <option value="{{ event.id }}">{{ event.name }}</option>
+                            <option value="{{ event.id }}" {{ 'selected' if request.args.get('event_id') == event.id|string else '' }}>{{ event.name }}</option>
                             {% endfor %}
                         </select>
                     </div>

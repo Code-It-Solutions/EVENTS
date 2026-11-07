@@ -1,0 +1,27 @@
+{# Afrionex Events brand pieces, shared by login, signup, base (organisers) and public pages #}
+{% macro afx_head() %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --afx-navy:#172443; --afx-teal:#0d9488; --afx-teal-soft:#f0fdfa; --afx-gold:#c8961e; --afx-cta:#c2410c; --afx-cta-hover:#9a3412; --afx-bg:#f8fafc; --afx-border:#e2e8f0; --afx-muted:#64748b; }
+  .afx-font, .afx-font * { font-family:'Manrope', system-ui, sans-serif; }
+  .afx-font h1, .afx-font h2, .afx-font h3, .afx-font h4, .afx-font .afx-wordmark { font-family:'Sora', 'Manrope', sans-serif; letter-spacing:-0.03em; }
+  .afx-accent { font-family:Georgia, 'Times New Roman', serif; font-style:italic; font-weight:400; letter-spacing:0; }
+  .afx-btn-cta { background:var(--afx-cta); color:#fff; border:0; border-radius:999px; font-weight:700; }
+  .afx-btn-cta:hover, .afx-btn-cta:focus { background:var(--afx-cta-hover); color:#fff; }
+</style>
+{% endmacro %}
+
+{% macro afx_logo(tone='dark', size=32) %}
+<span class="d-inline-flex align-items-center gap-2">
+  <svg viewBox="0 0 32 32" width="{{ size }}" height="{{ size }}" aria-hidden="true">
+    <rect width="32" height="32" rx="9" fill="{{ 'rgba(255,255,255,0.14)' if tone == 'light' else '#172443' }}"/>
+    <path d="M11.5 20.5 20.5 11.5" stroke-width="2.4" stroke-linecap="round" stroke="#2dd4bf"/>
+    <circle cx="10.5" cy="21.5" r="4" fill="#fff"/>
+    <circle cx="21.5" cy="10.5" r="4" fill="#2dd4bf"/>
+  </svg>
+  <span class="afx-wordmark fw-semibold text-nowrap" style="color:{{ '#fff' if tone == 'light' else '#172443' }}">
+    Afrionex <span style="color:{{ '#2dd4bf' if tone == 'light' else '#0d9488' }}">Events</span>
+  </span>
+</span>
+{% endmacro %}

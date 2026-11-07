@@ -43,6 +43,18 @@ class Budget(db.Model):
     
     def __repr__(self):
         return f'<Budget {self.name}>'
+
+    @staticmethod
+    def visible_to(user):
+        """Admins: all. Organisers: budgets of their own events only.
+        Other KAYO roles (finance): unlinked budgets and non-organiser events."""
+        from app.models.event import Event
+        if user.is_admin():
+            return Budget.query
+        ids = Event.managed_by(user).with_entities(Event.id)
+        if user.role == 'organizer':
+            return Budget.query.filter(Budget.event_id.in_(ids))
+        return Budget.query.filter(db.or_(Budget.event_id.is_(None), Budget.event_id.in_(ids)))
     
     def update_totals(self):
         """Recalculate budget totals"""

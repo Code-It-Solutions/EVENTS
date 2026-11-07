@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ event.name }} - KAYO{% endblock %}
+{% block title %}{{ event.name }} - {{ brand_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -300,6 +300,9 @@
                         </a>
                         <a href="{{ url_for('badges.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-id-badge me-2"></i>Badges
+                        </a>
+                        <a href="{{ url_for('budget.create', event_id=event.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-calculator me-2"></i>Budget
                         </a>
                     </div>
                 </div>

@@ -112,6 +112,12 @@ def create_app(config_class=Config):
         from flask_wtf.csrf import generate_csrf
         return dict(csrf_token=generate_csrf)
     
+    # Organisers get the Afrionex Events brand; KAYO roles keep KAYO
+    @app.context_processor
+    def inject_brand():
+        organizer = current_user.is_authenticated and current_user.role == 'organizer'
+        return dict(brand_name='Afrionex Events' if organizer else 'KAYO')
+
     # Inject pending registration count for admin navigation
     @app.context_processor
     def inject_pending_count():

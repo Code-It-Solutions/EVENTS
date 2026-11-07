@@ -1,14 +1,17 @@
+{% from "_afx_brand.html" import afx_head, afx_logo %}
+{# Organisers see the Afrionex Events brand; KAYO roles keep the KAYO theme #}
+{% set afx = current_user.is_authenticated and current_user.role == 'organizer' %}
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1a5f2a">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="{{ '#172443' if afx else '#1a5f2a' }}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- CSRF Token for AJAX and form submissions -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{% block title %}KAYO{% endblock %}</title>
+    <title>{% block title %}{{ 'Afrionex Events' if afx else 'KAYO' }}{% endblock %}</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -563,10 +566,55 @@
             height: 20px;
         }
     </style>
+
+    {% if afx %}
+    {{ afx_head() }}
+    <style>
+        /* Afrionex Events theme: same variables, flat colours, no gradients */
+        body.afx {
+            --kayo-green: #172443; --kayo-green-dark: #0f1b33; --kayo-green-light: #0d9488;
+            --kayo-gold: #c8961e; --kayo-gold-light: #f2cf63;
+            --primary-color: #172443; --secondary-color: #c8961e; --accent-color: #0d9488;
+            background: #f8fafc !important;
+        }
+        body.afx * { font-family: 'Manrope', system-ui, sans-serif; }
+        body.afx h1, body.afx h2, body.afx h3, body.afx h4, body.afx h5, body.afx .afx-wordmark {
+            font-family: 'Sora', 'Manrope', sans-serif; letter-spacing: -0.02em;
+        }
+        body.afx .bi, body.afx .fa, body.afx .fas, body.afx .far, body.afx .fab { font-family: inherit; }
+        body.afx .bi::before { font-family: bootstrap-icons !important; }
+        body.afx .fa::before, body.afx .fas::before { font-family: "Font Awesome 6 Free" !important; }
+        body.afx .fab::before { font-family: "Font Awesome 6 Brands" !important; }
+
+        body.afx .navbar, body.afx .sidebar, body.afx .card-header, body.afx .btn-primary, body.afx .btn-secondary,
+        body.afx .bg-primary, body.afx .bg-success, body.afx .badge-paid, body.afx .badge-pending,
+        body.afx .progress-bar, body.afx .sidebar .nav-link.active, body.afx footer, body.afx .alert-success {
+            background-image: none !important; box-shadow: none !important;
+        }
+        body.afx .navbar { background-color: #172443 !important; }
+        body.afx .sidebar { background-color: #172443; }
+        body.afx .sidebar .nav-link:hover { transform: none; }
+        body.afx .sidebar .nav-link.active { background-color: #0d9488; color: #fff; }
+        body.afx .card { border: 1px solid #e2e8f0; box-shadow: none; }
+        body.afx .card:hover { transform: none; box-shadow: none; }
+        body.afx .card-header { background-color: #fff; color: #172443; border-bottom: 1px solid #e2e8f0; }
+        body.afx .btn-primary { background-color: #c2410c; border-radius: 999px; font-weight: 700; }
+        body.afx .btn-primary:hover { background-color: #9a3412; transform: none; }
+        body.afx .btn-secondary { background-color: #f1f5f9; color: #172443; border-radius: 999px; }
+        body.afx .btn-outline-primary, body.afx .btn-outline-secondary, body.afx .btn-outline-info { border-radius: 999px; }
+        body.afx .bg-primary { background-color: #172443 !important; }
+        body.afx .bg-success, body.afx .badge-paid { background-color: #0d9488 !important; }
+        body.afx .badge-pending { background-color: #f2cf63; }
+        body.afx .progress-bar { background-color: #0d9488; }
+        body.afx .alert-success { background-color: #f0fdfa; }
+        body.afx a:not(.btn):not(.nav-link):not(.dropdown-item) { color: #0d9488; }
+        body.afx footer { background-color: #172443; }
+    </style>
+    {% endif %}
     
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="{{ 'afx' if afx else '' }}">
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container-fluid">
@@ -574,11 +622,15 @@
                 <i class="bi bi-list"></i>
             </button>
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.dashboard') }}">
+                {% if afx %}
+                {{ afx_logo('light') }}
+                {% else %}
                 <img src="{{ url_for('static', filename='images/diocese_logo.png') }}" alt="ACK Diocese of Nambale" height="70" class="me-2 d-none d-sm-block" onerror="this.style.display='none'">
                 <div class="d-flex flex-column lh-1">
                     <span class="fw-bold">KAYO</span>
                     <small class="text-light opacity-75 d-none d-md-block" style="font-size: 0.6rem;">ACK Diocese of Nambale</small>
                 </div>
+                {% endif %}
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -851,6 +903,11 @@
                         <li class="nav-item">
                             <a class="nav-link {% if 'badges.' in request.endpoint %}active{% endif %}" href="{{ url_for('badges.index') }}">
                                 <i class="bi bi-person-vcard"></i>Badges
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'budget.' in request.endpoint %}active{% endif %}" href="{{ url_for('budget.index') }}">
+                                <i class="bi bi-calculator"></i>Budgets
                             </a>
                         </li>
                         {% else %}
@@ -1577,6 +1634,9 @@
         <div class="container">
             <div class="row">
                 <div class="col-12">
+                    {% if afx %}
+                    <p class="mb-0 small">© Afrionex Solutions · Afrionex Events</p>
+                    {% else %}
                     <img src="{{ url_for('static', filename='images/logo.png') }}" height="40" class="mb-2" alt="KAYO" onerror="this.style.display='none'">
                     <p class="mb-1 small">
                         <strong>KAYO</strong> - Kenya Anglican Youth Organization<br>
@@ -1585,6 +1645,7 @@
                     <p class="mb-0 small fst-italic opacity-75">
                         "Be Strong in the Lord" - Eph. 6:10 | "The Lord is My Shepherd" - Ps. 23:1
                     </p>
+                    {% endif %}
                 </div>
             </div>
         </div>

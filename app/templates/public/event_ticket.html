@@ -1,3 +1,4 @@
+{% from "_afx_brand.html" import afx_head %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,8 +10,9 @@
         .ticket { border-top: 6px solid {{ event.primary_color or '#4e73df' }}; }
         @media print { .no-print { display: none; } }
     </style>
+    {{ afx_head() }}
 </head>
-<body class="bg-light">
+<body class="bg-light afx-font">
 <main class="container py-4" style="max-width: 460px;">
     <div class="card shadow-sm ticket text-center">
         <div class="card-body">
@@ -30,6 +32,7 @@
             <button class="btn btn-outline-primary no-print" onclick="window.print()">Print / save as PDF</button>
         </div>
     </div>
+    <p class="text-center small text-muted mt-4 mb-0">Powered by <a href="{{ url_for('auth.organizer_signup') }}" class="text-reset fw-semibold">Afrionex Events</a></p>
 </main>
 </body>
 </html>
