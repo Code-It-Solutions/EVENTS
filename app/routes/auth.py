@@ -93,7 +93,8 @@ def login():
             token = user.generate_session_token()
             db.session.commit()
             
-            login_user(user)
+            remember_me = bool(getattr(form, 'remember', None) and form.remember.data)
+            login_user(user, remember=remember_me)
             session['session_token'] = token
             
             # Create session record
@@ -134,7 +135,8 @@ def verify_otp():
             token = user.generate_session_token()
             db.session.commit()
             
-            login_user(user)
+            remember_me = bool(getattr(form, 'remember', None) and form.remember.data)
+            login_user(user, remember=remember_me)
             session['session_token'] = token
             
             # Create session record

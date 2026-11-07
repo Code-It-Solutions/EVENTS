@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, SelectField, SubmitField, TextAreaField
+from wtforms import StringField, PasswordField, SelectField, SubmitField, TextAreaField, BooleanField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, Optional, InputRequired
 from app.models.user import User
 from app.church_data import get_archdeaconries, get_parishes, CHURCH_DATA
@@ -34,6 +34,7 @@ def get_role_choices(include_admin=False, include_all=False):
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
+    remember = BooleanField('Remember me', default=False)
     submit = SubmitField('Login')
 
 

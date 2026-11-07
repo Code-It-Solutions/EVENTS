@@ -4,76 +4,994 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#172443">
-    <title>Log in · Afrionex Events</title>
+    <meta name="theme-color" content="#1d4ed8">
+    <title>Log in to your Account · Afrionex Events</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    {{ afx_head() }}
+
     <style>
-        body { background: var(--afx-bg); color: var(--afx-navy); }
-        .auth-card { border: 1px solid var(--afx-border); border-radius: 1.5rem; background: #fff; }
-        .form-control { border-radius: .75rem; padding: .5rem .8rem; }
-        .form-control:focus { border-color: var(--afx-teal); box-shadow: 0 0 0 .2rem rgba(13,148,136,.2); }
-        .btn-google { border: 1px solid var(--afx-border); border-radius: 999px; background: #fff; color: #334155; font-weight: 600; }
-        .btn-google:hover { background: var(--afx-bg); }
-        .divider { display: flex; align-items: center; gap: .75rem; color: var(--afx-muted); font-size: .85rem; }
-        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--afx-border); }
-        a { color: var(--afx-teal); font-weight: 600; }
+        :root {
+            --brand-primary: #1d4ed8;
+            --brand-primary-hover: #1e40af;
+            --brand-primary-light: #eff6ff;
+            --brand-navy: #0f172a;
+            --brand-text-muted: #64748b;
+            --brand-border: #e2e8f0;
+            --brand-bg: #f1f5f9;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background-color: var(--brand-bg);
+            background-image: 
+                radial-gradient(at 100% 0%, rgba(37, 99, 235, 0.08) 0px, transparent 55%),
+                radial-gradient(at 0% 100%, rgba(13, 148, 136, 0.07) 0px, transparent 55%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            margin: 0;
+            color: var(--brand-navy);
+        }
+
+        /* Container Card */
+        .auth-container {
+            width: 100%;
+            max-width: 1060px;
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(226, 232, 240, 0.85);
+            overflow: hidden;
+            display: flex;
+            min-height: 640px;
+            position: relative;
+        }
+
+        /* Left Side: Form */
+        .auth-form-side {
+            flex: 1 1 50%;
+            padding: 3.25rem 3.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #ffffff;
+        }
+
+        .auth-brand-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+
+        .auth-brand-header .site-tag {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--brand-text-muted);
+            text-decoration: none;
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            background: #f8fafc;
+            border: 1px solid var(--brand-border);
+            transition: all 0.2s ease;
+        }
+
+        .auth-brand-header .site-tag:hover {
+            color: var(--brand-primary);
+            border-color: #cbd5e1;
+            background: #f1f5f9;
+        }
+
+        .auth-heading {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #0f172a;
+            margin-bottom: 0.375rem;
+        }
+
+        .auth-subheading {
+            font-size: 0.925rem;
+            color: var(--brand-text-muted);
+            margin-bottom: 1.75rem;
+        }
+
+        /* Social Auth Button */
+        .social-auth-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 520px) {
+            .social-auth-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn-social {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.625rem;
+            padding: 0.675rem 1rem;
+            border-radius: 12px;
+            border: 1.5px solid var(--brand-border);
+            background: #ffffff;
+            color: #334155;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+
+        .btn-social:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #0f172a;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        /* Divider */
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.25rem 0 1.5rem 0;
+            color: #94a3b8;
+            font-size: 0.8125rem;
+            font-weight: 500;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--brand-border);
+        }
+
+        .auth-divider span {
+            padding: 0 0.875rem;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.4rem;
+            display: block;
+        }
+
+        .input-icon-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon-wrapper .input-leading-icon {
+            position: absolute;
+            left: 1rem;
+            color: #94a3b8;
+            font-size: 1.1rem;
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+
+        .input-icon-wrapper .form-control {
+            height: 48px;
+            padding-left: 2.75rem;
+            padding-right: 2.75rem;
+            border-radius: 12px;
+            border: 1.5px solid var(--brand-border);
+            background-color: #fafbfc;
+            font-size: 0.9375rem;
+            color: #0f172a;
+            transition: all 0.2s ease;
+        }
+
+        .input-icon-wrapper .form-control:focus {
+            background-color: #ffffff;
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3.5px rgba(29, 78, 216, 0.12);
+            outline: none;
+        }
+
+        .input-icon-wrapper:focus-within .input-leading-icon {
+            color: var(--brand-primary);
+        }
+
+        .btn-toggle-password {
+            position: absolute;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            padding: 0.4rem 0.5rem;
+            color: #94a3b8;
+            cursor: pointer;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+
+        .btn-toggle-password:hover {
+            color: #334155;
+        }
+
+        /* Options Row */
+        .auth-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0.75rem 0 1.5rem 0;
+            font-size: 0.875rem;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0;
+        }
+
+        .form-check-input {
+            width: 1.05rem;
+            height: 1.05rem;
+            border-radius: 4px;
+            border: 1.5px solid #cbd5e1;
+            cursor: pointer;
+            margin-top: 0;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--brand-primary);
+            border-color: var(--brand-primary);
+        }
+
+        .form-check-input:focus {
+            box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+            border-color: var(--brand-primary);
+        }
+
+        .form-check-label {
+            color: #475569;
+            cursor: pointer;
+            user-select: none;
+            font-weight: 500;
+        }
+
+        .forgot-link {
+            color: var(--brand-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.15s ease;
+        }
+
+        .forgot-link:hover {
+            color: var(--brand-primary-hover);
+            text-decoration: underline;
+        }
+
+        /* Submit Button */
+        .btn-auth-primary {
+            width: 100%;
+            height: 48px;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.975rem;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-auth-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+            transform: translateY(-1px);
+            color: #ffffff;
+        }
+
+        .btn-auth-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Bottom Signup Prompt */
+        .auth-footer-prompt {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--brand-text-muted);
+            margin-top: 1.5rem;
+            margin-bottom: 0;
+        }
+
+        .auth-footer-prompt a {
+            color: var(--brand-primary);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .auth-footer-prompt a:hover {
+            text-decoration: underline;
+        }
+
+        /* Right Side: Hero Visual Panel */
+        .auth-hero-side {
+            flex: 1 1 50%;
+            background: linear-gradient(145deg, #1d4ed8 0%, #1e40af 45%, #172554 100%);
+            position: relative;
+            overflow: hidden;
+            padding: 3.25rem 3rem 2.75rem 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #ffffff;
+        }
+
+        /* Background Wave Pattern */
+        .hero-pattern-waves {
+            position: absolute;
+            inset: 0;
+            background-image: url("{{ url_for('static', filename='images/auth-wave-vector.png') }}");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+            opacity: 0.18;
+            mix-blend-mode: screen;
+            pointer-events: none;
+        }
+
+        .hero-glow-circle {
+            position: absolute;
+            width: 440px;
+            height: 440px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(37, 99, 235, 0) 70%);
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -25%);
+            pointer-events: none;
+            filter: blur(20px);
+        }
+
+        /* Center Showcase Composition */
+        .hero-showcase-wrap {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: auto 0;
+            padding: 1rem 0;
+        }
+
+        .hero-orbit-ring {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 70%, transparent 100%);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 50px rgba(255, 255, 255, 0.05);
+        }
+
+        /* Satellite Nodes */
+        .hero-node {
+            position: absolute;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18), 0 0 0 4px rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            z-index: 3;
+            transition: transform 0.3s ease;
+        }
+
+        .hero-node:hover {
+            transform: scale(1.1);
+        }
+
+        .hero-node-1 { top: 22px; left: 30px; }
+        .hero-node-2 { top: 135px; left: -14px; }
+        .hero-node-3 { bottom: 26px; left: 32px; }
+
+        /* SVG Connectors */
+        .hero-connectors {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Floating UI Card inside Hero */
+        .hero-preview-card {
+            position: absolute;
+            right: -25px;
+            width: 235px;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 20px;
+            padding: 1.125rem;
+            box-shadow: 0 25px 50px -10px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.6);
+            color: #0f172a;
+            z-index: 4;
+            animation: cardFloat 5s ease-in-out infinite alternate;
+        }
+
+        @keyframes cardFloat {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-8px); }
+        }
+
+        .card-preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 0.625rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .card-dots span {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+
+        .card-dots span:nth-child(1) { background: #f87171; }
+        .card-dots span:nth-child(2) { background: #fbbf24; }
+        .card-dots span:nth-child(3) { background: #34d399; }
+
+        .card-badge {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #0d9488;
+            background: #ccfbf1;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .preview-item {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.45rem 0;
+        }
+
+        .preview-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .preview-avatar.avatar-emerald {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .preview-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .preview-title {
+            font-size: 0.775rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .preview-subtitle {
+            font-size: 0.675rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .preview-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+        }
+
+        /* Bottom Hero Content / Carousel */
+        .hero-content-footer {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding-top: 1rem;
+        }
+
+        .hero-slide {
+            display: none;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: all 0.4s ease;
+        }
+
+        .hero-slide.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hero-title {
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+
+        .hero-desc {
+            font-size: 0.875rem;
+            color: #bfdbfe;
+            line-height: 1.5;
+            max-width: 380px;
+            margin: 0 auto 1.25rem auto;
+        }
+
+        /* Indicators */
+        .hero-carousel-dots {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.35);
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .carousel-dot.active {
+            width: 26px;
+            background: #ffffff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 991px) {
+            .auth-container {
+                flex-direction: column;
+                max-width: 480px;
+                border-radius: 24px;
+            }
+
+            .auth-form-side {
+                padding: 2.25rem 2rem;
+            }
+
+            .auth-hero-side {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0.75rem;
+            }
+
+            .auth-form-side {
+                padding: 1.75rem 1.25rem;
+            }
+
+            .auth-heading {
+                font-size: 1.5rem;
+            }
+        }
     </style>
 </head>
-<body class="afx-font">
-    <header class="afx-band">
-        <div class="container d-flex align-items-center justify-content-between py-3" style="max-width: 440px;">
-            <a href="https://www.afrionexsolutions.com" class="text-decoration-none" aria-label="Afrionex Solutions">{{ afx_logo('light', 28) }}</a>
-            <a href="https://www.afrionexsolutions.com" class="small fw-semibold text-decoration-none">afrionexsolutions.com</a>
-        </div>
-    </header>
+<body>
 
-    <main class="container py-4" style="max-width: 440px;">
-        <div class="auth-card p-4">
-            <h1 class="h5 mb-3">Welcome <em class="afx-accent" style="color: var(--afx-teal);">back.</em></h1>
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }} py-2" role="alert">{{ message }}</div>
-            {% endfor %}
-            {% endwith %}
-
-            {# no ?next passthrough: auth.login redirects to it unvalidated #}
-            <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
-                {{ form.hidden_tag() }}
-                <div class="mb-3">
-                    <label class="form-label fw-semibold" for="email">Email</label>
-                    {{ form.email(class="form-control", id="email", autocomplete="email", **({'aria-invalid': 'true', 'aria-describedby': 'email-error'} if form.email.errors else {})) }}
-                    {% for error in form.email.errors %}<div id="email-error" class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+    <div class="auth-container">
+        
+        <!-- LEFT: Login Form Side -->
+        <div class="auth-form-side">
+            <div>
+                <!-- Brand Header -->
+                <div class="auth-brand-header">
+                    <a href="https://www.afrionexsolutions.com" class="text-decoration-none" aria-label="Afrionex Events">
+                        {{ afx_logo('dark', 32) }}
+                    </a>
+                    <a href="https://www.afrionexsolutions.com" class="site-tag" target="_blank" rel="noopener">
+                        afrionexsolutions.com
+                    </a>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-semibold" for="password">Password</label>
-                    {{ form.password(class="form-control", id="password", autocomplete="current-password", **({'aria-invalid': 'true', 'aria-describedby': 'password-error'} if form.password.errors else {})) }}
-                    {% for error in form.password.errors %}<div id="password-error" class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+
+                <!-- Title Section -->
+                <div>
+                    <h1 class="auth-heading">Log In to your Account</h1>
+                    <p class="auth-subheading">Welcome back! Please enter your details.</p>
                 </div>
-                <button type="submit" class="btn afx-btn-cta px-4">Log in</button>
-            </form>
 
-            <div class="divider my-3">or</div>
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="mb-3">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} d-flex align-items-center gap-2 py-2 px-3 rounded-3 small" role="alert">
+                        {% if category in ['danger', 'error'] %}
+                        <i class="bi bi-exclamation-circle-fill text-danger"></i>
+                        {% elif category == 'warning' %}
+                        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                        {% elif category == 'success' %}
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        {% else %}
+                        <i class="bi bi-info-circle-fill text-primary"></i>
+                        {% endif %}
+                        <div>{{ message }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
 
-            <a href="{{ url_for('auth.google_login') }}" class="btn btn-google btn-sm px-3 d-inline-flex align-items-center justify-content-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Continue with Google
-            </a>
+                <!-- Social Login Buttons -->
+                <div class="social-auth-grid">
+                    <a href="{{ url_for('auth.google_login') }}" class="btn-social">
+                        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        <span>Google</span>
+                    </a>
+                    <a href="https://connect.afrionexsolutions.com" class="btn-social" target="_blank" rel="noopener" title="Sign in with Afrionex Connect SSO">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <rect width="24" height="24" rx="6" fill="#172443"/>
+                            <path d="M8 15L16 9" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="8" cy="15" r="3" fill="#ffffff"/>
+                            <circle cx="16" cy="9" r="3" fill="#2dd4bf"/>
+                        </svg>
+                        <span>Connect ID</span>
+                    </a>
+                </div>
+
+                <!-- Divider -->
+                <div class="auth-divider">
+                    <span>Or continue with email</span>
+                </div>
+
+                <!-- Login Form -->
+                <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    <!-- Email Field -->
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email</label>
+                        <div class="input-icon-wrapper">
+                            <i class="bi bi-envelope input-leading-icon"></i>
+                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), id="email", placeholder="name@example.com", autocomplete="email", required=True) }}
+                        </div>
+                        {% for error in form.email.errors %}
+                        <div class="text-danger small mt-1 ms-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <div class="input-icon-wrapper">
+                            <i class="bi bi-lock input-leading-icon"></i>
+                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), id="password", placeholder="••••••••", autocomplete="current-password", required=True) }}
+                            <button type="button" class="btn-toggle-password" id="togglePasswordBtn" aria-label="Toggle password visibility">
+                                <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
+                        {% for error in form.password.errors %}
+                        <div class="text-danger small mt-1 ms-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Options: Remember Me & Forgot Password -->
+                    <div class="auth-options">
+                        <div class="form-check">
+                            {{ form.remember(class="form-check-input", id="remember") }}
+                            <label class="form-check-label" for="remember">Remember me</label>
+                        </div>
+                        <a href="javascript:void(0)" class="forgot-link" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Forgot Password?</a>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-auth-primary">
+                        <span>Log in</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Signup Prompt & Footer Links -->
+            <div>
+                <p class="auth-footer-prompt">
+                    Don't have an account? <a href="{{ url_for('auth.organizer_signup') }}">Create an account</a>
+                </p>
+            </div>
         </div>
 
-        <p class="text-center small mt-3 mb-0"><a href="{{ url_for('auth.organizer_signup') }}">Create an account</a></p>
-    </main>
+        <!-- RIGHT: Hero Showcase Panel -->
+        <div class="auth-hero-side">
+            <!-- Ambient Graphic Backgrounds -->
+            <div class="hero-pattern-waves"></div>
+            <div class="hero-glow-circle"></div>
 
-    <footer class="text-center small pb-3">
-        <a class="afx-site-link" href="https://www.afrionexsolutions.com">© Afrionex Solutions</a> ·
-        <a class="afx-site-link" href="https://connect.afrionexsolutions.com">Connect</a>
-    </footer>
+            <!-- Top Tagline or Badging -->
+            <div class="d-flex align-items-center justify-content-between position-relative z-2">
+                <span class="badge rounded-pill px-3 py-2 text-white" style="background: rgba(255,255,255,0.14); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); font-weight: 600; font-size: 0.8125rem;">
+                    <i class="bi bi-shield-check text-info me-1"></i> Enterprise Event Management
+                </span>
+            </div>
+
+            <!-- Center Connected Showcase Composition -->
+            <div class="hero-showcase-wrap">
+                <div class="hero-orbit-ring">
+                    <!-- Branching Connecting SVG Lines -->
+                    <svg class="hero-connectors" viewBox="0 0 320 320" fill="none">
+                        <!-- Path from Node 1 (Google) to Card -->
+                        <path d="M 68 45 C 130 50, 150 120, 205 130" stroke="rgba(255, 255, 255, 0.45)" stroke-width="2.5" stroke-dasharray="4 4" stroke-linecap="round"/>
+                        <!-- Path from Node 2 (NFC/Card) to Card -->
+                        <path d="M 32 158 C 90 158, 140 160, 205 160" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
+                        <!-- Path from Node 3 (Analytics) to Card -->
+                        <path d="M 70 270 C 130 265, 150 200, 205 190" stroke="rgba(255, 255, 255, 0.45)" stroke-width="2.5" stroke-dasharray="4 4" stroke-linecap="round"/>
+                        <circle cx="205" cy="160" r="4" fill="#38bdf8"/>
+                    </svg>
+
+                    <!-- Satellite Service Nodes -->
+                    <div class="hero-node hero-node-1" title="Google Integration">
+                        <svg width="22" height="22" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                    </div>
+
+                    <div class="hero-node hero-node-2" title="Digital Passes & NFC">
+                        <i class="bi bi-person-vcard-fill" style="color: #0284c7;"></i>
+                    </div>
+
+                    <div class="hero-node hero-node-3" title="Real-time Network Analytics">
+                        <i class="bi bi-graph-up-arrow" style="color: #059669;"></i>
+                    </div>
+
+                    <!-- Floating Mini Dashboard Card -->
+                    <div class="hero-preview-card">
+                        <div class="card-preview-header">
+                            <div class="card-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <span class="card-badge">LIVE SYNC</span>
+                        </div>
+
+                        <!-- Delegate Row 1 -->
+                        <div class="preview-item">
+                            <div class="preview-avatar">MC</div>
+                            <div class="preview-info">
+                                <p class="preview-title">M. Clarke</p>
+                                <p class="preview-subtitle">Digital Pass · VIP</p>
+                            </div>
+                            <span class="preview-status-dot"></span>
+                        </div>
+
+                        <!-- Delegate Row 2 -->
+                        <div class="preview-item" style="border-top: 1px dashed #f1f5f9;">
+                            <div class="preview-avatar avatar-emerald">
+                                <i class="bi bi-check2"></i>
+                            </div>
+                            <div class="preview-info">
+                                <p class="preview-title">NFC Check-in</p>
+                                <p class="preview-subtitle">Gate A · Verified</p>
+                            </div>
+                            <span class="badge text-bg-light" style="font-size: 0.65rem;">Active</span>
+                        </div>
+
+                        <!-- Progress indicator -->
+                        <div class="mt-2 pt-2 border-top">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span style="font-size: 0.65rem; color: #64748b; font-weight: 600;">Check-in Rate</span>
+                                <span style="font-size: 0.65rem; color: #1e293b; font-weight: 700;">94.2%</span>
+                            </div>
+                            <div class="progress" style="height: 5px; border-radius: 999px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 94%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Content Carousel -->
+            <div class="hero-content-footer">
+                <!-- Slide 1 -->
+                <div class="hero-slide active" data-slide="0">
+                    <h2 class="hero-title">Connect with every application.</h2>
+                    <p class="hero-desc">
+                        A seamless platform to organize events, track delegates, verify registrations, and manage budgets in real time.
+                    </p>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="hero-slide" data-slide="1">
+                    <h2 class="hero-title">Digital Passes & Instant Check-in.</h2>
+                    <p class="hero-desc">
+                        Issue smart QR badges, NFC credentials, and accelerate entry lines with zero friction.
+                    </p>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="hero-slide" data-slide="2">
+                    <h2 class="hero-title">Audited Real-time Analytics.</h2>
+                    <p class="hero-desc">
+                        Monitor attendance metrics, track fee payments, and generate compliance-ready reports instantly.
+                    </p>
+                </div>
+
+                <!-- Carousel Dots Indicator -->
+                <div class="hero-carousel-dots">
+                    <button type="button" class="carousel-dot active" data-slide-target="0" aria-label="Slide 1"></button>
+                    <button type="button" class="carousel-dot" data-slide-target="1" aria-label="Slide 2"></button>
+                    <button type="button" class="carousel-dot" data-slide-target="2" aria-label="Slide 3"></button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: #eff6ff; color: #1d4ed8;">
+                            <i class="bi bi-key-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark" id="forgotPasswordModalLabel">Reset Password</h5>
+                            <p class="text-muted small mb-0">Recover your account access</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <p class="small text-secondary mb-3">
+                        If you have forgotten your password or are unable to sign in, please contact your event administrator or reach our support team:
+                    </p>
+                    <div class="p-3 rounded-3 bg-light border mb-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-envelope-at text-primary"></i>
+                            <a href="mailto:support@afrionexsolutions.com" class="text-decoration-none fw-semibold small text-primary">support@afrionexsolutions.com</a>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-telephone text-primary"></i>
+                            <span class="small text-secondary">+254 (0) 700 000 000</span>
+                        </div>
+                    </div>
+                    <div class="alert alert-info py-2 small mb-0">
+                        <i class="bi bi-info-circle me-1"></i> Parish and Archdeaconry chairs can also have their credentials re-verified via OTP or by the Diocesan Admin.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                    <button type="button" class="btn btn-secondary w-100 rounded-3 py-2 fw-semibold" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Client-side Scripts -->
+    <script>
+        // Password Visibility Toggle
+        const toggleBtn = document.getElementById('togglePasswordBtn');
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('togglePasswordIcon');
+
+        if (toggleBtn && passwordInput && toggleIcon) {
+            toggleBtn.addEventListener('click', function () {
+                const isPassword = passwordInput.getAttribute('type') === 'password';
+                passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                toggleIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+        }
+
+        // Feature Showcase Carousel
+        const slides = document.querySelectorAll('.hero-slide');
+        const dots = document.querySelectorAll('.carousel-dot');
+        let currentSlide = 0;
+        let slideInterval = null;
+
+        function showSlide(index) {
+            slides.forEach((s, i) => {
+                s.classList.toggle('active', i === index);
+            });
+            dots.forEach((d, i) => {
+                d.classList.toggle('active', i === index);
+            });
+            currentSlide = index;
+        }
+
+        dots.forEach(dot => {
+            dot.addEventListener('click', function () {
+                const target = parseInt(this.getAttribute('data-slide-target'), 10);
+                showSlide(target);
+                resetSlideTimer();
+            });
+        });
+
+        function resetSlideTimer() {
+            clearInterval(slideInterval);
+            slideInterval = setInterval(() => {
+                const next = (currentSlide + 1) % slides.length;
+                showSlide(next);
+            }, 5500);
+        }
+
+        resetSlideTimer();
+    </script>
 </body>
 </html>
