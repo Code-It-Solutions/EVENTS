@@ -29,6 +29,10 @@ csrf = CSRFProtect()
 mail = Mail() if HAS_MAIL else None
 
 
+import mimetypes
+mimetypes.add_type('image/webp', '.webp')  # slim server images don't know webp; nosniff then blocks it
+
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
