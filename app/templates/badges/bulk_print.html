@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Badges - Bulk</title>
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 0.5in;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .page-break {
+                page-break-after: always;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 8.5in;
+            margin: 0 auto;
+        }
+        .badge-item {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .badge-item img {
+            width: 100%;
+            display: block;
+        }
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 0 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: #0d6efd;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .badge-count {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls no-print">
+        <div class="badge-count">{{ badges|length }} badges ready to print</div>
+        <button class="btn btn-primary" onclick="window.print()">
+            🖨️ Print All Badges
+        </button>
+        <button class="btn btn-secondary" onclick="window.close()">
+            ✕ Close
+        </button>
+    </div>
+
+    <div class="badges-grid">
+        {% for badge in badges %}
+        <div class="badge-item">
+            <img src="{{ badge.image }}" alt="Badge for {{ badge.delegate.name }}">
+        </div>
+        {% if loop.index % 6 == 0 and not loop.last %}
+        </div>
+        <div class="page-break"></div>
+        <div class="badges-grid">
+        {% endif %}
+        {% endfor %}
+    </div>
+</body>
+</html>

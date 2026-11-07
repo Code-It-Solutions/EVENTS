@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0"><i class="bi bi-folder-plus me-2"></i>Create Account</h2>
+                    <p class="text-muted mb-0">Add a new account to the chart of accounts</p>
+                </div>
+                <a href="{{ url_for('finance.chart_of_accounts') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+            </div>
+
+            <!-- Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Account Code <span class="text-danger">*</span></label>
+                            <input type="text" name="code" class="form-control" required
+                                   placeholder="e.g., 1001, 4100, 5200" maxlength="20"
+                                   pattern="[A-Za-z0-9\-]+"
+                                   title="Account code should contain only letters, numbers, and hyphens">
+                            <small class="text-muted">Unique identifier for this account (e.g., 1001, A-101)</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Account Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required
+                                   placeholder="e.g., Cash in Hand, Accounts Receivable">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Account Type <span class="text-danger">*</span></label>
+                            <select name="account_type" class="form-select" required id="accountType" onchange="updateNormalBalance()">
+                                <option value="">Select Type</option>
+                                <option value="asset">Asset</option>
+                                <option value="liability">Liability</option>
+                                <option value="equity">Equity</option>
+                                <option value="income">Income / Revenue</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                            <small class="text-muted">Determines how the account behaves in reports</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Normal Balance</label>
+                                    <select name="normal_balance" class="form-select" id="normalBalance">
+                                        <option value="debit">Debit</option>
+                                        <option value="credit">Credit</option>
+                                    </select>
+                                    <small class="text-muted">Auto-set based on account type</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Category</label>
+                                    <select name="category_id" class="form-select">
+                                        <option value="">No Category</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Parent Account</label>
+                            <select name="parent_id" class="form-select">
+                                <option value="">None (Top-Level Account)</option>
+                                {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">For sub-accounts (e.g., Cash in Hand under Cash)</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="2"
+                                      placeholder="Optional description of what this account is used for"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Opening Balance</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">KSh</span>
+                                        <input type="number" name="opening_balance" class="form-control" 
+                                               step="0.01" value="0.00">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Status</label>
+                                    <select name="is_active" class="form-select">
+                                        <option value="1" selected>Active</option>
+                                        <option value="0">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input type="checkbox" name="is_bank_account" class="form-check-input" id="isBankAccount">
+                            <label class="form-check-label" for="isBankAccount">
+                                This is a bank account
+                            </label>
+                            <small class="d-block text-muted">Check if this account represents a bank/M-Pesa account</small>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('finance.chart_of_accounts') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>Create Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Account Type Guide</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="mb-2">
+                            <strong class="text-primary">Asset</strong>: Cash, Bank, Equipment, Receivables (Debit balance)
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-danger">Liability</strong>: Loans, Payables, Accrued Expenses (Credit balance)
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-success">Equity</strong>: Capital, Retained Earnings, Reserves (Credit balance)
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-info">Income</strong>: Registration Fees, Donations, Grants (Credit balance)
+                        </li>
+                        <li>
+                            <strong class="text-warning">Expense</strong>: Salaries, Utilities, Transport (Debit balance)
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateNormalBalance() {
+    const type = document.getElementById('accountType').value;
+    const normalBalance = document.getElementById('normalBalance');
+    
+    // Set normal balance based on account type
+    if (type === 'asset' || type === 'expense') {
+        normalBalance.value = 'debit';
+    } else if (type === 'liability' || type === 'equity' || type === 'income') {
+        normalBalance.value = 'credit';
+    }
+}
+</script>
+{% endblock %}

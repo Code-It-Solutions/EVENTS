@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Import Delegates - KAYO{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('delegates.list_delegates') }}">Delegates</a></li>
+            <li class="breadcrumb-item active">Import</li>
+        </ol>
+    </nav>
+    <h2><i class="bi bi-upload me-2"></i>Batch Import Delegates</h2>
+    <p class="text-muted">Upload a CSV or Excel file to register multiple delegates at once.</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="POST" enctype="multipart/form-data" action="{{ url_for('delegates.import_delegates') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Upload File</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" name="file" accept=".csv,.xlsx,.xls" required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload me-2"></i>Import
+                            </button>
+                        </div>
+                        <div class="form-text">Supported formats: CSV, Excel (.xlsx, .xls)</div>
+                    </div>
+                </form>
+                
+                <hr class="my-4">
+                
+                <h5><i class="bi bi-file-earmark-spreadsheet me-2"></i>File Format Requirements</h5>
+                <p class="text-muted">Your file should have the following columns (headers in first row):</p>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Column</th>
+                                <th>Required</th>
+                                <th>Example</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>name</code> or <code>full name</code></td>
+                                <td><span class="badge bg-danger">Required</span></td>
+                                <td>John Doe</td>
+                                <td>Full name of the delegate</td>
+                            </tr>
+                            <tr>
+                                <td><code>phone</code> or <code>phone number</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>0712345678</td>
+                                <td>Contact phone number</td>
+                            </tr>
+                            <tr>
+                                <td><code>gender</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>male / female</td>
+                                <td>Defaults to male if not specified</td>
+                            </tr>
+                            <tr>
+                                <td><code>age bracket</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>15_19, 20_24, 25_29, 30_above</td>
+                                <td>Age range of delegate</td>
+                            </tr>
+                            <tr>
+                                <td><code>category</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>delegate, leader, counsellor</td>
+                                <td>Defaults to delegate</td>
+                            </tr>
+                            <tr>
+                                <td><code>local church</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>St. Paul's Church</td>
+                                <td>Uses your church if not specified</td>
+                            </tr>
+                            <tr>
+                                <td><code>parish</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Nambale Parish</td>
+                                <td>Uses your parish if not specified</td>
+                            </tr>
+                            <tr>
+                                <td><code>archdeaconry</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Nambale Archdeaconry</td>
+                                <td>Uses your archdeaconry if not specified</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="alert alert-info mt-4">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>Tip:</strong> If you don't specify church details, your own church/parish/archdeaconry will be used automatically.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <h6><i class="bi bi-download me-2"></i>Download Template</h6>
+                <p class="text-muted small">Download a sample CSV template to get started:</p>
+                <a href="{{ url_for('delegates.download_import_template') }}" class="btn btn-outline-success w-100">
+                    <i class="bi bi-file-earmark-arrow-down me-2"></i>Download CSV Template
+                </a>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h6><i class="bi bi-question-circle me-2"></i>Need Help?</h6>
+                <p class="text-muted small mb-2">Common issues:</p>
+                <ul class="small text-muted mb-0">
+                    <li>Ensure the first row contains column headers</li>
+                    <li>Name column is required for each delegate</li>
+                    <li>Use lowercase for gender (male/female)</li>
+                    <li>Phone numbers can include country code</li>
+                    <li>Empty rows will be skipped</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

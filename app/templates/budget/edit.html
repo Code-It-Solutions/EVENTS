@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Budget - KAYO{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('budget.index') }}">Budgets</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('budget.view', id=budget.id) }}">{{ budget.name }}</a></li>
+            <li class="breadcrumb-item active">Edit</li>
+        </ol>
+    </nav>
+    <h2><i class="bi bi-pencil me-2"></i>Edit Budget</h2>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Budget Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required 
+                               value="{{ budget.name }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3">{{ budget.description or '' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Link to Event</label>
+                        <select name="event_id" class="form-select">
+                            <option value="">-- Not linked to any event --</option>
+                            {% for event in events %}
+                            <option value="{{ event.id }}" {{ 'selected' if budget.event_id == event.id else '' }}>
+                                {{ event.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="draft" {{ 'selected' if budget.status == 'draft' else '' }}>Draft</option>
+                            <option value="active" {{ 'selected' if budget.status == 'active' else '' }}>Active</option>
+                            <option value="closed" {{ 'selected' if budget.status == 'closed' else '' }}>Closed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-2"></i>Save Changes
+                        </button>
+                        <a href="{{ url_for('budget.view', id=budget.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Budget Information</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <td class="text-muted">Created:</td>
+                        <td>{{ budget.created_at.strftime('%d %b %Y %H:%M') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Created By:</td>
+                        <td>{{ budget.creator.name }}</td>
+                    </tr>
+                    {% if budget.approved_at %}
+                    <tr>
+                        <td class="text-muted">Approved:</td>
+                        <td>{{ budget.approved_at.strftime('%d %b %Y') }} by {{ budget.approver.name }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="text-muted">Items:</td>
+                        <td>{{ budget.items_count }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Total Budget:</td>
+                        <td>KSh {{ "{:,.0f}".format(budget.total_budgeted) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Total Spent:</td>
+                        <td>KSh {{ "{:,.0f}".format(budget.total_spent) }}</td>
+                    </tr>
+                    {% if budget.original_filename %}
+                    <tr>
+                        <td class="text-muted">Source File:</td>
+                        <td>{{ budget.original_filename }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

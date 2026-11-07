@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Announcements - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-megaphone me-2 text-primary"></i>Announcements
+            </h2>
+            <p class="text-muted mb-0">Manage and send announcements to delegates</p>
+        </div>
+        <a href="{{ url_for('communications.create_announcement') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>New Announcement
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <select class="form-select" onchange="filterByStatus(this.value)">
+                        <option value="">All Status</option>
+                        <option value="draft" {% if current_status == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="scheduled" {% if current_status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                        <option value="sent" {% if current_status == 'sent' %}selected{% endif %}>Sent</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcements List -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            {% if announcements %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0">Title</th>
+                            <th class="border-0">Channels</th>
+                            <th class="border-0">Target</th>
+                            <th class="border-0">Recipients</th>
+                            <th class="border-0">Status</th>
+                            <th class="border-0">Created</th>
+                            <th class="border-0">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ann in announcements %}
+                        <tr>
+                            <td>
+                                <strong>{{ ann.title }}</strong>
+                                <div class="small text-muted text-truncate" style="max-width: 300px;">
+                                    {{ ann.content[:100] }}...
+                                </div>
+                            </td>
+                            <td>
+                                {% for channel in ann.channels %}
+                                <span class="badge bg-secondary me-1">
+                                    {% if channel == 'sms' %}
+                                    <i class="bi bi-chat-square-text me-1"></i>
+                                    {% elif channel == 'email' %}
+                                    <i class="bi bi-envelope me-1"></i>
+                                    {% else %}
+                                    <i class="bi bi-bell me-1"></i>
+                                    {% endif %}
+                                    {{ channel }}
+                                </span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <span class="badge bg-outline-primary border">
+                                    {{ ann.target_group|title }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if ann.recipients_count %}
+                                    <strong>{{ ann.recipients_count }}</strong>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if ann.status == 'sent' %}bg-success{% elif ann.status == 'scheduled' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    {{ ann.status|title }}
+                                </span>
+                                {% if ann.scheduled_for and ann.status == 'scheduled' %}
+                                <div class="small text-muted">
+                                    {{ ann.scheduled_for.strftime('%b %d, %H:%M') }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="small">
+                                    {{ ann.created_at.strftime('%b %d, %Y') }}
+                                </div>
+                                <div class="small text-muted">
+                                    {{ ann.created_at.strftime('%H:%M') }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    {% if ann.status != 'sent' %}
+                                    <form method="POST" action="{{ url_for('communications.send_announcement', announcement_id=ann.id) }}" 
+                                          style="display: inline;" onsubmit="return confirm('Send this announcement now?');">
+                                        <button type="submit" class="btn btn-outline-success" title="Send Now">
+                                            <i class="bi bi-send"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('communications.delete_announcement', announcement_id=ann.id) }}"
+                                          style="display: inline;" onsubmit="return confirm('Delete this announcement?');">
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-megaphone display-3 text-muted"></i>
+                <h5 class="text-muted mt-3">No announcements found</h5>
+                <p class="text-muted">Create your first announcement to communicate with delegates</p>
+                <a href="{{ url_for('communications.create_announcement') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i>Create Announcement
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function filterByStatus(status) {
+        const url = new URL(window.location.href);
+        if (status) {
+            url.searchParams.set('status', status);
+        } else {
+            url.searchParams.delete('status');
+        }
+        window.location.href = url.toString();
+    }
+</script>
+{% endblock %}

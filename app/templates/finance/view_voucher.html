@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}{{ voucher.voucher_number }} - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center">
+                    <a href="{{ url_for('finance.list_vouchers') }}" class="btn btn-outline-secondary me-3">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h2 class="mb-0">{{ voucher.voucher_number }}</h2>
+                        <p class="text-muted mb-0">
+                            <span class="badge bg-{{ 'danger' if voucher.voucher_type == 'payment' else 'success' }} me-2">
+                                {{ voucher.voucher_type|title }} Voucher
+                            </span>
+                            <span class="badge bg-{{ 'secondary' if voucher.status == 'draft' else 'warning' if voucher.status == 'pending_approval' else 'info' if voucher.status == 'approved' else 'success' if voucher.status == 'paid' else 'danger' }}">
+                                {{ voucher.status.replace('_', ' ')|title }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <a href="{{ url_for('finance.print_voucher', voucher_id=voucher.id) }}" 
+                       class="btn btn-outline-secondary" target="_blank">
+                        <i class="bi bi-printer me-1"></i>Print
+                    </a>
+                    {% if voucher.status == 'draft' %}
+                    <form action="{{ url_for('finance.submit_voucher', voucher_id=voucher.id) }}" method="POST" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-send me-1"></i>Submit for Approval
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% if voucher.status == 'pending_approval' %}
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal">
+                        <i class="bi bi-check-lg me-1"></i>Approve
+                    </button>
+                    {% endif %}
+                    {% if voucher.status == 'approved' %}
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#payModal">
+                        <i class="bi bi-cash me-1"></i>Mark as Paid
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Voucher Details -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-{{ 'danger' if voucher.voucher_type == 'payment' else 'success' }} bg-opacity-10 border-0">
+                    <h5 class="mb-0 text-{{ 'danger' if voucher.voucher_type == 'payment' else 'success' }}">
+                        <i class="bi bi-file-earmark-text me-2"></i>Voucher Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">Voucher Number</label>
+                            <p class="mb-0 fw-bold fs-5">{{ voucher.voucher_number }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">Date</label>
+                            <p class="mb-0">{{ voucher.date.strftime('%d %B %Y') }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">{{ 'Payee' if voucher.voucher_type == 'payment' else 'Payer' }}</label>
+                            <p class="mb-0 fw-bold">{{ voucher.payee_name or '-' }}</p>
+                            <small class="text-muted">{{ voucher.payee_type|title if voucher.payee_type else '' }}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">Category</label>
+                            <p class="mb-0">{{ voucher.category|title if voucher.category else '-' }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">Payment Method</label>
+                            <p class="mb-0">{{ voucher.payment_method|replace('_', ' ')|title if voucher.payment_method else '-' }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small">Reference Number</label>
+                            <p class="mb-0"><code>{{ voucher.reference_number or '-' }}</code></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Narration</label>
+                            <p class="mb-0">{{ voucher.narration }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Line Items -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Line Items</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Description</th>
+                                    <th class="text-center">Qty</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in voucher.items %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ item.description }}</td>
+                                    <td class="text-center">{{ item.quantity }}</td>
+                                    <td class="text-end">KSh {{ "{:,.2f}".format(item.unit_price) if item.unit_price else '-' }}</td>
+                                    <td class="text-end"><strong>KSh {{ "{:,.2f}".format(item.amount) }}</strong></td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">No line items</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="4" class="text-end fs-5">Total Amount:</th>
+                                    <th class="text-end">
+                                        <span class="fs-4 text-{{ 'danger' if voucher.voucher_type == 'payment' else 'success' }}">
+                                            KSh {{ "{:,.2f}".format(voucher.amount) }}
+                                        </span>
+                                    </th>
+                                </tr>
+                                {% if voucher.amount_in_words %}
+                                <tr>
+                                    <td colspan="5" class="text-end fst-italic">
+                                        {{ voucher.amount_in_words }}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approval History -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Workflow History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="d-flex align-items-start">
+                                <div class="timeline-icon bg-primary text-white rounded-circle p-2 me-3">
+                                    <i class="bi bi-pencil"></i>
+                                </div>
+                                <div>
+                                    <strong>Prepared by</strong>
+                                    <br>{{ voucher.preparer.name if voucher.preparer else 'Unknown' }}
+                                    <br><small class="text-muted">{{ voucher.created_at.strftime('%d %b %Y, %H:%M') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% if voucher.approved_at %}
+                        <div class="timeline-item mt-3">
+                            <div class="d-flex align-items-start">
+                                <div class="timeline-icon bg-success text-white rounded-circle p-2 me-3">
+                                    <i class="bi bi-check-lg"></i>
+                                </div>
+                                <div>
+                                    <strong>Approved by</strong>
+                                    <br>{{ voucher.approver.name if voucher.approver else 'Unknown' }}
+                                    <br><small class="text-muted">{{ voucher.approved_at.strftime('%d %b %Y, %H:%M') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if voucher.paid_at %}
+                        <div class="timeline-item mt-3">
+                            <div class="d-flex align-items-start">
+                                <div class="timeline-icon bg-info text-white rounded-circle p-2 me-3">
+                                    <i class="bi bi-cash"></i>
+                                </div>
+                                <div>
+                                    <strong>Paid</strong>
+                                    <br><small class="text-muted">{{ voucher.paid_at.strftime('%d %b %Y, %H:%M') }}</small>
+                                    {% if voucher.reference_number %}
+                                    <br><small>Ref: {{ voucher.reference_number }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if voucher.notes %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Notes:</strong> {{ voucher.notes }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Approve Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('finance.approve_voucher', voucher_id=voucher.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Approve Voucher</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to approve voucher <strong>{{ voucher.voucher_number }}</strong>?</p>
+                    <p class="fs-5">Amount: <strong class="text-{{ 'danger' if voucher.voucher_type == 'payment' else 'success' }}">KSh {{ "{:,.2f}".format(voucher.amount) }}</strong></p>
+                    <div class="mb-3">
+                        <label class="form-label">Notes (optional)</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" name="action" value="reject" class="btn btn-danger">Reject</button>
+                    <button type="submit" name="action" value="approve" class="btn btn-success">Approve</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Pay Modal -->
+<div class="modal fade" id="payModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('finance.mark_voucher_paid', voucher_id=voucher.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Mark as Paid</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Mark voucher <strong>{{ voucher.voucher_number }}</strong> as paid?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Reference (M-Pesa code, Cheque no., etc.)</label>
+                        <input type="text" name="reference_number" class="form-control" 
+                               value="{{ voucher.reference_number or '' }}" placeholder="Enter reference">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Confirm Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+{% endblock %}

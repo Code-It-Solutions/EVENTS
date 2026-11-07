@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Create Journal Entry - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0"><i class="bi bi-journal-plus me-2"></i>Create Journal Entry</h2>
+                    <p class="text-muted mb-0">Record double-entry transactions</p>
+                </div>
+                <a href="{{ url_for('finance.list_journals') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+            </div>
+
+            <!-- Form -->
+            <form method="POST" id="journalForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Entry Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Date <span class="text-danger">*</span></label>
+                                <input type="date" name="date" class="form-control" value="{{ today }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Reference</label>
+                                <input type="text" name="reference" class="form-control" placeholder="e.g., INV-001">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Entry Type</label>
+                                <select name="entry_type" class="form-select">
+                                    <option value="standard">Standard</option>
+                                    <option value="adjusting">Adjusting</option>
+                                    <option value="closing">Closing</option>
+                                    <option value="reversing">Reversing</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Description <span class="text-danger">*</span></label>
+                                <textarea name="description" class="form-control" rows="2" required 
+                                          placeholder="Describe the purpose of this journal entry"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Journal Lines -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Journal Lines</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addLine()">
+                            <i class="bi bi-plus-lg me-1"></i>Add Line
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0" id="linesTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="40%">Account</th>
+                                        <th width="25%">Description</th>
+                                        <th width="15%" class="text-end">Debit</th>
+                                        <th width="15%" class="text-end">Credit</th>
+                                        <th width="5%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="linesBody">
+                                    <!-- Lines added via JS -->
+                                </tbody>
+                                <tfoot class="table-light fw-bold">
+                                    <tr>
+                                        <td colspan="2" class="text-end">Totals:</td>
+                                        <td class="text-end" id="totalDebit">0.00</td>
+                                        <td class="text-end" id="totalCredit">0.00</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr id="differenceRow">
+                                        <td colspan="2" class="text-end">Difference:</td>
+                                        <td colspan="2" class="text-center" id="difference">
+                                            <span class="badge bg-success">Balanced</span>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('finance.list_journals') }}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" name="action" value="save" class="btn btn-secondary">
+                        <i class="bi bi-save me-1"></i>Save as Draft
+                    </button>
+                    <button type="submit" name="action" value="post" class="btn btn-success" id="postBtn" disabled>
+                        <i class="bi bi-check-circle me-1"></i>Save & Post
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize accounts data - ensure it's valid even if empty
+let accounts = [];
+try {
+    accounts = {{ accounts|tojson|safe }};
+} catch(e) {
+    console.error('Error parsing accounts:', e);
+}
+
+let lineCount = 0;
+
+function addLine(debit = '', credit = '') {
+    lineCount++;
+    const html = `
+        <tr data-line="${lineCount}">
+            <td>
+                <select name="lines[${lineCount}][account_id]" class="form-select form-select-sm" required>
+                    <option value="">Select Account</option>
+                    ${accounts.map(a => `<option value="${a.id}">${a.code} - ${a.name}</option>`).join('')}
+                </select>
+            </td>
+            <td>
+                <input type="text" name="lines[${lineCount}][description]" class="form-control form-control-sm" 
+                       placeholder="Line description">
+            </td>
+            <td>
+                <input type="number" name="lines[${lineCount}][debit]" class="form-control form-control-sm text-end debit-input" 
+                       step="0.01" min="0" value="${debit}" onchange="updateTotals()" onkeyup="updateTotals()">
+            </td>
+            <td>
+                <input type="number" name="lines[${lineCount}][credit]" class="form-control form-control-sm text-end credit-input" 
+                       step="0.01" min="0" value="${credit}" onchange="updateTotals()" onkeyup="updateTotals()">
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLine(${lineCount})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `;
+    document.getElementById('linesBody').insertAdjacentHTML('beforeend', html);
+    updateTotals();
+}
+
+function removeLine(lineNum) {
+    const row = document.querySelector(`tr[data-line="${lineNum}"]`);
+    if (row) {
+        row.remove();
+        updateTotals();
+    }
+}
+
+function updateTotals() {
+    let totalDebit = 0;
+    let totalCredit = 0;
+    
+    document.querySelectorAll('.debit-input').forEach(input => {
+        totalDebit += parseFloat(input.value) || 0;
+    });
+    
+    document.querySelectorAll('.credit-input').forEach(input => {
+        totalCredit += parseFloat(input.value) || 0;
+    });
+    
+    document.getElementById('totalDebit').textContent = totalDebit.toLocaleString('en-KE', {minimumFractionDigits: 2});
+    document.getElementById('totalCredit').textContent = totalCredit.toLocaleString('en-KE', {minimumFractionDigits: 2});
+    
+    const diff = Math.abs(totalDebit - totalCredit);
+    const diffEl = document.getElementById('difference');
+    const postBtn = document.getElementById('postBtn');
+    
+    if (diff < 0.01 && totalDebit > 0) {
+        diffEl.innerHTML = '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Balanced</span>';
+        postBtn.disabled = false;
+    } else if (totalDebit === 0 && totalCredit === 0) {
+        diffEl.innerHTML = '<span class="badge bg-secondary">No entries</span>';
+        postBtn.disabled = true;
+    } else {
+        diffEl.innerHTML = `<span class="badge bg-danger">KSh ${diff.toLocaleString('en-KE', {minimumFractionDigits: 2})} off</span>`;
+        postBtn.disabled = true;
+    }
+}
+
+// Add initial lines
+document.addEventListener('DOMContentLoaded', function() {
+    addLine();
+    addLine();
+});
+
+// Form validation
+document.getElementById('journalForm').addEventListener('submit', function(e) {
+    const debits = document.querySelectorAll('.debit-input');
+    const credits = document.querySelectorAll('.credit-input');
+    let totalDebit = 0, totalCredit = 0;
+    
+    debits.forEach(input => totalDebit += parseFloat(input.value) || 0);
+    credits.forEach(input => totalCredit += parseFloat(input.value) || 0);
+    
+    if (Math.abs(totalDebit - totalCredit) >= 0.01) {
+        e.preventDefault();
+        alert('Journal entry must be balanced. Total debits must equal total credits.');
+        return false;
+    }
+    
+    if (totalDebit === 0) {
+        e.preventDefault();
+        alert('Please enter at least one debit and credit amount.');
+        return false;
+    }
+});
+</script>
+{% endblock %}

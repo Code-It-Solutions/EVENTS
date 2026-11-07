@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Review Transfer {{ transfer.reference_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Transfer Summary -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Review Transfer</h6>
+                    <h4 class="font-monospace mb-3">{{ transfer.reference_number }}</h4>
+                    <h2 class="text-primary mb-3">KSh {{ "{:,.2f}".format(transfer.amount) }}</h2>
+                    <div class="d-flex justify-content-center align-items-center gap-3">
+                        <div class="text-end">
+                            <small class="text-muted">From</small>
+                            <p class="mb-0 fw-semibold">{{ transfer.from_user.name }}</p>
+                        </div>
+                        <i class="fas fa-arrow-right text-muted"></i>
+                        <div class="text-start">
+                            <small class="text-muted">To</small>
+                            <p class="mb-0 fw-semibold">You</p>
+                        </div>
+                    </div>
+                    {% if transfer.description %}
+                    <hr>
+                    <p class="text-muted mb-0">{{ transfer.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Approval Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-gavel me-2 text-primary"></i>Your Decision</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('fund_management.approve_transfer', transfer_id=transfer.id) }}" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Action -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.action.label.text }} <span class="text-danger">*</span></label>
+                            <div class="d-grid gap-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="action" id="action_approve" value="approve" checked>
+                                    <label class="form-check-label" for="action_approve">
+                                        <span class="badge bg-success me-2">Approve</span>
+                                        Accept and confirm receipt of funds
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="action" id="action_reject" value="reject">
+                                    <label class="form-check-label" for="action_reject">
+                                        <span class="badge bg-danger me-2">Reject</span>
+                                        Decline this transfer
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">{{ form.notes.label.text }}</label>
+                            {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows="3", placeholder="Add any notes or reason for rejection...") }}
+                            {% for error in form.notes.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                            <a href="{{ url_for('fund_management.view_transfer', transfer_id=transfer.id) }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

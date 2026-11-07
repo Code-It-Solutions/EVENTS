@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Budget Management - KAYO{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <div>
+        <h2><i class="bi bi-wallet2 me-2"></i>Budget Management</h2>
+        <p class="text-muted mb-0">Upload, manage and track event budgets</p>
+    </div>
+    <div class="btn-group">
+        <a href="{{ url_for('budget.upload') }}" class="btn btn-primary">
+            <i class="bi bi-cloud-upload me-2"></i>Upload Budget
+        </a>
+        <a href="{{ url_for('budget.create') }}" class="btn btn-outline-primary">
+            <i class="bi bi-plus-lg me-2"></i>Create Manually
+        </a>
+    </div>
+</div>
+
+{% if budgets %}
+<div class="row">
+    {% for budget in budgets %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 {{ 'border-success' if budget.status == 'active' else 'border-secondary' if budget.status == 'closed' else '' }}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="badge bg-{{ 'success' if budget.status == 'active' else 'secondary' if budget.status == 'closed' else 'warning' }}">
+                    {{ budget.status | title }}
+                </span>
+                <small class="text-muted">{{ budget.created_at.strftime('%d %b %Y') }}</small>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ budget.name }}</h5>
+                {% if budget.description %}
+                <p class="card-text text-muted small">{{ budget.description[:100] }}{% if budget.description|length > 100 %}...{% endif %}</p>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small>Budget Utilization</small>
+                        <small>{{ "%.1f"|format(budget.utilization_percentage) }}%</small>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-{{ 'danger' if budget.utilization_percentage > 100 else 'warning' if budget.utilization_percentage > 80 else 'success' }}" 
+                             style="width: {{ [budget.utilization_percentage, 100]|min }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="row text-center small">
+                    <div class="col-4">
+                        <div class="fw-bold text-primary">{{ budget.items_count }}</div>
+                        <div class="text-muted">Items</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold text-success">KSh {{ "{:,.0f}".format(budget.total_budgeted) }}</div>
+                        <div class="text-muted">Budget</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold text-{{ 'danger' if budget.total_spent > budget.total_budgeted else 'info' }}">KSh {{ "{:,.0f}".format(budget.total_spent) }}</div>
+                        <div class="text-muted">Spent</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('budget.view', id=budget.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye me-1"></i>View
+                    </a>
+                    <a href="{{ url_for('budget.report', id=budget.id) }}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-graph-up me-1"></i>Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-wallet2 display-1 text-muted"></i>
+        <h4 class="mt-3">No Budgets Yet</h4>
+        <p class="text-muted">Upload a budget file or create one manually to get started.</p>
+        <div class="mt-3">
+            <a href="{{ url_for('budget.upload') }}" class="btn btn-primary me-2">
+                <i class="bi bi-cloud-upload me-2"></i>Upload Budget File
+            </a>
+            <a href="{{ url_for('budget.create') }}" class="btn btn-outline-primary">
+                <i class="bi bi-plus-lg me-2"></i>Create Manually
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

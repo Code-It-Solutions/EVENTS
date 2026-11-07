@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h4 class="mb-0"><i class="fas fa-calendar-plus me-2 text-primary"></i>{{ title }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="no-mask" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Source Type -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.source_type.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.source_type(class="form-select" + (" is-invalid" if form.source_type.errors else "")) }}
+                            {% for error in form.source_type.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="row">
+                            <!-- Source Name -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">{{ form.source_name.label.text }} <span class="text-danger">*</span></label>
+                                {{ form.source_name(class="form-control" + (" is-invalid" if form.source_name.errors else ""), placeholder="Full name") }}
+                                {% for error in form.source_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Phone -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">{{ form.source_phone.label.text }}</label>
+                                {{ form.source_phone(class="form-control" + (" is-invalid" if form.source_phone.errors else ""), placeholder="0712345678") }}
+                                {% for error in form.source_phone.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Email -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">{{ form.source_email.label.text }}</label>
+                                {{ form.source_email(class="form-control" + (" is-invalid" if form.source_email.errors else ""), placeholder="email@example.com") }}
+                                {% for error in form.source_email.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Link to Delegate -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">{{ form.delegate_id.label.text }}</label>
+                                {{ form.delegate_id(class="form-select" + (" is-invalid" if form.delegate_id.errors else "")) }}
+                                {% for error in form.delegate_id.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                        <h6 class="text-muted mb-3">Payment Schedule</h6>
+
+                        <div class="row">
+                            <!-- Amount -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">{{ form.amount.label.text }} <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">KSh</span>
+                                    {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), placeholder="0.00") }}
+                                </div>
+                                {% for error in form.amount.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Frequency -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">{{ form.frequency.label.text }} <span class="text-danger">*</span></label>
+                                {{ form.frequency(class="form-select" + (" is-invalid" if form.frequency.errors else "")) }}
+                                {% for error in form.frequency.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Start Date -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">{{ form.start_date.label.text }} <span class="text-danger">*</span></label>
+                                {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else ""), type="date") }}
+                                {% for error in form.start_date.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- End Date -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">{{ form.end_date.label.text }}</label>
+                                {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else ""), type="date") }}
+                                {% for error in form.end_date.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                                <small class="text-muted">Leave blank for ongoing payments</small>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                        <h6 class="text-muted mb-3">Church Information (Optional)</h6>
+
+                        <div class="row">
+                            <!-- Local Church -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">{{ form.local_church.label.text }}</label>
+                                {{ form.local_church(class="form-control" + (" is-invalid" if form.local_church.errors else "")) }}
+                            </div>
+
+                            <!-- Archdeaconry -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">{{ form.archdeaconry.label.text }}</label>
+                                {{ form.archdeaconry(class="form-select" + (" is-invalid" if form.archdeaconry.errors else "")) }}
+                            </div>
+
+                            <!-- Parish -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">{{ form.parish.label.text }}</label>
+                                {{ form.parish(class="form-select" + (" is-invalid" if form.parish.errors else "")) }}
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.description.label.text }}</label>
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="3", placeholder="Purpose of the scheduled payments...") }}
+                            {% for error in form.description.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('fund_management.chair_dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

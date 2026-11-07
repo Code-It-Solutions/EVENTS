@@ -1,0 +1,1404 @@
+{% extends "base.html" %}
+
+{% block title %}Chair Training Manual - KAYO System{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Manual Styling */
+    .manual-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .manual-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .manual-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    
+    .manual-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .manual-header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Table of Contents */
+    .toc-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        position: sticky;
+        top: 80px;
+    }
+    
+    .toc-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .toc-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .toc-list li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .toc-list a {
+        color: #666;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .toc-list a:hover, .toc-list a.active {
+        background: #f0f4ff;
+        color: #667eea;
+        transform: translateX(5px);
+    }
+    
+    .toc-list .step-number {
+        background: #667eea;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    /* Section Cards */
+    .section-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border-left: 5px solid #667eea;
+        scroll-margin-top: 100px;
+    }
+    
+    .section-card h2 {
+        color: #333;
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .section-card h2 .icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .section-card h3 {
+        color: #444;
+        font-size: 1.3rem;
+        margin: 1.5rem 0 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    /* Workflow Diagrams */
+    .workflow-diagram {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        overflow-x: auto;
+    }
+    
+    .workflow-steps {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .workflow-step {
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-align: center;
+        min-width: 120px;
+        position: relative;
+    }
+    
+    .workflow-step .step-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .workflow-step .step-label {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.9rem;
+    }
+    
+    .workflow-step .step-desc {
+        font-size: 0.75rem;
+        color: #666;
+        margin-top: 0.3rem;
+    }
+    
+    .workflow-arrow {
+        font-size: 1.5rem;
+        color: #667eea;
+    }
+    
+    /* Process Cards */
+    .process-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin: 1.5rem 0;
+    }
+    
+    .process-card {
+        background: linear-gradient(135deg, #fff 0%, #f8f9ff 100%);
+        border: 2px solid #e8ecf4;
+        border-radius: 15px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .process-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.15);
+        border-color: #667eea;
+    }
+    
+    .process-card .card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .process-card .card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .process-card .card-icon.blue { background: #e3f2fd; color: #1976d2; }
+    .process-card .card-icon.green { background: #e8f5e9; color: #388e3c; }
+    .process-card .card-icon.orange { background: #fff3e0; color: #f57c00; }
+    .process-card .card-icon.purple { background: #f3e5f5; color: #7b1fa2; }
+    .process-card .card-icon.red { background: #ffebee; color: #d32f2f; }
+    .process-card .card-icon.teal { background: #e0f2f1; color: #00796b; }
+    
+    .process-card h4 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: #333;
+    }
+    
+    .process-card p {
+        color: #666;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    
+    /* Step Lists */
+    .step-list {
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0;
+    }
+    
+    .step-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        background: #f8f9ff;
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .step-list li:hover {
+        background: #eef1ff;
+        transform: translateX(5px);
+    }
+    
+    .step-list .step-num {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    
+    .step-list .step-content h5 {
+        margin: 0 0 0.3rem;
+        color: #333;
+        font-size: 1rem;
+    }
+    
+    .step-list .step-content p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    /* Info Boxes */
+    .info-box {
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin: 1rem 0;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .info-box .info-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .info-box.tip {
+        background: #e3f2fd;
+        border-left: 4px solid #1976d2;
+    }
+    
+    .info-box.tip .info-icon { color: #1976d2; }
+    
+    .info-box.warning {
+        background: #fff3e0;
+        border-left: 4px solid #f57c00;
+    }
+    
+    .info-box.warning .info-icon { color: #f57c00; }
+    
+    .info-box.success {
+        background: #e8f5e9;
+        border-left: 4px solid #388e3c;
+    }
+    
+    .info-box.success .info-icon { color: #388e3c; }
+    
+    .info-box.danger {
+        background: #ffebee;
+        border-left: 4px solid #d32f2f;
+    }
+    
+    .info-box.danger .info-icon { color: #d32f2f; }
+    
+    /* Screenshot Placeholder */
+    .screenshot-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 3rem 2rem;
+        text-align: center;
+        color: white;
+        margin: 1rem 0;
+    }
+    
+    .screenshot-box i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+    
+    .screenshot-box p {
+        margin: 0;
+        opacity: 0.9;
+    }
+    
+    /* Interactive Accordion */
+    .accordion-item {
+        background: white;
+        border: 2px solid #e8ecf4;
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+        overflow: hidden;
+    }
+    
+    .accordion-header {
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+    
+    .accordion-header:hover {
+        background: #f8f9ff;
+    }
+    
+    .accordion-header h5 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #333;
+    }
+    
+    .accordion-header .toggle-icon {
+        transition: transform 0.3s ease;
+    }
+    
+    .accordion-item.active .accordion-header .toggle-icon {
+        transform: rotate(180deg);
+    }
+    
+    .accordion-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+    
+    .accordion-item.active .accordion-content {
+        max-height: 1000px;
+    }
+    
+    .accordion-body {
+        padding: 1rem 1.5rem 1.5rem;
+        border-top: 1px solid #e8ecf4;
+    }
+    
+    /* Payment Status Diagram */
+    .status-flow {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    .status-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .status-badge {
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        min-width: 140px;
+        text-align: center;
+    }
+    
+    .status-badge.pending { background: #fff3e0; color: #f57c00; }
+    .status-badge.confirmed { background: #e3f2fd; color: #1976d2; }
+    .status-badge.approved { background: #e8f5e9; color: #388e3c; }
+    .status-badge.completed { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
+    
+    .status-arrow {
+        font-size: 1.5rem;
+        color: #667eea;
+    }
+    
+    .status-desc {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    /* Quick Reference Card */
+    .quick-ref {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+    }
+    
+    .quick-ref h4 {
+        margin: 0 0 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .quick-ref-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .quick-ref-item {
+        background: rgba(255,255,255,0.15);
+        border-radius: 10px;
+        padding: 1rem;
+    }
+    
+    .quick-ref-item .label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-bottom: 0.3rem;
+    }
+    
+    .quick-ref-item .value {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    /* Role Comparison Table */
+    .role-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 1.5rem 0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .role-table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+    }
+    
+    .role-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e8ecf4;
+        background: white;
+    }
+    
+    .role-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .role-table tr:hover td {
+        background: #f8f9ff;
+    }
+    
+    .check-icon { color: #388e3c; }
+    .cross-icon { color: #d32f2f; }
+    
+    /* Print Styles */
+    @media print {
+        .toc-card { display: none; }
+        .section-card { break-inside: avoid; }
+        .manual-header { background: #667eea !important; -webkit-print-color-adjust: exact; }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .manual-header h1 { font-size: 1.8rem; }
+        .workflow-steps { flex-direction: column; }
+        .workflow-arrow { transform: rotate(90deg); }
+        .status-row { flex-direction: column; text-align: center; }
+        .status-arrow { transform: rotate(90deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="manual-container">
+    <!-- Header -->
+    <div class="manual-header">
+        <h1><i class="fas fa-graduation-cap me-2"></i> Parish Chair Training Manual</h1>
+        <p>Your Complete Guide to Managing KAYO Delegate Registration & Payments</p>
+    </div>
+    
+    <div class="row">
+        <!-- Table of Contents - Sidebar -->
+        <div class="col-lg-3 d-none d-lg-block">
+            <div class="toc-card">
+                <div class="toc-title">
+                    <i class="fas fa-list-ul"></i> Contents
+                </div>
+                <ul class="toc-list">
+                    <li><a href="#overview"><span class="step-number">1</span> Overview</a></li>
+                    <li><a href="#getting-started"><span class="step-number">2</span> Getting Started</a></li>
+                    <li><a href="#delegates"><span class="step-number">3</span> Managing Delegates</a></li>
+                    <li><a href="#payments"><span class="step-number">4</span> Payment Process</a></li>
+                    <li><a href="#workflow"><span class="step-number">5</span> Payment Workflow</a></li>
+                    <li><a href="#reports"><span class="step-number">6</span> Reports & Export</a></li>
+                    <li><a href="#troubleshooting"><span class="step-number">7</span> Troubleshooting</a></li>
+                    <li><a href="#faq"><span class="step-number">8</span> FAQ</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <!-- Section 1: Overview -->
+            <div class="section-card" id="overview">
+                <h2>
+                    <span class="icon"><i class="fas fa-eye"></i></span>
+                    System Overview
+                </h2>
+                
+                <p>Welcome to the KAYO Delegate Management System! As a Parish Chair, you play a crucial role in registering and managing delegates from your parish for KAYO events.</p>
+                
+                <div class="process-grid">
+                    <div class="process-card">
+                        <div class="card-header">
+                            <div class="card-icon blue"><i class="fas fa-users"></i></div>
+                            <div>
+                                <h4>Register Delegates</h4>
+                                <p>Add youth from your parish</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="process-card">
+                        <div class="card-header">
+                            <div class="card-icon green"><i class="fas fa-money-bill-wave"></i></div>
+                            <div>
+                                <h4>Record Payments</h4>
+                                <p>Track registration fees</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="process-card">
+                        <div class="card-header">
+                            <div class="card-icon orange"><i class="fas fa-check-circle"></i></div>
+                            <div>
+                                <h4>Confirm Payments</h4>
+                                <p>Verify & approve payments</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="process-card">
+                        <div class="card-header">
+                            <div class="card-icon purple"><i class="fas fa-chart-bar"></i></div>
+                            <div>
+                                <h4>View Reports</h4>
+                                <p>Track parish progress</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-sitemap me-2"></i> Your Role in the System</h3>
+                
+                <table class="role-table">
+                    <thead>
+                        <tr>
+                            <th>Capability</th>
+                            <th>Chair</th>
+                            <th>Admin</th>
+                            <th>Finance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Register delegates from your parish</td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                            <td><i class="fas fa-times cross-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Record payments</td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                            <td><i class="fas fa-times cross-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Confirm payments (Chair level)</td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                            <td><i class="fas fa-times cross-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Final payment approval</td>
+                            <td><i class="fas fa-times cross-icon"></i></td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td>View all parishes</td>
+                            <td><i class="fas fa-times cross-icon"></i></td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Export parish reports</td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                            <td><i class="fas fa-check check-icon"></i></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Section 2: Getting Started -->
+            <div class="section-card" id="getting-started">
+                <h2>
+                    <span class="icon"><i class="fas fa-rocket"></i></span>
+                    Getting Started
+                </h2>
+                
+                <h3><i class="fas fa-sign-in-alt me-2"></i> Logging In</h3>
+                
+                <ol class="step-list">
+                    <li>
+                        <span class="step-num">1</span>
+                        <div class="step-content">
+                            <h5>Access the System</h5>
+                            <p>Open your browser and go to: <strong>monsiuer.pythonanywhere.com</strong></p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">2</span>
+                        <div class="step-content">
+                            <h5>Enter Credentials</h5>
+                            <p>Use the email and password provided by your administrator</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">3</span>
+                        <div class="step-content">
+                            <h5>Verify OTP (if required)</h5>
+                            <p>Check your email for a 6-digit verification code and enter it</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">4</span>
+                        <div class="step-content">
+                            <h5>Access Dashboard</h5>
+                            <p>You'll be taken to your parish dashboard showing your delegates and stats</p>
+                        </div>
+                    </li>
+                </ol>
+                
+                <div class="info-box tip">
+                    <div class="info-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div>
+                        <strong>Pro Tip:</strong> Bookmark the login page for quick access. Your session stays active for security, but you may need to log in again after a period of inactivity.
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-tachometer-alt me-2"></i> Understanding Your Dashboard</h3>
+                
+                <div class="workflow-diagram">
+                    <div class="workflow-steps">
+                        <div class="workflow-step">
+                            <div class="step-icon">📊</div>
+                            <div class="step-label">Statistics</div>
+                            <div class="step-desc">Total delegates & payments</div>
+                        </div>
+                        <div class="workflow-arrow">→</div>
+                        <div class="workflow-step">
+                            <div class="step-icon">👥</div>
+                            <div class="step-label">Delegates List</div>
+                            <div class="step-desc">Your parish members</div>
+                        </div>
+                        <div class="workflow-arrow">→</div>
+                        <div class="workflow-step">
+                            <div class="step-icon">💰</div>
+                            <div class="step-label">Payments</div>
+                            <div class="step-desc">Pending approvals</div>
+                        </div>
+                        <div class="workflow-arrow">→</div>
+                        <div class="workflow-step">
+                            <div class="step-icon">📈</div>
+                            <div class="step-label">Progress</div>
+                            <div class="step-desc">Registration rate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section 3: Managing Delegates -->
+            <div class="section-card" id="delegates">
+                <h2>
+                    <span class="icon"><i class="fas fa-users"></i></span>
+                    Managing Delegates
+                </h2>
+                
+                <h3><i class="fas fa-user-plus me-2"></i> Registering a New Delegate</h3>
+                
+                <ol class="step-list">
+                    <li>
+                        <span class="step-num">1</span>
+                        <div class="step-content">
+                            <h5>Navigate to Registration</h5>
+                            <p>Click <strong>"Register Delegate"</strong> from the sidebar menu or dashboard</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">2</span>
+                        <div class="step-content">
+                            <h5>Fill Required Information</h5>
+                            <p>Enter: Full Name, Gender, Phone Number, ID/Birth Certificate Number, Local Church</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">3</span>
+                        <div class="step-content">
+                            <h5>Select Category</h5>
+                            <p>Choose the appropriate category: Youth, Young Adult, Leader, etc.</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">4</span>
+                        <div class="step-content">
+                            <h5>Submit Registration</h5>
+                            <p>Click <strong>"Register"</strong> - A unique ticket number will be generated</p>
+                        </div>
+                    </li>
+                </ol>
+                
+                <div class="info-box warning">
+                    <div class="info-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div>
+                        <strong>Important:</strong> You can only register delegates for <strong>your assigned parish</strong>. The system automatically links delegates to your parish.
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-edit me-2"></i> Editing Delegate Information</h3>
+                
+                <div class="accordion-item active">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-pencil-alt me-2"></i> How to Edit a Delegate</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <ol>
+                                <li>Go to <strong>My Delegates</strong> from the sidebar</li>
+                                <li>Find the delegate you want to edit</li>
+                                <li>Click the <strong>Edit</strong> button (pencil icon)</li>
+                                <li>Update the necessary information</li>
+                                <li>Click <strong>Save Changes</strong></li>
+                            </ol>
+                            <div class="info-box tip">
+                                <div class="info-icon"><i class="fas fa-info-circle"></i></div>
+                                <div>
+                                    <strong>Note:</strong> You cannot edit delegates who have already been checked in at the event.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-trash-alt me-2"></i> How to Delete a Delegate</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <ol>
+                                <li>Go to <strong>My Delegates</strong> from the sidebar</li>
+                                <li>Find the delegate you want to remove</li>
+                                <li>Click the <strong>Delete</strong> button (trash icon)</li>
+                                <li>Confirm the deletion when prompted</li>
+                            </ol>
+                            <div class="info-box danger">
+                                <div class="info-icon"><i class="fas fa-exclamation-circle"></i></div>
+                                <div>
+                                    <strong>Warning:</strong> Deletion is permanent! You cannot delete a delegate who has made a payment. Contact admin if needed.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section 4: Payment Process -->
+            <div class="section-card" id="payments">
+                <h2>
+                    <span class="icon"><i class="fas fa-credit-card"></i></span>
+                    Payment Process
+                </h2>
+                
+                <h3><i class="fas fa-plus-circle me-2"></i> Recording a Payment</h3>
+                
+                <ol class="step-list">
+                    <li>
+                        <span class="step-num">1</span>
+                        <div class="step-content">
+                            <h5>Go to Payments</h5>
+                            <p>Click <strong>"Record Payment"</strong> from the sidebar or dashboard</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">2</span>
+                        <div class="step-content">
+                            <h5>Select Delegates</h5>
+                            <p>Choose one or more unpaid delegates to include in this payment</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">3</span>
+                        <div class="step-content">
+                            <h5>Choose Payment Method</h5>
+                            <p>Select: M-Pesa, Bank Transfer, Cash, or other available methods</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">4</span>
+                        <div class="step-content">
+                            <h5>Enter Payment Details</h5>
+                            <p>Provide transaction reference (M-Pesa code, bank reference, etc.)</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">5</span>
+                        <div class="step-content">
+                            <h5>Upload Proof (if required)</h5>
+                            <p>Attach screenshot or photo of payment confirmation</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">6</span>
+                        <div class="step-content">
+                            <h5>Submit Payment</h5>
+                            <p>Click <strong>"Submit Payment"</strong> - Payment goes to pending status</p>
+                        </div>
+                    </li>
+                </ol>
+                
+                <div class="quick-ref">
+                    <h4><i class="fas fa-bolt me-2"></i> Quick Reference: Payment Methods</h4>
+                    <div class="quick-ref-grid">
+                        <div class="quick-ref-item">
+                            <div class="label">M-Pesa</div>
+                            <div class="value">Paybill / Till Number</div>
+                        </div>
+                        <div class="quick-ref-item">
+                            <div class="label">Bank Transfer</div>
+                            <div class="value">Account Number</div>
+                        </div>
+                        <div class="quick-ref-item">
+                            <div class="label">Cash</div>
+                            <div class="value">Receipt Number</div>
+                        </div>
+                        <div class="quick-ref-item">
+                            <div class="label">Fund Transfer</div>
+                            <div class="value">Internal Transfer</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-check-double me-2"></i> Confirming Payments</h3>
+                
+                <p>As a Chair, you have the responsibility to confirm payments from your parish before they go for final approval.</p>
+                
+                <ol class="step-list">
+                    <li>
+                        <span class="step-num">1</span>
+                        <div class="step-content">
+                            <h5>View Pending Payments</h5>
+                            <p>Go to <strong>Payments → Pending Confirmation</strong></p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">2</span>
+                        <div class="step-content">
+                            <h5>Review Payment Details</h5>
+                            <p>Check the amount, delegates covered, and payment proof</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">3</span>
+                        <div class="step-content">
+                            <h5>Verify Transaction</h5>
+                            <p>Confirm the payment was actually received (check M-Pesa, bank, etc.)</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">4</span>
+                        <div class="step-content">
+                            <h5>Confirm or Reject</h5>
+                            <p>Click <strong>"Confirm"</strong> if valid, or <strong>"Reject"</strong> with reason if invalid</p>
+                        </div>
+                    </li>
+                </ol>
+                
+                <div class="info-box success">
+                    <div class="info-icon"><i class="fas fa-check-circle"></i></div>
+                    <div>
+                        <strong>After Confirmation:</strong> The payment moves to Finance for final approval. Once approved, delegates are marked as <strong>PAID</strong>.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section 5: Payment Workflow -->
+            <div class="section-card" id="workflow">
+                <h2>
+                    <span class="icon"><i class="fas fa-project-diagram"></i></span>
+                    Payment Workflow
+                </h2>
+                
+                <p>Understanding the complete payment flow helps you track where each payment stands:</p>
+                
+                <div class="workflow-diagram">
+                    <div class="workflow-steps">
+                        <div class="workflow-step">
+                            <div class="step-icon">📝</div>
+                            <div class="step-label">Submitted</div>
+                            <div class="step-desc">Payment recorded</div>
+                        </div>
+                        <div class="workflow-arrow">→</div>
+                        <div class="workflow-step">
+                            <div class="step-icon">👤</div>
+                            <div class="step-label">Chair Review</div>
+                            <div class="step-desc">Your confirmation</div>
+                        </div>
+                        <div class="workflow-arrow">→</div>
+                        <div class="workflow-step">
+                            <div class="step-icon">💼</div>
+                            <div class="step-label">Finance Review</div>
+                            <div class="step-desc">Final approval</div>
+                        </div>
+                        <div class="workflow-arrow">→</div>
+                        <div class="workflow-step" style="border: 3px solid #388e3c;">
+                            <div class="step-icon">✅</div>
+                            <div class="step-label">Completed</div>
+                            <div class="step-desc">Delegates paid!</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-info-circle me-2"></i> Payment Status Meanings</h3>
+                
+                <div class="status-flow">
+                    <div class="status-row">
+                        <div class="status-badge pending">⏳ Pending</div>
+                        <div class="status-desc">Payment submitted, waiting for Chair to confirm</div>
+                    </div>
+                    <div class="text-center"><i class="fas fa-arrow-down status-arrow"></i></div>
+                    <div class="status-row">
+                        <div class="status-badge confirmed">✓ Chair Confirmed</div>
+                        <div class="status-desc">Chair verified, waiting for Finance approval</div>
+                    </div>
+                    <div class="text-center"><i class="fas fa-arrow-down status-arrow"></i></div>
+                    <div class="status-row">
+                        <div class="status-badge approved">✓ Finance Approved</div>
+                        <div class="status-desc">Payment verified and approved by Finance team</div>
+                    </div>
+                    <div class="text-center"><i class="fas fa-arrow-down status-arrow"></i></div>
+                    <div class="status-row">
+                        <div class="status-badge completed">✅ Completed</div>
+                        <div class="status-desc">Delegates marked as PAID - Ready for event!</div>
+                    </div>
+                </div>
+                
+                <div class="info-box warning">
+                    <div class="info-icon"><i class="fas fa-clock"></i></div>
+                    <div>
+                        <strong>Timeline:</strong> Please confirm payments within <strong>24-48 hours</strong> of submission to ensure timely processing before the event deadline.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section 6: Reports & Export -->
+            <div class="section-card" id="reports">
+                <h2>
+                    <span class="icon"><i class="fas fa-file-export"></i></span>
+                    Reports & Export
+                </h2>
+                
+                <h3><i class="fas fa-chart-pie me-2"></i> Viewing Parish Reports</h3>
+                
+                <div class="process-grid">
+                    <div class="process-card">
+                        <div class="card-header">
+                            <div class="card-icon teal"><i class="fas fa-users"></i></div>
+                            <div>
+                                <h4>Delegate Summary</h4>
+                                <p>Total registered, paid vs unpaid breakdown</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="process-card">
+                        <div class="card-header">
+                            <div class="card-icon green"><i class="fas fa-money-bill-wave"></i></div>
+                            <div>
+                                <h4>Payment Summary</h4>
+                                <p>Total collected, pending, and payment methods</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="process-card">
+                        <div class="card-header">
+                            <div class="card-icon blue"><i class="fas fa-church"></i></div>
+                            <div>
+                                <h4>By Local Church</h4>
+                                <p>Breakdown by each local church in your parish</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="process-card">
+                        <div class="card-header">
+                            <div class="card-icon purple"><i class="fas fa-venus-mars"></i></div>
+                            <div>
+                                <h4>Demographics</h4>
+                                <p>Gender, age bracket, and category distribution</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-download me-2"></i> Exporting Data</h3>
+                
+                <ol class="step-list">
+                    <li>
+                        <span class="step-num">1</span>
+                        <div class="step-content">
+                            <h5>Go to My Delegates</h5>
+                            <p>Navigate to the delegates list page</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">2</span>
+                        <div class="step-content">
+                            <h5>Apply Filters (Optional)</h5>
+                            <p>Filter by payment status, local church, or category</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">3</span>
+                        <div class="step-content">
+                            <h5>Click Export</h5>
+                            <p>Choose format: <strong>Excel (.xlsx)</strong> or <strong>PDF</strong></p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="step-num">4</span>
+                        <div class="step-content">
+                            <h5>Download File</h5>
+                            <p>The file downloads automatically to your device</p>
+                        </div>
+                    </li>
+                </ol>
+                
+                <div class="info-box tip">
+                    <div class="info-icon"><i class="fas fa-print"></i></div>
+                    <div>
+                        <strong>Tip:</strong> Export the list before the event for offline check-in reference. The PDF format is great for printing attendance sheets.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section 7: Troubleshooting -->
+            <div class="section-card" id="troubleshooting">
+                <h2>
+                    <span class="icon"><i class="fas fa-tools"></i></span>
+                    Troubleshooting
+                </h2>
+                
+                <h3><i class="fas fa-bug me-2"></i> Common Issues & Solutions</h3>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-sign-in-alt me-2 text-danger"></i> Can't Log In</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <ul>
+                                <li><strong>Wrong password:</strong> Click "Forgot Password" to reset</li>
+                                <li><strong>Account pending:</strong> Wait for admin approval (new registrations)</li>
+                                <li><strong>Account deactivated:</strong> Contact your administrator</li>
+                                <li><strong>OTP not received:</strong> Check spam folder, or wait 2 minutes and request again</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-user-plus me-2 text-warning"></i> Can't Register Delegate</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <ul>
+                                <li><strong>Duplicate ID:</strong> Delegate with this ID already exists - search for them first</li>
+                                <li><strong>Missing fields:</strong> Ensure all required fields (marked with *) are filled</li>
+                                <li><strong>Invalid phone:</strong> Use format 07XXXXXXXX (10 digits)</li>
+                                <li><strong>Wrong parish:</strong> You can only register for your assigned parish</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-credit-card me-2 text-info"></i> Payment Issues</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <ul>
+                                <li><strong>No unpaid delegates:</strong> All your delegates are already paid or have pending payments</li>
+                                <li><strong>Amount mismatch:</strong> The system calculates amount based on delegate fee × count</li>
+                                <li><strong>Payment stuck:</strong> Check with Finance team for approval status</li>
+                                <li><strong>Wrong delegates selected:</strong> Contact admin to reverse the payment</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-download me-2 text-success"></i> Export Problems</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <ul>
+                                <li><strong>Download blocked:</strong> Allow downloads from the site in your browser</li>
+                                <li><strong>File won't open:</strong> Ensure you have Excel or a PDF reader installed</li>
+                                <li><strong>Empty export:</strong> Check if filters are excluding all delegates</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box danger mt-4">
+                    <div class="info-icon"><i class="fas fa-headset"></i></div>
+                    <div>
+                        <strong>Still Having Issues?</strong> Contact the system administrator or send an email to support with:
+                        <ul class="mb-0 mt-2">
+                            <li>Your name and parish</li>
+                            <li>Description of the problem</li>
+                            <li>Screenshot of any error message</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section 8: FAQ -->
+            <div class="section-card" id="faq">
+                <h2>
+                    <span class="icon"><i class="fas fa-question-circle"></i></span>
+                    Frequently Asked Questions
+                </h2>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-money-bill me-2"></i> How much is the registration fee?</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            The registration fee is set by the administrator and may vary by event. Check the dashboard or contact admin for current pricing. The system automatically calculates total based on the number of delegates.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-users me-2"></i> Can I register delegates from another parish?</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            No. As a Parish Chair, you can only register delegates from your assigned parish. If someone from another parish needs registration, they should contact their parish chair or the admin.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-edit me-2"></i> Can I change a delegate's information after payment?</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            You can edit basic information (phone, local church) but not critical details. For major changes after payment, contact the administrator.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-undo me-2"></i> What if I made a wrong payment entry?</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            If the payment hasn't been confirmed yet, you may be able to cancel it. For confirmed/approved payments, contact the Finance team or administrator to reverse it.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-ticket-alt me-2"></i> How do delegates get their tickets?</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            Once payment is completed:
+                            <ol>
+                                <li>Each delegate gets a unique ticket number</li>
+                                <li>You can view/print tickets from the delegate list</li>
+                                <li>QR codes can be scanned at check-in</li>
+                                <li>Delegates can also access their tickets via the public portal</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-clock me-2"></i> Is there a registration deadline?</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            Yes, registration typically closes before the event. Check the dashboard for deadline announcements. Late registrations may incur additional fees or may not be accepted.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <h5><i class="fas fa-mobile-alt me-2"></i> Can I use the system on my phone?</h5>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            Yes! The system is fully responsive and works on smartphones and tablets. Simply open the website in your mobile browser. For best experience, use Chrome, Safari, or Firefox.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Final Call to Action -->
+            <div class="section-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-left: none;">
+                <div class="text-center">
+                    <h2 style="color: white;"><i class="fas fa-hands-helping me-2"></i> Need More Help?</h2>
+                    <p class="lead mb-4">Our support team is here to assist you!</p>
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
+                        </a>
+                        <a href="{{ url_for('delegates.register_delegate') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-user-plus me-2"></i> Register Delegate
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Accordion Toggle
+    function toggleAccordion(header) {
+        const item = header.parentElement;
+        const wasActive = item.classList.contains('active');
+        
+        // Close all accordions in this section
+        // item.parentElement.querySelectorAll('.accordion-item').forEach(acc => {
+        //     acc.classList.remove('active');
+        // });
+        
+        // Toggle clicked accordion
+        if (!wasActive) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    }
+    
+    // Smooth scroll for TOC links
+    document.querySelectorAll('.toc-list a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+                
+                // Update active state
+                document.querySelectorAll('.toc-list a').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            }
+        });
+    });
+    
+    // Highlight TOC on scroll
+    window.addEventListener('scroll', function() {
+        const sections = document.querySelectorAll('.section-card[id]');
+        let current = '';
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop - 150;
+            if (window.scrollY >= sectionTop) {
+                current = section.getAttribute('id');
+            }
+        });
+        
+        document.querySelectorAll('.toc-list a').forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === '#' + current) {
+                link.classList.add('active');
+            }
+        });
+    });
+    
+    // Print functionality
+    function printManual() {
+        window.print();
+    }
+</script>
+{% endblock %}

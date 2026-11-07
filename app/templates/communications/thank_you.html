@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Thank You Messages - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-heart text-danger me-2"></i>Post-Event Thank You Messages</h2>
+                    <p class="text-muted mb-0">Send appreciation messages to delegates after the event</p>
+                </div>
+                <a href="{{ url_for('communications.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Send Thank You Form -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #e91e63, #9c27b0); color: white;">
+                    <h5 class="mb-0"><i class="fas fa-envelope-open-text me-2"></i>Send Thank You Messages</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="thankYouForm">
+                        <!-- Event Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-calendar-alt me-1"></i>Select Event
+                            </label>
+                            <select name="event_id" class="form-select form-select-lg" id="eventSelect" required>
+                                <option value="">-- Choose an event --</option>
+                                {% for event in events %}
+                                <option value="{{ event.id }}" data-counts='{{ delegate_counts.get(event.id, {})|tojson }}'>
+                                    {{ event.name }}
+                                    {% if event.end_date %}
+                                    ({{ event.end_date.strftime('%b %d, %Y') }})
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Target Group -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Target Recipients</label>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-check target-card p-3 border rounded">
+                                        <input class="form-check-input" type="radio" name="target_group" 
+                                               value="checked_in" id="targetCheckedIn" checked>
+                                        <label class="form-check-label w-100" for="targetCheckedIn">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-user-check fa-2x text-success me-3"></i>
+                                                <div>
+                                                    <strong>Checked In</strong>
+                                                    <div class="small text-muted">
+                                                        <span id="checkedInCount">0</span> delegates
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check target-card p-3 border rounded">
+                                        <input class="form-check-input" type="radio" name="target_group" 
+                                               value="paid" id="targetPaid">
+                                        <label class="form-check-label w-100" for="targetPaid">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-credit-card fa-2x text-info me-3"></i>
+                                                <div>
+                                                    <strong>Paid Delegates</strong>
+                                                    <div class="small text-muted">
+                                                        <span id="paidCount">0</span> delegates
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check target-card p-3 border rounded">
+                                        <input class="form-check-input" type="radio" name="target_group" 
+                                               value="all" id="targetAll">
+                                        <label class="form-check-label w-100" for="targetAll">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-users fa-2x text-primary me-3"></i>
+                                                <div>
+                                                    <strong>All Delegates</strong>
+                                                    <div class="small text-muted">
+                                                        <span id="allCount">0</span> delegates
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Template Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Message Template</label>
+                            <div class="row g-3">
+                                {% for template in thank_you_templates %}
+                                <div class="col-md-6">
+                                    <div class="card template-card h-100" data-template-id="{{ template.id }}">
+                                        <div class="card-body">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" 
+                                                       name="template_type" value="{{ template.id }}"
+                                                       id="template_{{ template.id }}"
+                                                       data-sms="{{ template.sms }}"
+                                                       data-whatsapp="{{ template.whatsapp }}"
+                                                       {% if loop.first %}checked{% endif %}>
+                                                <label class="form-check-label fw-bold" for="template_{{ template.id }}">
+                                                    {% if template.id == 'general' %}
+                                                    <i class="fas fa-smile text-warning me-1"></i>
+                                                    {% elif template.id == 'with_certificate' %}
+                                                    <i class="fas fa-certificate text-success me-1"></i>
+                                                    {% elif template.id == 'feedback_request' %}
+                                                    <i class="fas fa-comment-dots text-info me-1"></i>
+                                                    {% else %}
+                                                    <i class="fas fa-calendar-plus text-primary me-1"></i>
+                                                    {% endif %}
+                                                    {{ template.title }}
+                                                </label>
+                                            </div>
+                                            <div class="mt-2 small text-muted">
+                                                {{ template.sms[:100] }}...
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Channels -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Delivery Channels</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check channel-check">
+                                    <input class="form-check-input" type="checkbox" name="channels" 
+                                           value="sms" id="channelSMS" checked>
+                                    <label class="form-check-label" for="channelSMS">
+                                        <i class="fas fa-sms text-primary me-1"></i>SMS
+                                    </label>
+                                </div>
+                                <div class="form-check channel-check">
+                                    <input class="form-check-input" type="checkbox" name="channels" 
+                                           value="whatsapp" id="channelWhatsApp">
+                                    <label class="form-check-label" for="channelWhatsApp">
+                                        <i class="fab fa-whatsapp text-success me-1"></i>WhatsApp
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Message (Optional) -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                Custom Message <span class="text-muted fw-normal">(optional)</span>
+                            </label>
+                            <textarea name="custom_message" class="form-control" rows="4" 
+                                      id="customMessage" placeholder="Leave empty to use the selected template...
+
+Available placeholders: {name}, {first_name}, {event_name}, {ticket_number}"></textarea>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Preview</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card bg-light h-100">
+                                        <div class="card-header py-2">
+                                            <small class="fw-bold"><i class="fas fa-sms me-1"></i>SMS Preview</small>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="smsPreview" style="white-space: pre-wrap; font-size: 14px;">
+                                                Select a template to see preview
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-light h-100">
+                                        <div class="card-header py-2" style="background: #25D366; color: white;">
+                                            <small class="fw-bold"><i class="fab fa-whatsapp me-1"></i>WhatsApp Preview</small>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="whatsappPreview" style="white-space: pre-wrap; font-size: 14px;">
+                                                Select a template to see preview
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-lg" 
+                                    style="background: linear-gradient(135deg, #e91e63, #9c27b0); color: white;">
+                                <i class="fas fa-heart me-2"></i>Send Thank You Messages
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Tips -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb text-warning me-2"></i>Best Practices</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Timing matters</strong> - Send within 24-48 hours after the event
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Personalize</strong> - Use delegate names for a personal touch
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Keep it short</strong> - Express gratitude concisely
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Include next steps</strong> - Mention certificates or future events
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Request feedback</strong> - Great opportunity to improve
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Event Summary</h6>
+                </div>
+                <div class="card-body" id="eventSummary">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-alt fa-3x mb-3"></i>
+                        <p>Select an event to see summary</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.target-card {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.target-card:hover {
+    border-color: #e91e63 !important;
+}
+.target-card:has(input:checked) {
+    border-color: #e91e63 !important;
+    background: rgba(233, 30, 99, 0.1);
+}
+.template-card {
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+.template-card:hover {
+    border-color: #9c27b0;
+}
+.template-card:has(input:checked) {
+    border-color: #9c27b0;
+    background: rgba(156, 39, 176, 0.1);
+}
+.channel-check {
+    padding: 10px 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+.channel-check:has(input:checked) {
+    border-color: #198754;
+    background: rgba(25, 135, 84, 0.1);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const eventSelect = document.getElementById('eventSelect');
+    const customMessage = document.getElementById('customMessage');
+    const smsPreview = document.getElementById('smsPreview');
+    const whatsappPreview = document.getElementById('whatsappPreview');
+    const eventSummary = document.getElementById('eventSummary');
+    
+    // Update counts when event changes
+    eventSelect.addEventListener('change', function() {
+        const option = this.options[this.selectedIndex];
+        const counts = option.dataset.counts ? JSON.parse(option.dataset.counts) : {};
+        
+        document.getElementById('allCount').textContent = counts.all || 0;
+        document.getElementById('checkedInCount').textContent = counts.checked_in || 0;
+        document.getElementById('paidCount').textContent = counts.paid || 0;
+        
+        // Update event summary
+        if (this.value) {
+            eventSummary.innerHTML = `
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="h4 text-primary mb-0">${counts.all || 0}</div>
+                        <small class="text-muted">Total</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 text-success mb-0">${counts.checked_in || 0}</div>
+                        <small class="text-muted">Attended</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 text-info mb-0">${counts.paid || 0}</div>
+                        <small class="text-muted">Paid</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <strong>${Math.round((counts.checked_in / counts.all) * 100) || 0}%</strong>
+                    <small class="text-muted">attendance rate</small>
+                </div>
+            `;
+        }
+    });
+    
+    // Update preview when template changes
+    function updatePreview() {
+        const selectedRadio = document.querySelector('input[name="template_type"]:checked');
+        const custom = customMessage.value.trim();
+        
+        let smsText = custom || (selectedRadio ? selectedRadio.dataset.sms : '');
+        let waText = custom || (selectedRadio ? selectedRadio.dataset.whatsapp : '');
+        
+        // Replace placeholders
+        const replacements = {
+            '{name}': 'John Doe',
+            '{first_name}': 'John',
+            '{event_name}': 'KAYO Annual Conference 2024',
+            '{ticket_number}': 'KAYO-2024-001'
+        };
+        
+        for (const [key, value] of Object.entries(replacements)) {
+            smsText = smsText.replace(new RegExp(key, 'g'), value);
+            waText = waText.replace(new RegExp(key, 'g'), value);
+        }
+        
+        smsPreview.textContent = smsText;
+        
+        // Format WhatsApp preview
+        waText = waText.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+        waText = waText.replace(/_([^_]+)_/g, '<em>$1</em>');
+        whatsappPreview.innerHTML = waText;
+    }
+    
+    document.querySelectorAll('input[name="template_type"]').forEach(radio => {
+        radio.addEventListener('change', updatePreview);
+    });
+    
+    customMessage.addEventListener('input', updatePreview);
+    
+    // Click on cards to select
+    document.querySelectorAll('.template-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.type !== 'radio') {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+    
+    document.querySelectorAll('.target-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.type !== 'radio') {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+            }
+        });
+    });
+    
+    // Initial preview
+    updatePreview();
+});
+</script>
+{% endblock %}

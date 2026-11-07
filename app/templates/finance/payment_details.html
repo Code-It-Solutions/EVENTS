@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Details - Finance{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a href="{{ url_for('finance.payment_approvals') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Approvals
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Payment Info Card -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        Payment Details
+                    </h5>
+                    <span class="badge bg-{{ 'warning' if payment.finance_status == 'pending_approval' else ('success' if payment.finance_status == 'approved' else 'danger') }} fs-6">
+                        {{ payment.finance_status|replace('_', ' ')|title }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted" width="40%">Reference:</th>
+                                    <td><strong>{{ payment.mpesa_receipt_number or ('PAY-' ~ payment.id) }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Amount:</th>
+                                    <td><h4 class="text-success mb-0">KES {{ "{:,.2f}".format(payment.amount) }}</h4></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Payment Method:</th>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if 'M-Pesa' in (payment.payment_mode or '') else 'secondary' }}">
+                                            {{ payment.payment_mode or 'CASH' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Payment Status:</th>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if payment.status == 'completed' else 'warning' }}">
+                                            {{ payment.status|title }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted" width="40%">Submitted Date:</th>
+                                    <td>{{ payment.created_at.strftime('%d %b %Y at %H:%M') }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Confirmed By Chair:</th>
+                                    <td>
+                                        {% if payment.confirmed_by_chair_at %}
+                                        {{ payment.confirmed_by_chair_at.strftime('%d %b %Y at %H:%M') }}
+                                        {% else %}
+                                        N/A
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if payment.mpesa_code %}
+                                <tr>
+                                    <th class="text-muted">M-Pesa Code:</th>
+                                    <td><code>{{ payment.mpesa_code }}</code></td>
+                                </tr>
+                                {% endif %}
+                                {% if payment.notes %}
+                                <tr>
+                                    <th class="text-muted">Notes:</th>
+                                    <td>{{ payment.notes }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delegates List -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Associated Delegates ({{ payment.delegates.count() }})
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Parish</th>
+                                    <th>Category</th>
+                                    <th>Age Bracket</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for delegate in payment.delegates %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>
+                                        <strong>{{ delegate.name }}</strong>
+                                        {% if delegate.phone_number %}
+                                        <br><small class="text-muted">{{ delegate.phone_number }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ delegate.parish or 'N/A' }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ delegate.category or 'Regular' }}</span>
+                                    </td>
+                                    <td>{{ delegate.age_bracket or 'N/A' }}</td>
+                                    <td>
+                                        {% if delegate.is_paid %}
+                                        <span class="badge bg-success">Paid</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Submitter Info -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user-tie me-2"></i>
+                        Submitted By
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    {% if chair %}
+                    <div class="mb-3">
+                        <i class="fas fa-user-circle fa-4x text-secondary"></i>
+                    </div>
+                    <h5>{{ chair.name }}</h5>
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-church me-1"></i>
+                        {{ chair.parish or 'Unknown Parish' }}
+                    </p>
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-phone me-1"></i>
+                        {{ chair.phone or 'No phone' }}
+                    </p>
+                    <span class="badge bg-primary">{{ chair.role|title }}</span>
+                    {% else %}
+                    <p class="text-muted">Submitter information not available</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Actions Card -->
+            {% if payment.finance_status == 'pending_approval' %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>
+                        Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('finance.approve_payment', payment_id=payment.id) }}" method="POST" class="mb-3">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-2">
+                            <textarea name="notes" class="form-control form-control-sm" rows="2" 
+                                      placeholder="Add approval notes (optional)"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-check me-1"></i> Approve Payment
+                        </button>
+                    </form>
+                    
+                    <hr>
+                    
+                    <form action="{{ url_for('finance.reject_payment', payment_id=payment.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-2">
+                            <textarea name="reason" class="form-control form-control-sm" rows="2" required
+                                      placeholder="Reason for rejection (required)"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="fas fa-times me-1"></i> Reject Payment
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Status History -->
+            {% if payment.finance_status != 'pending_approval' %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Approval History
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if payment.finance_status == 'approved' %}
+                    <div class="alert alert-success mb-0">
+                        <strong><i class="fas fa-check-circle me-1"></i> Approved</strong>
+                        {% if payment.approved_by_finance_at %}
+                        <br><small>{{ payment.approved_by_finance_at.strftime('%d %b %Y at %H:%M') }}</small>
+                        {% endif %}
+                        {% if payment.finance_notes %}
+                        <br><small>Notes: {{ payment.finance_notes }}</small>
+                        {% endif %}
+                    </div>
+                    {% elif payment.finance_status == 'rejected' %}
+                    <div class="alert alert-danger mb-0">
+                        <strong><i class="fas fa-times-circle me-1"></i> Rejected</strong>
+                        {% if payment.rejection_reason %}
+                        <br><small>Reason: {{ payment.rejection_reason }}</small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

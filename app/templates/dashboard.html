@@ -1,0 +1,1197 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - KAYO | ACK Diocese of Nambale{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Role-Based Theme Colors */
+    :root {
+        --super-admin-gold: #FFD700;
+        --super-admin-bg: #1a1a2e;
+        --super-admin-glow: rgba(255, 215, 0, 0.4);
+        
+        --admin-green: #1a5f2a;
+        --admin-gold: #D4AF37;
+        
+        --youth-minister-sage: #4ADE80;
+        --youth-minister-bg: #ECFDF5;
+        
+        --chair-yellow: #FBBF24;
+        --chair-green: #22C55E;
+        
+        --finance-green: #059669;
+        --finance-gold: #EAB308;
+        
+        --reg-officer-green: #1a5f2a;
+        --reg-officer-purple: #7C3AED;
+        
+        --data-clerk-green: #1a5f2a;
+        --data-clerk-teal: #0D9488;
+        
+        --viewer-gray: #6B7280;
+    }
+    
+    /* DYO Stats Colors */
+    .text-purple { color: #7C3AED !important; }
+    .stat-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    
+    /* Welcome Card Base */
+    .welcome-card {
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .welcome-card .role-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .welcome-card h2 {
+        margin: 12px 0 8px;
+        font-weight: 700;
+    }
+    
+    .welcome-card .access-level {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    /* Super Admin - Premium Gold Theme */
+    .welcome-card.super-admin {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+        color: white;
+        border: 2px solid var(--super-admin-gold);
+        box-shadow: 0 0 30px var(--super-admin-glow), inset 0 0 60px rgba(255, 215, 0, 0.05);
+        animation: superAdminGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes superAdminGlow {
+        0%, 100% { box-shadow: 0 0 30px var(--super-admin-glow), inset 0 0 60px rgba(255, 215, 0, 0.05); }
+        50% { box-shadow: 0 0 50px var(--super-admin-glow), inset 0 0 80px rgba(255, 215, 0, 0.1); }
+    }
+    
+    .welcome-card.super-admin .role-badge {
+        background: linear-gradient(135deg, var(--super-admin-gold), #FFA500);
+        color: #1a1a2e;
+    }
+    
+    .welcome-card.super-admin h2 {
+        background: linear-gradient(90deg, var(--super-admin-gold), #FFA500);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .welcome-card.super-admin::before {
+        content: '⚡';
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 3rem;
+        opacity: 0.3;
+    }
+    
+    /* Admin - Green with Gold */
+    .welcome-card.admin {
+        background: linear-gradient(135deg, var(--admin-green) 0%, #0d4a1c 100%);
+        color: white;
+        border-left: 4px solid var(--admin-gold);
+    }
+    
+    .welcome-card.admin .role-badge {
+        background: var(--admin-gold);
+        color: #1a1a2e;
+    }
+    
+    .welcome-card.admin::before {
+        content: '🛡️';
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 2.5rem;
+        opacity: 0.3;
+    }
+    
+    /* Chair - Yellow to Green */
+    .welcome-card.chair {
+        background: linear-gradient(135deg, #FEF3C7 0%, #D9F99D 100%);
+        color: #15803D;
+        border-left: 4px solid var(--chair-yellow);
+    }
+    
+    .welcome-card.chair .role-badge {
+        background: linear-gradient(135deg, var(--chair-yellow), var(--chair-green));
+        color: white;
+    }
+    
+    .welcome-card.chair::before {
+        content: '☀️';
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 2.5rem;
+        opacity: 0.4;
+    }
+    
+    /* Finance - Green with Gold Glow */
+    .welcome-card.finance {
+        background: linear-gradient(135deg, #065F46 0%, #047857 100%);
+        color: white;
+        border-left: 4px solid var(--finance-gold);
+        animation: financeGlow 2s ease-in-out infinite;
+    }
+    
+    @keyframes financeGlow {
+        0%, 100% { box-shadow: 0 4px 20px rgba(234, 179, 8, 0.2); }
+        50% { box-shadow: 0 4px 30px rgba(234, 179, 8, 0.4); }
+    }
+    
+    .welcome-card.finance .role-badge {
+        background: var(--finance-gold);
+        color: #1a1a2e;
+    }
+    
+    .welcome-card.finance::before {
+        content: '💰';
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 2.5rem;
+        opacity: 0.4;
+    }
+    
+    /* Registration Officer - Green with Purple */
+    .welcome-card.registration-officer {
+        background: linear-gradient(135deg, var(--reg-officer-green) 0%, #166534 100%);
+        color: white;
+        border-left: 4px solid var(--reg-officer-purple);
+    }
+    
+    .welcome-card.registration-officer .role-badge {
+        background: var(--reg-officer-purple);
+        color: white;
+    }
+    
+    .welcome-card.registration-officer::before {
+        content: '📋';
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 2.5rem;
+        opacity: 0.3;
+    }
+    
+    /* Data Clerk - Green with Teal */
+    .welcome-card.data-clerk {
+        background: linear-gradient(135deg, #134E4A 0%, #0F766E 100%);
+        color: white;
+        border-left: 4px solid var(--data-clerk-teal);
+    }
+    
+    .welcome-card.data-clerk .role-badge {
+        background: var(--data-clerk-teal);
+        color: white;
+    }
+    
+    .welcome-card.data-clerk::before {
+        content: '📊';
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 2.5rem;
+        opacity: 0.3;
+    }
+    
+    /* Viewer - Neutral Gray */
+    .welcome-card.viewer {
+        background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+        color: #374151;
+        border-left: 4px solid var(--viewer-gray);
+    }
+    
+    .welcome-card.viewer .role-badge {
+        background: var(--viewer-gray);
+        color: white;
+    }
+    
+    .welcome-card.viewer::before {
+        content: '👁️';
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 2.5rem;
+        opacity: 0.3;
+    }
+    
+    /* DYO - Diocesan Youth Officer - Royal Purple & Gold Executive Theme */
+    .welcome-card.dyo {
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+        color: white;
+        border: 3px solid #a855f7;
+        box-shadow: 0 0 40px rgba(168, 85, 247, 0.5), inset 0 0 80px rgba(168, 85, 247, 0.1);
+        animation: dyoGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes dyoGlow {
+        0%, 100% { box-shadow: 0 0 40px rgba(168, 85, 247, 0.5), inset 0 0 80px rgba(168, 85, 247, 0.1); }
+        50% { box-shadow: 0 0 60px rgba(168, 85, 247, 0.7), inset 0 0 100px rgba(168, 85, 247, 0.2); }
+    }
+    
+    .welcome-card.dyo h2 {
+        background: linear-gradient(90deg, #c084fc, #f472b6, #facc15);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 1.8rem;
+    }
+    
+    .welcome-card.dyo .role-badge {
+        background: linear-gradient(135deg, #a855f7, #ec4899);
+        color: white;
+        font-weight: 700;
+        padding: 6px 16px;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+    }
+    
+    .welcome-card.dyo .access-level {
+        color: #e9d5ff;
+        font-weight: 500;
+    }
+    
+    .welcome-card.dyo::before {
+        content: '👑';
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 3.5rem;
+        opacity: 0.5;
+        animation: crownFloat 2s ease-in-out infinite;
+    }
+    
+    @keyframes crownFloat {
+        0%, 100% { transform: translateY(0) rotate(-5deg); }
+        50% { transform: translateY(-5px) rotate(5deg); }
+    }
+    
+    .welcome-card.dyo::after {
+        content: '✨';
+        position: absolute;
+        right: 70px;
+        top: 30px;
+        font-size: 1.5rem;
+        opacity: 0.6;
+        animation: sparkle 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes sparkle {
+        0%, 100% { opacity: 0.3; transform: scale(0.8); }
+        50% { opacity: 0.8; transform: scale(1.2); }
+    }
+
+    /* Default User */
+    .welcome-card.user {
+        background: linear-gradient(135deg, var(--admin-green) 0%, #2d8f42 100%);
+        color: white;
+        border-left: 4px solid #22C55E;
+    }
+    
+    .welcome-card.user .role-badge {
+        background: #22C55E;
+        color: white;
+    }
+    
+    .welcome-card.user::before {
+        content: '👤';
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 2.5rem;
+        opacity: 0.3;
+    }
+    
+    /* M-Pesa Number Hover/Animation Styles */
+    .mpesa-number {
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    
+    .mpesa-number:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+        background-color: #ffc107 !important;
+    }
+    
+    .mpesa-number-wrapper {
+        cursor: pointer;
+    }
+    
+    .copy-feedback {
+        animation: fadeInOut 1.5s ease;
+        z-index: 100;
+    }
+    
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateX(-50%) translateY(5px); }
+        20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        100% { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+    }
+    
+    #mpesaBanner {
+        border-left: 5px solid #198754;
+        background: linear-gradient(135deg, #d1e7dd 0%, #f8f9fa 100%);
+    }
+    
+    #mpesaBanner:hover {
+        box-shadow: 0 4px 15px rgba(25, 135, 84, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Role-Based Welcome Card -->
+{% set role_class = current_user.role | replace('_', '-') %}
+{% if current_user.role == 'viewer' %}
+    {% set role_class = 'dyo' %}
+{% endif %}
+<div class="welcome-card {{ role_class }}">
+    {% if current_user.role == 'viewer' %}
+    <span class="role-badge">👑 Diocesan Youth Officer</span>
+    {% endif %}
+    <h2>Welcome back, {{ current_user.name }}!</h2>
+    <p class="access-level mb-0">
+        {% if current_user.role == 'chair' %}
+            {% if current_user.parish %}Parish: {{ current_user.parish }}{% endif %}
+            {% if current_user.local_church %} • {{ current_user.local_church }}{% endif %}
+        {% elif current_user.role == 'viewer' %}
+            Overseer • KAYO Diocese of Nambale
+        {% else %}
+            KAYO - ACK Diocese of Nambale
+        {% endif %}
+    </p>
+</div>
+
+<!-- Finance M-Pesa Payment Banner for Chairs -->
+{% if current_user.role in ['chair', 'registration_officer', 'data_clerk'] %}
+<div class="alert alert-success alert-dismissible fade show mb-4 shadow-sm" role="alert" id="mpesaBanner">
+    <div class="d-flex align-items-center">
+        <div class="me-3">
+            <i class="bi bi-phone-fill text-success" style="font-size: 2rem;"></i>
+        </div>
+        <div class="flex-grow-1">
+            <h6 class="alert-heading mb-1">
+                <i class="bi bi-cash-coin me-1"></i>Finance M-Pesa Payment Number
+            </h6>
+            <p class="mb-0">
+                Send delegate fees to: 
+                <span class="mpesa-number-wrapper d-inline-block position-relative" 
+                      data-bs-toggle="tooltip" 
+                      data-bs-placement="top" 
+                      title="Click to copy M-Pesa number">
+                    <strong class="mpesa-number text-dark bg-warning px-2 py-1 rounded cursor-pointer" 
+                            onclick="copyMpesaNumber(this)" 
+                            style="font-size: 1.1rem; letter-spacing: 1px; cursor: pointer;">
+                        0742080328
+                    </strong>
+                    <span class="copy-feedback position-absolute bg-dark text-white px-2 py-1 rounded small" 
+                          style="display: none; top: -30px; left: 50%; transform: translateX(-50%); white-space: nowrap;">
+                        Copied!
+                    </span>
+                </span>
+                <small class="text-muted ms-2">(Tap to copy)</small>
+            </p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+{% endif %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h4>
+    </div>
+    {% if current_user.role != 'viewer' %}
+    <a href="{{ url_for('delegates.register_delegate') }}" class="btn btn-primary">
+        <i class="bi bi-person-plus me-2"></i>Register Delegate
+    </a>
+    {% endif %}
+</div>
+
+<!-- Event Countdown -->
+{% if active_event %}
+<div class="card border-0 shadow-sm mb-4 overflow-hidden" id="countdownCard">
+    <div class="card-body p-0">
+        <div class="row g-0">
+            <div class="col-md-8 p-4 bg-gradient" style="background: linear-gradient(135deg, var(--kayo-green) 0%, var(--kayo-green-dark) 100%);">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="countdown-icon bg-white bg-opacity-25 rounded-circle p-3">
+                        <i class="bi bi-calendar-event text-white" style="font-size: 2rem;"></i>
+                    </div>
+                    <div class="text-white">
+                        <h5 class="mb-1 fw-bold">{{ active_event.name }}</h5>
+                        <p class="mb-0 opacity-75">
+                            <i class="bi bi-geo-alt me-1"></i>{{ active_event.venue or 'Venue TBA' }}
+                            <span class="mx-2">•</span>
+                            <i class="bi bi-calendar3 me-1"></i>{{ active_event.start_date.strftime('%d %B %Y') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 p-3 d-flex align-items-center justify-content-center" style="background: rgba(26, 95, 42, 0.1);">
+                <div class="countdown-timer text-center" id="eventCountdown" data-target="{{ active_event.start_date.isoformat() }}">
+                    <div class="d-flex gap-3 justify-content-center">
+                        <div class="countdown-item">
+                            <div class="countdown-value fw-bold text-success" id="countdownDays">--</div>
+                            <div class="countdown-label small text-muted">Days</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value fw-bold text-success" id="countdownHours">--</div>
+                            <div class="countdown-label small text-muted">Hours</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value fw-bold text-success" id="countdownMins">--</div>
+                            <div class="countdown-label small text-muted">Mins</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value fw-bold text-success" id="countdownSecs">--</div>
+                            <div class="countdown-label small text-muted">Secs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .countdown-value {
+        font-size: 1.75rem;
+        line-height: 1;
+        font-family: 'Poppins', monospace;
+    }
+    .countdown-item {
+        min-width: 50px;
+    }
+    @media (max-width: 768px) {
+        .countdown-value { font-size: 1.25rem; }
+        .countdown-item { min-width: 40px; }
+    }
+</style>
+
+<script>
+(function() {
+    const countdownEl = document.getElementById('eventCountdown');
+    if (!countdownEl) return;
+    
+    const targetDate = new Date(countdownEl.dataset.target + 'T00:00:00');
+    const daysEl = document.getElementById('countdownDays');
+    const hoursEl = document.getElementById('countdownHours');
+    const minsEl = document.getElementById('countdownMins');
+    const secsEl = document.getElementById('countdownSecs');
+    
+    // Exit if any element is missing
+    if (!daysEl || !hoursEl || !minsEl || !secsEl) return;
+    
+    function updateCountdown() {
+        const now = new Date();
+        const diff = targetDate - now;
+        
+        if (diff <= 0) {
+            daysEl.textContent = '🎉';
+            hoursEl.textContent = 'Event';
+            minsEl.textContent = 'Is';
+            secsEl.textContent = 'Here!';
+            return;
+        }
+        
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        daysEl.textContent = days.toString().padStart(2, '0');
+        hoursEl.textContent = hours.toString().padStart(2, '0');
+        minsEl.textContent = mins.toString().padStart(2, '0');
+        secsEl.textContent = secs.toString().padStart(2, '0');
+    }
+    
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+})();
+</script>
+{% endif %}
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-{% if is_dyo %}3{% else %}4{% endif %} mb-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value">{{ total_delegates }}</div>
+                    <div class="stat-label">Total Delegates</div>
+                </div>
+                <div class="stat-icon text-primary">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-{% if is_dyo %}3{% else %}4{% endif %} mb-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value text-success">{{ paid_delegates }}</div>
+                    <div class="stat-label">Paid Delegates</div>
+                </div>
+                <div class="stat-icon text-success">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-{% if is_dyo %}3{% else %}4{% endif %} mb-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value text-danger">{{ unpaid_delegates }}</div>
+                    <div class="stat-label">Unpaid Delegates</div>
+                </div>
+                <div class="stat-icon text-danger">
+                    <i class="bi bi-exclamation-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if is_dyo %}
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value text-info">{{ checked_in }}</div>
+                    <div class="stat-label">Checked In</div>
+                </div>
+                <div class="stat-icon text-info">
+                    <i class="bi bi-qr-code-scan"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if is_dyo %}
+<!-- DYO Additional Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card stat-card bg-gradient" style="background: linear-gradient(135deg, #065F46 0%, #047857 100%); color: white;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value">KSh {{ "{:,.0f}".format(total_collected or 0) }}</div>
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8);">Total Collected</div>
+                </div>
+                <div class="stat-icon" style="color: rgba(255,255,255,0.5);">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value text-warning">{{ total_users }}</div>
+                    <div class="stat-label">Registered Chairs</div>
+                </div>
+                <div class="stat-icon text-warning">
+                    <i class="bi bi-person-workspace"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    {% set payment_rate = (paid_delegates / total_delegates * 100) if total_delegates > 0 else 0 %}
+                    <div class="stat-value text-purple">{{ "%.1f"|format(payment_rate) }}%</div>
+                    <div class="stat-label">Payment Rate</div>
+                </div>
+                <div class="stat-icon text-purple">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Archdeaconry Leaderboard (Gamified) -->
+{% if archdeaconry_stats %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-trophy me-2 text-warning"></i>Archdeaconry Leaderboard
+        </h5>
+        <span class="badge bg-success">{{ archdeaconry_stats|length }} Competing</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="leaderboard">
+            {% for stat in archdeaconry_stats|sort(attribute='total', reverse=true)|list|batch(5)|first %}
+            {% set pct = (stat.paid / stat.total * 100) if stat.total > 0 else 0 %}
+            {% set rank = loop.index %}
+            <div class="leaderboard-item d-flex align-items-center p-3 {% if not loop.last %}border-bottom{% endif %}">
+                <!-- Rank Badge -->
+                <div class="rank-badge me-3 text-center" style="width: 45px;">
+                    {% if rank == 1 %}
+                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2" style="font-size: 1rem;">🥇</span>
+                    {% elif rank == 2 %}
+                    <span class="badge bg-secondary rounded-pill px-3 py-2" style="font-size: 1rem;">🥈</span>
+                    {% elif rank == 3 %}
+                    <span class="badge bg-danger rounded-pill px-3 py-2" style="font-size: 0.9rem; opacity: 0.8;">🥉</span>
+                    {% else %}
+                    <span class="badge bg-light text-dark rounded-pill px-3 py-2">{{ rank }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Archdeaconry Info -->
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="{% if rank == 1 %}text-warning{% endif %}">{{ stat.archdeaconry or 'Unknown' }}</strong>
+                        <span class="badge bg-{{ 'success' if pct >= 80 else 'primary' if pct >= 50 else 'warning' }}">
+                            {{ stat.total }} delegates
+                        </span>
+                    </div>
+                    <!-- Progress Bar -->
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="progress flex-grow-1" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ pct }}%;" 
+                                 aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <small class="text-muted" style="min-width: 65px;">
+                            <span class="text-success fw-bold">{{ stat.paid }}</span>/{{ stat.total }} paid
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card-footer bg-transparent text-center">
+        <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>Ranked by total registrations. Green bar shows payment progress.
+        </small>
+    </div>
+</div>
+
+<style>
+    .leaderboard-item {
+        transition: background-color 0.2s;
+    }
+    .leaderboard-item:hover {
+        background-color: rgba(26, 95, 42, 0.05);
+    }
+    .leaderboard-item:first-child {
+        background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 100%);
+    }
+</style>
+{% endif %}
+
+<!-- DYO Charts Row -->
+<div class="row mb-4">
+    <!-- Archdeaconry Stats -->
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-building me-2"></i>By Archdeaconry</h5>
+            </div>
+            <div class="card-body">
+                {% if archdeaconry_stats %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Archdeaconry</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">Paid</th>
+                                <th class="text-center">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in archdeaconry_stats %}
+                            <tr>
+                                <td>{{ stat.archdeaconry or 'Unknown' }}</td>
+                                <td class="text-center">{{ stat.total }}</td>
+                                <td class="text-center text-success">{{ stat.paid }}</td>
+                                <td class="text-center">
+                                    {% set pct = (stat.paid / stat.total * 100) if stat.total > 0 else 0 %}
+                                    <span class="badge bg-{{ 'success' if pct >= 80 else 'warning' if pct >= 50 else 'danger' }}">
+                                        {{ "%.0f"|format(pct) }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">No data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gender Stats -->
+    <div class="col-lg-2 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-gender-ambiguous me-2"></i>Gender</h5>
+            </div>
+            <div class="card-body">
+                {% if gender_stats %}
+                <div class="text-center">
+                    {% for stat in gender_stats %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>{{ stat.gender | capitalize if stat.gender else 'Unknown' }}</span>
+                            <strong>{{ stat.count }}</strong>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            {% set pct = (stat.count / total_delegates * 100) if total_delegates > 0 else 0 %}
+                            <div class="progress-bar bg-{{ 'primary' if stat.gender == 'male' else 'danger' if stat.gender == 'female' else 'secondary' }}" 
+                                 style="width: {{ pct }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">No data</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Age Bracket Stats -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart-steps me-2"></i>Age</h5>
+            </div>
+            <div class="card-body">
+                {% if age_bracket_stats %}
+                <div class="text-center">
+                    {% for stat in age_bracket_stats %}
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small">{{ stat.age_bracket }}</span>
+                            <strong>{{ stat.count }}</strong>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            {% set pct = (stat.count / total_delegates * 100) if total_delegates > 0 else 0 %}
+                            <div class="progress-bar bg-info" style="width: {{ pct }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">No data</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Category Stats -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-tags me-2"></i>Category</h5>
+            </div>
+            <div class="card-body">
+                {% if category_stats %}
+                <ul class="list-group list-group-flush">
+                    {% for stat in category_stats %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span class="badge bg-{{ 'success' if stat.category == 'vip' else 'info' if stat.category == 'speaker' else 'warning' if stat.category == 'leader' else 'secondary' }}">
+                            {{ stat.category | upper }}
+                        </span>
+                        <strong>{{ stat.count }}</strong>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted text-center py-3">No data</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Parishes -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Top Parishes by Registration</h5>
+            </div>
+            <div class="card-body">
+                {% if parish_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Parish</th>
+                                <th>Archdeaconry</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">Paid</th>
+                                <th class="text-center">Unpaid</th>
+                                <th class="text-center">Payment Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in parish_stats[:10] %}
+                            <tr>
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td>{{ stat.parish }}</td>
+                                <td><small class="text-muted">{{ stat.archdeaconry or '-' }}</small></td>
+                                <td class="text-center"><strong>{{ stat.total }}</strong></td>
+                                <td class="text-center text-success">{{ stat.paid }}</td>
+                                <td class="text-center text-danger">{{ stat.total - stat.paid }}</td>
+                                <td class="text-center">
+                                    {% set pct = (stat.paid / stat.total * 100) if stat.total > 0 else 0 %}
+                                    <div class="progress" style="height: 20px; min-width: 80px;">
+                                        <div class="progress-bar bg-{{ 'success' if pct >= 80 else 'warning' if pct >= 50 else 'danger' }}" 
+                                             style="width: {{ pct }}%">
+                                            {{ "%.0f"|format(pct) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">No parish data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if unpaid_delegates > 0 and current_user.role != 'viewer' %}
+<div class="alert alert-warning d-flex align-items-center" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-3" style="font-size: 1.5rem;"></i>
+    <div>
+        <strong>Payment Required!</strong> You have {{ unpaid_delegates }} unpaid delegate(s). 
+        Total: <strong>KSh {{ unpaid_delegates * 1000 | int }}</strong>
+        <a href="{{ url_for('payments.payment_page') }}" class="btn btn-warning btn-sm ms-3">Pay Now</a>
+    </div>
+</div>
+{% endif %}
+
+{% if pending_approval is defined and pending_approval > 0 and current_user.role != 'viewer' %}
+<div class="alert alert-info d-flex align-items-center" role="alert">
+    <i class="bi bi-hourglass-split me-3" style="font-size: 1.5rem;"></i>
+    <div>
+        <strong>Pending Approval:</strong> {{ pending_approval }} delegate(s) awaiting Finance approval.
+        <a href="{{ url_for('payments.my_submissions') }}" class="btn btn-info btn-sm ms-3">View Status</a>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Recent Delegates -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Recent Delegates</h5>
+                <a href="{{ url_for('delegates.list_delegates') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if delegates %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parish</th>
+                                <th>Gender</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for delegate in delegates[:5] %}
+                            <tr>
+                                <td>{{ delegate.name }}</td>
+                                <td>{{ delegate.parish }}</td>
+                                <td>{{ delegate.gender | capitalize }}</td>
+                                <td>
+                                    {% if delegate.is_paid %}
+                                    <span class="badge badge-paid">Paid</span>
+                                    {% else %}
+                                    <span class="badge badge-unpaid">Unpaid</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('delegates.view_delegate', id=delegate.id) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-person-plus text-muted" style="font-size: 3rem;"></i>
+                    <p class="mt-3 text-muted">No delegates registered yet.</p>
+                    {% if current_user.role != 'viewer' %}
+                    <a href="{{ url_for('delegates.register_delegate') }}" class="btn btn-primary">Register First Delegate</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Payments -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-activity me-2"></i>Activity Feed</h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="refreshActivityFeed()" title="Refresh">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+            <div class="card-body p-0" id="activityFeedContainer">
+                <!-- Activity feed loads here via JavaScript -->
+                <div class="text-center py-4">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <p class="small text-muted mt-2 mb-0">Loading activities...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .activity-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        transition: background-color 0.2s;
+    }
+    .activity-item:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    .activity-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .activity-icon.bg-success-soft { background: rgba(25, 135, 84, 0.15); color: #198754; }
+    .activity-icon.bg-primary-soft { background: rgba(13, 110, 253, 0.15); color: #0d6efd; }
+    .activity-icon.bg-info-soft { background: rgba(13, 202, 240, 0.15); color: #0dcaf0; }
+    .activity-icon.bg-warning-soft { background: rgba(255, 193, 7, 0.15); color: #ffc107; }
+    .activity-time {
+        font-size: 0.7rem;
+        color: #6c757d;
+    }
+</style>
+
+<script>
+async function refreshActivityFeed() {
+    const container = document.getElementById('activityFeedContainer');
+    // Guard: exit early if container doesn't exist on this page
+    if (!container) return;
+    
+    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+    
+    try {
+        const response = await fetch('/api/activity-feed');
+        if (!response.ok) throw new Error('Network response not ok');
+        const data = await response.json();
+        
+        if (data.activities && data.activities.length > 0) {
+            let html = '<div class="activity-feed">';
+            data.activities.slice(0, 8).forEach(activity => {
+                const colorClass = `bg-${activity.color}-soft`;
+                html += `
+                    <a href="${activity.url}" class="activity-item d-flex align-items-start gap-3 text-decoration-none text-dark">
+                        <div class="activity-icon ${colorClass}">
+                            <i class="bi ${activity.icon}"></i>
+                        </div>
+                        <div class="flex-grow-1 min-width-0">
+                            <div class="fw-medium text-truncate">${activity.title}</div>
+                            <div class="small text-muted text-truncate">${activity.subtitle}</div>
+                            <div class="activity-time">${activity.time_ago}</div>
+                        </div>
+                    </a>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
+                    <p class="small text-muted mt-2 mb-0">No recent activity</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.log('Activity feed:', error.message);
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-exclamation-circle text-warning" style="font-size: 2rem;"></i>
+                <p class="small text-muted mt-2 mb-0">Unable to load activities</p>
+            </div>
+        `;
+    }
+}
+
+// Load activity feed on page load
+document.addEventListener('DOMContentLoaded', refreshActivityFeed);
+
+// Auto-refresh every 30 seconds
+setInterval(refreshActivityFeed, 30000);
+</script>
+
+<!-- First Login Tutorial Modal for Chairs -->
+{% if current_user.role in ['chair', 'finance', 'registration_officer', 'data_clerk'] and not current_user.has_seen_tutorial %}
+<div class="modal fade" id="welcomeTutorialModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0">
+                <h4 class="modal-title">
+                    <i class="bi bi-stars me-2"></i>Welcome to KAYO!
+                </h4>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px;">
+                        <i class="bi bi-person-check text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h3 class="fw-bold">Hello, {{ current_user.name.split()[0] }}!</h3>
+                    <p class="text-muted lead">Your account has been approved. Let's get you started!</p>
+                </div>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4 text-center">
+                        <div class="p-3 bg-light rounded-3">
+                            <i class="bi bi-person-plus text-success fs-2 mb-2"></i>
+                            <h6>Register Delegates</h6>
+                            <small class="text-muted">Add your parish youth members</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="p-3 bg-light rounded-3">
+                            <i class="bi bi-wallet2 text-warning fs-2 mb-2"></i>
+                            <h6>Process Payments</h6>
+                            <small class="text-muted">Record M-Pesa transactions</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="p-3 bg-light rounded-3">
+                            <i class="bi bi-person-vcard text-info fs-2 mb-2"></i>
+                            <h6>Print Badges</h6>
+                            <small class="text-muted">Generate event badges</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>Pro Tip:</strong> Check out the <strong>Help & Tutorial</strong> section in the sidebar anytime you need guidance!
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center gap-2">
+                <a href="{{ url_for('main.help_page') }}" class="btn btn-primary btn-lg px-4">
+                    <i class="bi bi-book me-2"></i>View Full Tutorial
+                </a>
+                <form action="{{ url_for('main.mark_tutorial_seen') }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-secondary btn-lg px-4">
+                        Skip for Now
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show modal on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        var welcomeModal = new bootstrap.Modal(document.getElementById('welcomeTutorialModal'));
+        welcomeModal.show();
+    });
+</script>
+{% endif %}
+
+<!-- M-Pesa Copy Function -->
+<script>
+function copyMpesaNumber(element) {
+    const number = element.textContent.trim();
+    navigator.clipboard.writeText(number).then(function() {
+        // Show feedback
+        const feedback = element.parentElement.querySelector('.copy-feedback');
+        if (feedback) {
+            feedback.style.display = 'block';
+            setTimeout(function() {
+                feedback.style.display = 'none';
+            }, 1500);
+        }
+        
+        // Brief visual feedback on the number itself
+        element.style.backgroundColor = '#198754';
+        element.style.color = 'white';
+        setTimeout(function() {
+            element.style.backgroundColor = '';
+            element.style.color = '';
+        }, 300);
+    }).catch(function(err) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = number;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        alert('M-Pesa number copied: ' + number);
+    });
+}
+
+// Initialize tooltips for M-Pesa banner
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Finance Dashboard - Fund Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Finance Dashboard</h1>
+            <p class="text-muted mb-0">Overall fund management and confirmation</p>
+        </div>
+        <div>
+            <a href="{{ url_for('fund_management.reports') }}" class="btn btn-outline-primary">
+                <i class="fas fa-chart-bar me-2"></i>Full Reports
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-white bg-opacity-50 rounded-circle p-3">
+                            <i class="fas fa-clock fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="mb-0 small">Pending Review</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(total_pending) }}</h3>
+                            <small>{{ pending_transfers|length }} transfers</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-white bg-opacity-25 rounded-circle p-3">
+                            <i class="fas fa-check fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="mb-0 small opacity-75">Approved (Awaiting)</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(total_approved) }}</h3>
+                            <small class="opacity-75">{{ approved_transfers|length }} transfers</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-white bg-opacity-25 rounded-circle p-3">
+                            <i class="fas fa-check-double fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="mb-0 small opacity-75">Total Received</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(total_received) }}</h3>
+                            <small class="opacity-75">{{ completed_transfers|length }} completed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-hand-holding-heart text-primary fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-0 small">Total Pledged</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(total_pledged_system) }}</h3>
+                            <small class="text-success">KSh {{ "{:,.2f}".format(total_collected_system) }} collected</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <!-- Pending Approval -->
+            {% if pending_transfers %}
+            <div class="card border-0 shadow-sm border-start border-warning border-4 mb-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0 text-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Pending Approval ({{ pending_transfers|length }})
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>From</th>
+                                    <th>Amount</th>
+                                    <th>Submitted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transfer in pending_transfers %}
+                                <tr>
+                                    <td><code>{{ transfer.reference_number }}</code></td>
+                                    <td>
+                                        <strong>{{ transfer.from_user.name }}</strong>
+                                        <br><small class="text-muted">{{ transfer.parish or transfer.archdeaconry or '-' }}</small>
+                                    </td>
+                                    <td><strong class="text-primary">KSh {{ "{:,.2f}".format(transfer.amount) }}</strong></td>
+                                    <td>{{ transfer.submitted_at.strftime('%d %b %Y') if transfer.submitted_at else transfer.created_at.strftime('%d %b %Y') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('fund_management.approve_transfer', transfer_id=transfer.id) }}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-gavel me-1"></i>Review
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Approved - Awaiting Completion -->
+            {% if approved_transfers %}
+            <div class="card border-0 shadow-sm border-start border-info border-4 mb-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0 text-info">
+                        <i class="fas fa-hourglass-half me-2"></i>Approved - Awaiting Receipt ({{ approved_transfers|length }})
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>From</th>
+                                    <th>Amount</th>
+                                    <th>Approved</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transfer in approved_transfers %}
+                                <tr>
+                                    <td><code>{{ transfer.reference_number }}</code></td>
+                                    <td>{{ transfer.from_user.name }}</td>
+                                    <td><strong>KSh {{ "{:,.2f}".format(transfer.amount) }}</strong></td>
+                                    <td>{{ transfer.approved_at.strftime('%d %b %Y') if transfer.approved_at else '-' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('fund_management.complete_transfer', transfer_id=transfer.id) }}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check-double me-1"></i>Confirm Receipt
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- All Transfers -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">All Fund Transfers</h5>
+                    <a href="{{ url_for('fund_management.list_transfers') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>From</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transfer in all_transfers[:15] %}
+                                <tr>
+                                    <td><code>{{ transfer.reference_number }}</code></td>
+                                    <td>
+                                        {{ transfer.from_user.name }}
+                                        <br><small class="text-muted">via {{ transfer.to_user.name if transfer.transfer_stage == 'ym_to_finance' else '-' }}</small>
+                                    </td>
+                                    <td>KSh {{ "{:,.2f}".format(transfer.amount) }}</td>
+                                    <td>{{ transfer.created_at.strftime('%d %b %Y') }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if transfer.status == 'completed' else 'info' if transfer.status == 'approved' else 'warning' if transfer.status == 'pending' else 'danger' }}">
+                                            {{ transfer.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('fund_management.view_transfer', transfer_id=transfer.id) }}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        No transfers yet
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Summary Card -->
+            <div class="card border-0 shadow-sm bg-dark text-white">
+                <div class="card-body">
+                    <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Fund Summary</h5>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>Total Pledged</small>
+                            <span>KSh {{ "{:,.0f}".format(total_pledged_system) }}</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            {% set pledge_percent = (total_collected_system / total_pledged_system * 100) if total_pledged_system > 0 else 0 %}
+                            <div class="progress-bar bg-success" style="width: {{ pledge_percent }}%"></div>
+                        </div>
+                        <small class="opacity-75">{{ "{:.1f}".format(pledge_percent) }}% collected</small>
+                    </div>
+                    <hr class="opacity-25">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="mb-0">{{ all_transfers|length }}</h4>
+                            <small class="opacity-75">Total Transfers</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="mb-0">{{ completed_transfers|length }}</h4>
+                            <small class="opacity-75">Completed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chairs -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Chairs</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for chair in chairs %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ chair.name }}</strong>
+                                <br><small class="text-muted">{{ chair.parish or chair.archdeaconry or '-' }}</small>
+                            </div>
+                            {% set chair_transfers = all_transfers|selectattr('from_user_id', 'eq', chair.id)|list %}
+                            {% set chair_total = chair_transfers|sum(attribute='amount') %}
+                            <div class="text-end">
+                                <span class="badge bg-primary rounded-pill">{{ chair_transfers|length }}</span>
+                                <br><small class="text-success">KSh {{ "{:,.0f}".format(chair_total) }}</small>
+                            </div>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center text-muted py-4">
+                            No chairs found
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Recent Pledges -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-hand-holding-heart me-2"></i>Recent Pledges</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for pledge in all_pledges[:5] %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ pledge.source_name }}</strong>
+                                    <br><small class="text-muted">{{ pledge.source_type.replace('_', ' ').title() }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-{{ 'success' if pledge.status == 'fulfilled' else 'warning' if pledge.status == 'partial' else 'secondary' }}">
+                                        {{ pledge.status }}
+                                    </span>
+                                    <br><small>KSh {{ "{:,.0f}".format(pledge.amount_paid) }} / {{ "{:,.0f}".format(pledge.amount_pledged) }}</small>
+                                </div>
+                            </div>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center text-muted py-3">
+                            No pledges yet
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <a href="{{ url_for('fund_management.list_pledges') }}" class="btn btn-sm btn-outline-primary w-100">View All Pledges</a>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('fund_management.reports') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-file-alt me-2"></i>Generate Report
+                        </a>
+                        <a href="{{ url_for('fund_management.pending_payments') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-tasks me-2"></i>Pending Confirmations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

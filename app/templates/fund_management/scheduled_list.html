@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Scheduled Payments{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Scheduled Payments</h1>
+            <p class="text-muted mb-0">Track recurring and scheduled payments</p>
+        </div>
+        <a href="{{ url_for('fund_management.create_scheduled_payment') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create Schedule
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Source</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Frequency</th>
+                            <th>Next Due</th>
+                            <th>Collected</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>
+                                <strong>{{ payment.source_name }}</strong>
+                                {% if payment.source_phone %}
+                                <br><small class="text-muted">{{ payment.source_phone }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if payment.source_type == 'delegate' else 'success' if payment.source_type == 'well_wisher' else 'info' }}">
+                                    {{ payment.source_type.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td>KSh {{ "{:,.2f}".format(payment.amount) }}</td>
+                            <td>{{ payment.frequency.title() }}</td>
+                            <td>
+                                {% if payment.next_payment_date %}
+                                {{ payment.next_payment_date.strftime('%d %b %Y') }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td class="text-success">
+                                KSh {{ "{:,.2f}".format(payment.total_collected) }}
+                                {% if payment.total_expected > 0 %}
+                                <br><small class="text-muted">of {{ "{:,.0f}".format(payment.total_expected) }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if payment.status == 'completed' else 'primary' if payment.status == 'active' else 'warning' if payment.status == 'paused' else 'danger' }}">
+                                    {{ payment.status.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('fund_management.view_scheduled_payment', payment_id=payment.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                                <p class="mb-2">No scheduled payments yet</p>
+                                <a href="{{ url_for('fund_management.create_scheduled_payment') }}" class="btn btn-primary btn-sm">
+                                    Create First Schedule
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

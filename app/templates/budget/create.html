@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Create Budget - KAYO{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('budget.index') }}">Budgets</a></li>
+            <li class="breadcrumb-item active">Create Budget</li>
+        </ol>
+    </nav>
+    <h2><i class="bi bi-plus-circle me-2"></i>Create New Budget</h2>
+    <p class="text-muted">Create a budget manually and add items one by one</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Budget Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required 
+                               placeholder="e.g., KAYO 2025 Annual Conference">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3"
+                                  placeholder="Brief description of this budget"></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Link to Event (Optional)</label>
+                        <select name="event_id" class="form-select">
+                            <option value="">-- Not linked to any event --</option>
+                            {% for event in events %}
+                            <option value="{{ event.id }}">{{ event.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-2"></i>Create Budget
+                        </button>
+                        <a href="{{ url_for('budget.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5><i class="bi bi-lightbulb me-2"></i>Tip</h5>
+                <p>After creating the budget, you can:</p>
+                <ul>
+                    <li>Add items manually one by one</li>
+                    <li>Copy items from another budget</li>
+                    <li>Import items from a file later</li>
+                </ul>
+                <p class="mb-0">
+                    <strong>Prefer uploading a file?</strong><br>
+                    <a href="{{ url_for('budget.upload') }}">Upload a budget file instead</a> and let AI parse it automatically.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

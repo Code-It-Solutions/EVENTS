@@ -1,0 +1,632 @@
+{% extends "base.html" %}
+
+{% block title %}QR Scanner - KAYO Check-in{% endblock %}
+
+{% block extra_css %}
+<style>
+    #scanner-container {
+        position: relative;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    #reader {
+        width: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    #reader video {
+        border-radius: 12px;
+    }
+    
+    .scan-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 250px;
+        height: 250px;
+        border: 3px solid #00ff00;
+        border-radius: 20px;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { border-color: #00ff00; }
+        50% { border-color: #00cc00; }
+    }
+    
+    .result-card {
+        transition: all 0.3s ease;
+    }
+    
+    .result-card.success {
+        border-left: 5px solid #198754;
+        animation: slideIn 0.3s ease;
+    }
+    
+    .result-card.error {
+        border-left: 5px solid #dc3545;
+        animation: shake 0.5s ease;
+    }
+    
+    .result-card.warning {
+        border-left: 5px solid #ffc107;
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateX(50px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    
+    .status-indicator.scanning {
+        background: #00ff00;
+        animation: blink 1s infinite;
+    }
+    
+    .status-indicator.paused {
+        background: #ffc107;
+    }
+    
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .recent-scans {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .scan-item {
+        border-left: 3px solid #198754;
+        transition: all 0.2s;
+    }
+    
+    .scan-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .scan-item.failed {
+        border-left-color: #dc3545;
+    }
+    
+    .camera-switch {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 100;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-qrcode me-2"></i>QR Code Scanner</h2>
+                    <p class="text-muted mb-0">Scan delegate badges for quick check-in</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('checkin.dashboard') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-chart-line me-1"></i>Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Scanner Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <span class="status-indicator scanning" id="scannerStatus"></span>
+                        Scanner
+                    </h5>
+                    <div>
+                        <button class="btn btn-light btn-sm" id="switchCameraBtn" title="Switch Camera">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn btn-light btn-sm" id="toggleScannerBtn">
+                            <i class="fas fa-pause" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Settings -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">Event</label>
+                            <select id="eventSelect" class="form-select form-select-sm">
+                                <option value="">Auto-detect</option>
+                                {% for event in events %}
+                                <option value="{{ event.id }}">{{ event.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Session</label>
+                            <select id="sessionSelect" class="form-select form-select-sm">
+                                <option value="">General Check-in</option>
+                                {% for session in sessions %}
+                                <option value="{{ session.id }}">{{ session.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Scanner -->
+                    <div id="scanner-container" class="mb-3">
+                        <div id="reader"></div>
+                    </div>
+
+                    <!-- Manual Entry -->
+                    <div class="card bg-light">
+                        <div class="card-body py-2">
+                            <label class="form-label small mb-1">Manual Entry / Search</label>
+                            <div class="input-group">
+                                <input type="text" id="manualInput" class="form-control" 
+                                       placeholder="Enter ticket # or search name...">
+                                <button class="btn btn-primary" id="manualSearchBtn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div id="searchResults" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result & Recent Scans -->
+        <div class="col-lg-6">
+            <!-- Last Scan Result -->
+            <div class="card shadow-sm mb-4" id="resultCard" style="display: none;">
+                <div class="card-header" id="resultHeader">
+                    <h5 class="mb-0" id="resultTitle">Scan Result</h5>
+                </div>
+                <div class="card-body" id="resultBody">
+                    <!-- Result content will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Recent Scans -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Check-ins</h5>
+                    <span class="badge bg-primary" id="totalCount">0</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="recent-scans" id="recentScans">
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-qrcode fa-3x mb-2"></i>
+                            <p>No check-ins yet today</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Audio feedback -->
+<audio id="successSound" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2Onp+ai3xxaW1uc3yHkpSNgHJkYGBkaXJ8hoyMhn50bGhoa3F4gIaIh4J7dHBucHN3fIGFhoWCfnl1c3N0dnh8f4GCgoF/fHp4d3d4eXt9fn9/f39+fXx7enp6ent7fH1+fn5+fn19fHx7e3t7e3x8fX19fX19fX18fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8" type="audio/wav">
+</audio>
+<audio id="errorSound" preload="auto">
+    <source src="data:audio/wav;base64,UklGRl9vAABXQVZFZm10IBAAAAABAAEAESsAABErAAABAAgAZGF0YTtvAACA" type="audio/wav">
+</audio>
+
+<!-- HTML5 QR Scanner Library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script>
+let html5QrCode = null;
+let isScanning = true;
+let currentCameraId = null;
+let cameras = [];
+let recentScansData = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    initScanner();
+    loadRecentScans();
+    
+    // Manual search
+    document.getElementById('manualInput').addEventListener('keyup', debounce(searchDelegate, 300));
+    document.getElementById('manualSearchBtn').addEventListener('click', function() {
+        const input = document.getElementById('manualInput').value.trim();
+        if (input) {
+            processManualEntry(input);
+        }
+    });
+    
+    // Toggle scanner
+    document.getElementById('toggleScannerBtn').addEventListener('click', toggleScanner);
+    
+    // Switch camera
+    document.getElementById('switchCameraBtn').addEventListener('click', switchCamera);
+});
+
+async function initScanner() {
+    html5QrCode = new Html5Qrcode("reader");
+    
+    try {
+        cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length > 0) {
+            // Prefer back camera
+            currentCameraId = cameras.find(c => c.label.toLowerCase().includes('back'))?.id || cameras[0].id;
+            startScanning();
+        } else {
+            showError('No cameras found');
+        }
+    } catch (err) {
+        showError('Camera access denied: ' + err.message);
+    }
+}
+
+function startScanning() {
+    const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+    };
+    
+    html5QrCode.start(
+        currentCameraId,
+        config,
+        onScanSuccess,
+        onScanFailure
+    ).then(() => {
+        document.getElementById('scannerStatus').classList.add('scanning');
+        document.getElementById('scannerStatus').classList.remove('paused');
+        isScanning = true;
+    }).catch(err => {
+        showError('Failed to start scanner: ' + err.message);
+    });
+}
+
+function stopScanning() {
+    if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('scannerStatus').classList.remove('scanning');
+            document.getElementById('scannerStatus').classList.add('paused');
+            isScanning = false;
+        });
+    }
+}
+
+function toggleScanner() {
+    const icon = document.getElementById('toggleIcon');
+    if (isScanning) {
+        stopScanning();
+        icon.classList.remove('fa-pause');
+        icon.classList.add('fa-play');
+    } else {
+        startScanning();
+        icon.classList.remove('fa-play');
+        icon.classList.add('fa-pause');
+    }
+}
+
+function switchCamera() {
+    if (cameras.length <= 1) return;
+    
+    stopScanning();
+    const currentIndex = cameras.findIndex(c => c.id === currentCameraId);
+    currentCameraId = cameras[(currentIndex + 1) % cameras.length].id;
+    setTimeout(startScanning, 500);
+}
+
+let lastScanTime = 0;
+const SCAN_COOLDOWN = 2000; // 2 seconds between scans
+
+function onScanSuccess(decodedText, decodedResult) {
+    const now = Date.now();
+    if (now - lastScanTime < SCAN_COOLDOWN) return;
+    lastScanTime = now;
+    
+    // Vibrate if supported
+    if (navigator.vibrate) {
+        navigator.vibrate(200);
+    }
+    
+    processQRCode(decodedText);
+}
+
+function onScanFailure(error) {
+    // Ignore failures - they happen constantly when no QR code is in view
+}
+
+async function processQRCode(qrData) {
+    const eventId = document.getElementById('eventSelect').value;
+    const sessionName = document.getElementById('sessionSelect').value;
+    
+    try {
+        const response = await fetch('{{ url_for("checkin.process_scan") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                qr_data: qrData,
+                event_id: eventId || null,
+                session_name: sessionName || null
+            })
+        });
+        
+        const result = await response.json();
+        showResult(result);
+        
+        if (result.success) {
+            addToRecentScans(result.delegate, result.check_in);
+            playSound('success');
+        } else {
+            playSound('error');
+        }
+    } catch (err) {
+        showError('Network error: ' + err.message);
+        playSound('error');
+    }
+}
+
+function showResult(result) {
+    const card = document.getElementById('resultCard');
+    const header = document.getElementById('resultHeader');
+    const body = document.getElementById('resultBody');
+    
+    card.style.display = 'block';
+    card.className = 'card shadow-sm mb-4 result-card';
+    
+    if (result.success) {
+        card.classList.add('success');
+        header.className = 'card-header bg-success text-white';
+        header.innerHTML = '<h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Check-in Successful!</h5>';
+        
+        body.innerHTML = `
+            <div class="text-center mb-3">
+                <i class="fas fa-user-check fa-4x text-success"></i>
+            </div>
+            <h4 class="text-center mb-3">${result.delegate.name}</h4>
+            <div class="row">
+                <div class="col-6">
+                    <p class="mb-1"><strong>Ticket:</strong> ${result.delegate.ticket_number || 'N/A'}</p>
+                    <p class="mb-1"><strong>Category:</strong> ${result.delegate.category || 'Delegate'}</p>
+                </div>
+                <div class="col-6">
+                    <p class="mb-1"><strong>Parish:</strong> ${result.delegate.parish || 'N/A'}</p>
+                    <p class="mb-1"><strong>Time:</strong> ${result.check_in.time}</p>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <span class="badge bg-${result.delegate.payment_status === 'paid' ? 'success' : 'warning'} fs-6">
+                    ${result.delegate.payment_status.toUpperCase()}
+                </span>
+            </div>
+        `;
+    } else if (result.already_checked_in) {
+        card.classList.add('warning');
+        header.className = 'card-header bg-warning text-dark';
+        header.innerHTML = '<h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Already Checked In</h5>';
+        
+        body.innerHTML = `
+            <div class="text-center mb-3">
+                <i class="fas fa-user-clock fa-4x text-warning"></i>
+            </div>
+            <h4 class="text-center mb-3">${result.delegate.name}</h4>
+            <p class="text-center text-muted">
+                Already checked in at <strong>${result.delegate.checked_in_at}</strong>
+            </p>
+        `;
+    } else {
+        card.classList.add('error');
+        header.className = 'card-header bg-danger text-white';
+        header.innerHTML = '<h5 class="mb-0"><i class="fas fa-times-circle me-2"></i>Check-in Failed</h5>';
+        
+        body.innerHTML = `
+            <div class="text-center">
+                <i class="fas fa-exclamation-circle fa-4x text-danger mb-3"></i>
+                <p class="mb-0">${result.error}</p>
+            </div>
+        `;
+    }
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        card.style.display = 'none';
+    }, 5000);
+}
+
+function showError(message) {
+    showResult({ success: false, error: message });
+}
+
+function addToRecentScans(delegate, checkIn) {
+    const container = document.getElementById('recentScans');
+    
+    // Remove "no check-ins" message if present
+    if (container.querySelector('.text-muted')) {
+        container.innerHTML = '';
+    }
+    
+    const item = document.createElement('div');
+    item.className = 'scan-item p-3 border-bottom';
+    item.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <strong>${delegate.name}</strong>
+                <br>
+                <small class="text-muted">
+                    ${delegate.ticket_number || 'N/A'} | ${delegate.category || 'Delegate'}
+                </small>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-${delegate.payment_status === 'paid' ? 'success' : 'warning'}">
+                    ${delegate.payment_status}
+                </span>
+                <br>
+                <small class="text-muted">${checkIn.time}</small>
+            </div>
+        </div>
+    `;
+    
+    container.insertBefore(item, container.firstChild);
+    
+    // Update count
+    const countBadge = document.getElementById('totalCount');
+    countBadge.textContent = parseInt(countBadge.textContent) + 1;
+}
+
+async function loadRecentScans() {
+    try {
+        const response = await fetch('{{ url_for("checkin.live_arrivals") }}');
+        const data = await response.json();
+        
+        document.getElementById('totalCount').textContent = data.total_today;
+        
+        const container = document.getElementById('recentScans');
+        if (data.arrivals && data.arrivals.length > 0) {
+            container.innerHTML = data.arrivals.map(a => `
+                <div class="scan-item p-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${a.name}</strong>
+                            <br>
+                            <small class="text-muted">
+                                ${a.ticket_number || 'N/A'} | ${a.category || 'Delegate'}
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-${a.payment_status === 'paid' ? 'success' : 'warning'}">
+                                ${a.payment_status}
+                            </span>
+                            <br>
+                            <small class="text-muted">${a.arrival_time_formatted}</small>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (err) {
+        console.error('Failed to load recent scans:', err);
+    }
+}
+
+async function searchDelegate(e) {
+    const query = e.target.value.trim();
+    const resultsContainer = document.getElementById('searchResults');
+    
+    if (query.length < 2) {
+        resultsContainer.innerHTML = '';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{{ url_for("checkin.search_delegate") }}?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data.results.length === 0) {
+            resultsContainer.innerHTML = '<div class="text-muted small">No delegates found</div>';
+            return;
+        }
+        
+        resultsContainer.innerHTML = data.results.map(d => `
+            <div class="d-flex justify-content-between align-items-center p-2 border-bottom search-result-item"
+                 onclick="checkInDelegate(${d.id})" style="cursor: pointer;">
+                <div>
+                    <strong>${d.name}</strong>
+                    <small class="text-muted d-block">${d.ticket_number || 'N/A'}</small>
+                </div>
+                <div>
+                    ${d.checked_in_today 
+                        ? `<span class="badge bg-secondary">Checked in ${d.check_in_time}</span>`
+                        : `<button class="btn btn-sm btn-success">Check In</button>`
+                    }
+                </div>
+            </div>
+        `).join('');
+    } catch (err) {
+        resultsContainer.innerHTML = '<div class="text-danger small">Search failed</div>';
+    }
+}
+
+async function checkInDelegate(delegateId) {
+    const eventId = document.getElementById('eventSelect').value;
+    const sessionName = document.getElementById('sessionSelect').value;
+    
+    try {
+        const response = await fetch('{{ url_for("checkin.process_scan") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                qr_data: delegateId.toString(),
+                event_id: eventId || null,
+                session_name: sessionName || null
+            })
+        });
+        
+        const result = await response.json();
+        showResult(result);
+        
+        if (result.success) {
+            addToRecentScans(result.delegate, result.check_in);
+            playSound('success');
+            document.getElementById('manualInput').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+        } else {
+            playSound('error');
+        }
+    } catch (err) {
+        showError('Network error: ' + err.message);
+    }
+}
+
+function processManualEntry(input) {
+    processQRCode(input);
+}
+
+function playSound(type) {
+    try {
+        const sound = document.getElementById(type + 'Sound');
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play().catch(() => {});
+        }
+    } catch (e) {}
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+</script>
+{% endblock %}

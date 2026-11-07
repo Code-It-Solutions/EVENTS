@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Events - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-calendar-alt me-2"></i>Events</h2>
+        <a href="{{ url_for('events.create_event') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create Event
+        </a>
+    </div>
+    
+    <div class="row">
+        {% for event in events %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 {% if current_user.current_event_id == event.id %}border-primary{% endif %}">
+                <div class="card-header d-flex justify-content-between align-items-center"
+                     style="background-color: {{ event.primary_color }}20;">
+                    <h5 class="mb-0" style="color: {{ event.primary_color }};">{{ event.name }}</h5>
+                    {% if event.is_published %}
+                    <span class="badge bg-success">Published</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Draft</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-calendar me-1"></i>
+                        {{ event.start_date.strftime('%b %d') }} - {{ event.end_date.strftime('%b %d, %Y') }}
+                    </p>
+                    {% if event.venue %}
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-map-marker-alt me-1"></i>{{ event.venue }}
+                    </p>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="h4 mb-0">{{ event.get_delegate_count() }}</div>
+                            <small class="text-muted">Registered</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h4 mb-0 text-success">{{ event.get_paid_delegate_count() }}</div>
+                            <small class="text-muted">Paid</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h4 mb-0 text-info">{{ event.get_checked_in_count() }}</div>
+                            <small class="text-muted">Checked In</small>
+                        </div>
+                    </div>
+                    
+                    {% if event.max_delegates %}
+                    <div class="progress mt-3" style="height: 5px;">
+                        {% set pct = (event.get_delegate_count() / event.max_delegates * 100)|int %}
+                        <div class="progress-bar" role="progressbar" style="width: {{ pct }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ event.get_delegate_count() }}/{{ event.max_delegates }} capacity</small>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group w-100">
+                        {% if current_user.current_event_id != event.id %}
+                        <a href="{{ url_for('events.switch_event', event_id=event.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-exchange-alt"></i> Switch
+                        </a>
+                        {% else %}
+                        <span class="btn btn-sm btn-primary disabled">
+                            <i class="fas fa-check"></i> Active
+                        </span>
+                        {% endif %}
+                        <a href="{{ url_for('events.view_event', event_id=event.id) }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        <a href="{{ url_for('events.edit_event', event_id=event.id) }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>No events found. Create your first event!
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

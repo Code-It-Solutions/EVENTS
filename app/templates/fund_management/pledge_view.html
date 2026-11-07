@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Pledge Details - {{ pledge.source_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Pledge Details Card -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-hand-holding-heart me-2 text-primary"></i>
+                        Pledge Details
+                    </h4>
+                    <span class="badge bg-{{ 'success' if pledge.status == 'fulfilled' else 'warning' if pledge.status == 'partial' else 'secondary' if pledge.status == 'pending' else 'danger' }} fs-6">
+                        {{ pledge.status.title() }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Source Name</h6>
+                            <p class="h5 mb-3">{{ pledge.source_name }}</p>
+                            
+                            <h6 class="text-muted mb-1">Source Type</h6>
+                            <p class="mb-3">
+                                <span class="badge bg-{{ 'primary' if pledge.source_type == 'delegate' else 'success' if pledge.source_type == 'well_wisher' else 'info' }}">
+                                    {{ pledge.source_type.replace('_', ' ').title() }}
+                                </span>
+                            </p>
+                            
+                            {% if pledge.source_phone %}
+                            <h6 class="text-muted mb-1">Phone</h6>
+                            <p class="mb-3">{{ pledge.source_phone }}</p>
+                            {% endif %}
+                            
+                            {% if pledge.source_email %}
+                            <h6 class="text-muted mb-1">Email</h6>
+                            <p class="mb-3">{{ pledge.source_email }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Amount Pledged</h6>
+                            <p class="h4 text-primary mb-3">KSh {{ "{:,.2f}".format(pledge.amount_pledged) }}</p>
+                            
+                            <h6 class="text-muted mb-1">Amount Paid</h6>
+                            <p class="h4 text-success mb-3">KSh {{ "{:,.2f}".format(pledge.amount_paid or 0) }}</p>
+                            
+                            <h6 class="text-muted mb-1">Balance</h6>
+                            <p class="h4 text-{{ 'danger' if pledge.get_balance() > 0 else 'success' }} mb-3">KSh {{ "{:,.2f}".format(pledge.get_balance()) }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="text-muted">Payment Progress</small>
+                            <small class="text-muted">{{ "{:.1f}".format(((pledge.amount_paid or 0) / pledge.amount_pledged * 100) if pledge.amount_pledged > 0 else 0) }}%</small>
+                        </div>
+                        <div class="progress" style="height: 12px;">
+                            <div class="progress-bar bg-success" style="width: {{ ((pledge.amount_paid or 0) / pledge.amount_pledged * 100) if pledge.amount_pledged > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    {% if pledge.due_date %}
+                    <div class="alert alert-{{ 'danger' if pledge.due_date < today else 'warning' if (pledge.due_date - today).days <= 7 else 'info' }} d-flex align-items-center" role="alert">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        <div>
+                            Due Date: <strong>{{ pledge.due_date.strftime('%d %B %Y') }}</strong>
+                            {% if pledge.due_date < today %}
+                            <span class="badge bg-danger ms-2">Overdue</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if pledge.description %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Description/Purpose</h6>
+                        <p class="mb-0">{{ pledge.description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Local Church</h6>
+                            <p class="mb-2">{{ pledge.local_church or '-' }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Parish</h6>
+                            <p class="mb-2">{{ pledge.parish or '-' }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Archdeaconry</h6>
+                            <p class="mb-2">{{ pledge.archdeaconry or '-' }}</p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            Recorded by {{ pledge.recorder.name }} on {{ pledge.created_at.strftime('%d %b %Y at %H:%M') }}
+                        </small>
+                        {% if pledge.delegate %}
+                        <span class="badge bg-info">Linked to: {{ pledge.delegate.name }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <div class="d-flex gap-2">
+                        {% if pledge.status not in ['fulfilled', 'cancelled'] %}
+                        <a href="{{ url_for('fund_management.record_pledge_payment', pledge_id=pledge.id) }}" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>Record Payment
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('fund_management.list_pledges') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to List
+                        </a>
+                        {% if pledge.status == 'pending' and pledge.amount_paid == 0 %}
+                        <form action="{{ url_for('fund_management.cancel_pledge', pledge_id=pledge.id) }}" method="POST" class="ms-auto no-mask" onsubmit="return confirm('Are you sure you want to cancel this pledge?');">
+                            {{ form.hidden_tag() }}
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-times me-2"></i>Cancel Pledge
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment History -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Payment History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for payment in payments %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong class="text-success">KSh {{ "{:,.2f}".format(payment.amount) }}</strong>
+                                    <br><small class="text-muted">{{ payment.payment_method.replace('_', ' ').title() }}</small>
+                                    {% if payment.reference %}
+                                    <br><small class="text-muted">Ref: {{ payment.reference }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-{{ 'success' if payment.status == 'confirmed' else 'warning' if payment.status == 'pending' else 'danger' }}">
+                                        {{ payment.status.title() }}
+                                    </span>
+                                    <br><small class="text-muted">{{ payment.created_at.strftime('%d %b %Y') }}</small>
+                                </div>
+                            </div>
+                            {% if payment.notes %}
+                            <small class="text-muted d-block mt-1">{{ payment.notes }}</small>
+                            {% endif %}
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p class="mb-0">No payments recorded yet</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

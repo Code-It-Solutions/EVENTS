@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Receive Payment - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a href="{{ url_for('payments.finance_payment_dashboard') }}" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div class="flex-grow-1">
+            <h2 class="mb-0"><i class="bi bi-cash-coin me-2 text-success"></i>Receive Payment</h2>
+            <p class="text-muted mb-0">Record cash/manual payments directly from chairs</p>
+        </div>
+    </div>
+
+    {% if pending_approval_count > 0 %}
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-hourglass-split me-3" style="font-size: 1.5rem;"></i>
+            <div class="flex-grow-1">
+                <strong>{{ pending_approval_count }} payment(s) awaiting your approval</strong>
+                <p class="mb-0 small">Chairs have submitted cash payments that need your approval before delegates are marked as paid.</p>
+            </div>
+            <a href="{{ url_for('finance.payment_approvals') }}" class="btn btn-info btn-sm ms-3">
+                <i class="bi bi-check-circle me-1"></i>Review Approvals
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if unpaid_by_chair %}
+    <form method="POST" id="receivePaymentForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Global Select All Controls -->
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button type="button" class="btn btn-primary btn-sm" id="globalSelectAll">
+                                    <i class="bi bi-check-all me-1"></i>Select All Delegates
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm ms-2" id="globalDeselectAll">
+                                    <i class="bi bi-x me-1"></i>Deselect All
+                                </button>
+                            </div>
+                            <span class="text-muted small">
+                                <span id="globalSelectedCount">0</span> of <span id="globalTotalCount">0</span> selected
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Delegates by Chair -->
+                <div class="accordion" id="chairsAccordion">
+                    {% for chair, delegates in unpaid_by_chair.items() %}
+                    <div class="accordion-item border-0 shadow-sm mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#chair{{ chair.id }}">
+                                <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                    <div>
+                                        <strong>{{ chair.name }}</strong>
+                                        <br><small class="text-muted">{{ chair.parish or chair.archdeaconry or 'N/A' }}</small>
+                                    </div>
+                                    <span class="badge bg-warning">{{ delegates|length }} unpaid</span>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="chair{{ chair.id }}" class="accordion-collapse collapse" data-bs-parent="#chairsAccordion">
+                            <div class="accordion-body p-0">
+                                <div class="p-3 bg-light border-bottom">
+                                    <button type="button" class="btn btn-sm btn-outline-primary select-all-btn" 
+                                            data-chair="{{ chair.id }}">
+                                        <i class="bi bi-check-all"></i> Select All
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary deselect-all-btn" 
+                                            data-chair="{{ chair.id }}">
+                                        <i class="bi bi-x"></i> Deselect All
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="50">
+                                                    <input type="checkbox" class="form-check-input chair-select-all" 
+                                                           data-chair="{{ chair.id }}">
+                                                </th>
+                                                <th>Name</th>
+                                                <th>Phone</th>
+                                                <th>Category</th>
+                                                <th class="text-end">Fee</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for delegate in delegates %}
+                                            <tr>
+                                                <td>
+                                                    <input type="checkbox" class="form-check-input delegate-checkbox" 
+                                                           name="delegate_ids" value="{{ delegate.id }}"
+                                                           data-chair="{{ chair.id }}" data-fee="{{ delegate.get_registration_fee() }}">
+                                                </td>
+                                                <td><strong>{{ delegate.name }}</strong></td>
+                                                <td><small>{{ delegate.phone_number or 'N/A' }}</small></td>
+                                                <td><span class="badge bg-secondary">{{ delegate.category or 'Delegate' }}</span></td>
+                                                <td class="text-end">KSh {{ "{:,}".format(delegate.get_registration_fee()) }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Summary Sidebar -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm sticky-top" style="top: 80px;">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Payment Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Selected Delegates:</span>
+                                <strong id="selectedCount">0</strong>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span class="fs-5">Total Amount:</span>
+                                <strong class="fs-4 text-success" id="totalAmount">KSh 0</strong>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="receipt_number" class="form-label">Receipt/Reference Number</label>
+                            <input type="text" class="form-control" name="receipt_number" id="receipt_number" 
+                                   placeholder="e.g., CASH-001 or M-Pesa code">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes (optional)</label>
+                            <textarea name="notes" id="notes" class="form-control" rows="2" 
+                                      placeholder="Any additional notes..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100" id="submitBtn" disabled>
+                            <i class="bi bi-check-circle me-2"></i>Confirm Receipt
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+        <h3 class="mt-3">All Delegates Paid!</h3>
+        <p class="text-muted">There are no unpaid delegates at this time.</p>
+        <a href="{{ url_for('payments.finance_payment_dashboard') }}" class="btn btn-primary">
+            Back to Dashboard
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.delegate-checkbox');
+    const selectedCountEl = document.getElementById('selectedCount');
+    const totalAmountEl = document.getElementById('totalAmount');
+    const submitBtn = document.getElementById('submitBtn');
+    const globalSelectedCount = document.getElementById('globalSelectedCount');
+    const globalTotalCount = document.getElementById('globalTotalCount');
+    const globalSelectAllBtn = document.getElementById('globalSelectAll');
+    const globalDeselectAllBtn = document.getElementById('globalDeselectAll');
+    
+    // Set total count
+    if (globalTotalCount) {
+        globalTotalCount.textContent = checkboxes.length;
+    }
+
+    function updateSummary() {
+        const checked = document.querySelectorAll('.delegate-checkbox:checked');
+        const count = checked.length;
+        let total = 0;
+        
+        checked.forEach(cb => {
+            total += parseInt(cb.dataset.fee) || 0;
+        });
+        
+        selectedCountEl.textContent = count;
+        totalAmountEl.textContent = 'KSh ' + total.toLocaleString();
+        submitBtn.disabled = count === 0;
+        
+        // Update global count
+        if (globalSelectedCount) {
+            globalSelectedCount.textContent = count;
+        }
+        
+        // Update chair-level checkboxes state
+        document.querySelectorAll('.chair-select-all').forEach(chairCb => {
+            const chairId = chairCb.dataset.chair;
+            const chairCheckboxes = document.querySelectorAll(`.delegate-checkbox[data-chair="${chairId}"]`);
+            const chairChecked = document.querySelectorAll(`.delegate-checkbox[data-chair="${chairId}"]:checked`);
+            
+            if (chairChecked.length === 0) {
+                chairCb.checked = false;
+                chairCb.indeterminate = false;
+            } else if (chairChecked.length === chairCheckboxes.length) {
+                chairCb.checked = true;
+                chairCb.indeterminate = false;
+            } else {
+                chairCb.checked = false;
+                chairCb.indeterminate = true;
+            }
+        });
+    }
+
+    // Individual checkbox change
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateSummary);
+    });
+    
+    // Global Select All button
+    if (globalSelectAllBtn) {
+        globalSelectAllBtn.addEventListener('click', function() {
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+            });
+            updateSummary();
+        });
+    }
+    
+    // Global Deselect All button
+    if (globalDeselectAllBtn) {
+        globalDeselectAllBtn.addEventListener('click', function() {
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+            });
+            updateSummary();
+        });
+    }
+
+    // Select All buttons (per chair)
+    document.querySelectorAll('.select-all-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const chairId = this.dataset.chair;
+            document.querySelectorAll(`.delegate-checkbox[data-chair="${chairId}"]`).forEach(cb => {
+                cb.checked = true;
+            });
+            updateSummary();
+        });
+    });
+
+    // Deselect All buttons (per chair)
+    document.querySelectorAll('.deselect-all-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const chairId = this.dataset.chair;
+            document.querySelectorAll(`.delegate-checkbox[data-chair="${chairId}"]`).forEach(cb => {
+                cb.checked = false;
+            });
+            updateSummary();
+        });
+    });
+
+    // Chair select all checkbox
+    document.querySelectorAll('.chair-select-all').forEach(cb => {
+        cb.addEventListener('change', function() {
+            const chairId = this.dataset.chair;
+            const isChecked = this.checked;
+            document.querySelectorAll(`.delegate-checkbox[data-chair="${chairId}"]`).forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateSummary();
+        });
+    });
+    
+    // Initialize counts on page load
+    updateSummary();
+});
+</script>
+{% endblock %}

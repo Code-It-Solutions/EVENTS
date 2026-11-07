@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Cash Payments - KAYO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .mpesa-number {
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    .mpesa-number:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+        background-color: #ffc107 !important;
+    }
+    .copy-feedback {
+        animation: fadeInOut 1.5s ease;
+        z-index: 100;
+    }
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateX(-50%) translateY(5px); }
+        20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        100% { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('payments.payment_page') }}">Payments</a></li>
+            <li class="breadcrumb-item active">Confirm Cash Receipts</li>
+        </ol>
+    </nav>
+    <h2><i class="bi bi-cash me-2"></i>Confirm Cash Receipts from Delegates</h2>
+    {% if current_user.role == 'chair' %}
+    <p class="text-muted">Select delegates who have paid you cash. After confirmation, this will be submitted to Finance for final approval.</p>
+    
+    <!-- Finance M-Pesa Payment Info -->
+    <div class="alert alert-success shadow-sm mb-3" style="border-left: 5px solid #198754; background: linear-gradient(135deg, #d1e7dd 0%, #f8f9fa 100%);">
+        <div class="d-flex align-items-center">
+            <div class="me-3">
+                <i class="bi bi-phone-fill text-success" style="font-size: 1.8rem;"></i>
+            </div>
+            <div>
+                <h6 class="alert-heading mb-1">
+                    <i class="bi bi-send me-1"></i>Send Collected Cash via M-Pesa to Finance
+                </h6>
+                <p class="mb-0">
+                    M-Pesa Number: 
+                    <span class="d-inline-block position-relative">
+                        <strong class="mpesa-number text-dark bg-warning px-2 py-1 rounded" 
+                                onclick="copyMpesaNumber(this)" 
+                                style="font-size: 1.1rem; letter-spacing: 1px; cursor: pointer;"
+                                title="Click to copy">
+                            0742080328
+                        </strong>
+                        <span class="copy-feedback position-absolute bg-dark text-white px-2 py-1 rounded small" 
+                              style="display: none; top: -30px; left: 50%; transform: translateX(-50%); white-space: nowrap;">
+                            Copied!
+                        </span>
+                    </span>
+                    <small class="text-muted ms-2">(Tap to copy)</small>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Workflow Steps -->
+    <div class="alert alert-info">
+        <h6 class="alert-heading"><i class="bi bi-diagram-3 me-2"></i>Payment Workflow</h6>
+        <div class="d-flex justify-content-between align-items-center mt-3 small">
+            <div class="text-center">
+                <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width:35px;height:35px;">1</div>
+                <p class="mb-0 mt-1"><strong>Receive Cash</strong><br>From delegate</p>
+            </div>
+            <i class="bi bi-arrow-right text-muted"></i>
+            <div class="text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width:35px;height:35px;">2</div>
+                <p class="mb-0 mt-1"><strong>Confirm Here</strong><br>You are here</p>
+            </div>
+            <i class="bi bi-arrow-right text-muted"></i>
+            <div class="text-center">
+                <div class="bg-warning text-dark rounded-circle d-inline-flex align-items-center justify-content-center" style="width:35px;height:35px;">3</div>
+                <p class="mb-0 mt-1"><strong>Send to Finance</strong><br>Submit for approval</p>
+            </div>
+            <i class="bi bi-arrow-right text-muted"></i>
+            <div class="text-center">
+                <div class="bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width:35px;height:35px;">4</div>
+                <p class="mb-0 mt-1"><strong>Finance Approves</strong><br>Ticket issued</p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <p class="text-muted">Select delegates and confirm their cash payment. As Finance, payments will be approved immediately.</p>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Unpaid Delegates</h5>
+                <div>
+                    <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search delegates...">
+                </div>
+            </div>
+            <div class="card-body">
+                {% if unpaid_delegates %}
+                <div class="mb-3">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllBtn">Select All</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="clearAllBtn">Clear All</button>
+                    <span class="ms-3 text-muted"><span id="selectedCount">0</span> selected</span>
+                </div>
+                
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm table-hover" id="delegatesTable">
+                        <thead class="sticky-top bg-white">
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="selectAllCheckbox" class="form-check-input">
+                                </th>
+                                <th>Name</th>
+                                <th>Local Church</th>
+                                <th>Parish</th>
+                                <th>Archdeaconry</th>
+                                <th>Fee</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for delegate in unpaid_delegates %}
+                            <tr class="delegate-row" data-search="{{ delegate.name|lower }} {{ delegate.local_church|lower }} {{ delegate.parish|lower }} {{ delegate.archdeaconry|lower }}">
+                                <td>
+                                    <input type="checkbox" class="form-check-input delegate-checkbox" value="{{ delegate.id }}" data-fee="{{ delegate.get_registration_fee() }}">
+                                </td>
+                                <td>{{ delegate.name }}</td>
+                                <td>{{ delegate.local_church }}</td>
+                                <td>{{ delegate.parish }}</td>
+                                <td>{{ delegate.archdeaconry }}</td>
+                                <td>KSh {{ delegate.get_registration_fee() | int }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">All delegates have been paid!</h5>
+                    <p class="text-muted">There are no unpaid delegates at this time.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        {% if unpaid_delegates %}
+        <div class="card sticky-top" style="top: 20px;">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>
+                    {% if current_user.role == 'chair' %}
+                    Confirm Receipt & Submit
+                    {% else %}
+                    Confirm Payment
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('payments.confirm_cash_payment') }}" id="confirmForm" class="no-mask">
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" name="delegate_ids" id="delegateIds">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Selected Delegates</label>
+                        <div class="alert alert-light py-2" id="selectedSummary">
+                            <span class="text-muted">No delegates selected</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Total Amount Received</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">KSh</span>
+                            <input type="text" class="form-control" id="totalAmount" name="amount" value="0" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.receipt_number.label.text }}</label>
+                        {{ form.receipt_number(class="form-control", placeholder="Optional receipt number") }}
+                        <small class="text-muted">Leave blank to auto-generate</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">{{ form.notes.label.text }}</label>
+                        {{ form.notes(class="form-control", rows="2", placeholder="Any additional notes...") }}
+                    </div>
+                    
+                    <div class="d-grid">
+                        {% if current_user.role == 'chair' %}
+                        <button type="submit" class="btn btn-warning btn-lg" id="submitBtn" disabled>
+                            <i class="bi bi-send me-2"></i>Confirm & Submit to Finance
+                        </button>
+                        <small class="text-center text-muted mt-2">
+                            <i class="bi bi-info-circle"></i> Finance will approve once they receive the money from you
+                        </small>
+                        {% else %}
+                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn" disabled>
+                            <i class="bi bi-check-circle me-2"></i>Confirm & Issue Tickets
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6><i class="bi bi-info-circle me-2"></i>Instructions</h6>
+                <hr>
+                {% if current_user.role == 'chair' %}
+                <ol class="small mb-0">
+                    <li class="mb-2">Receive cash payment from delegates</li>
+                    <li class="mb-2">Select the delegates who have paid you</li>
+                    <li class="mb-2">Verify the total amount matches cash received</li>
+                    <li class="mb-2">Click "Confirm & Submit to Finance"</li>
+                    <li class="mb-2"><strong>Important:</strong> Deliver the cash to Finance</li>
+                    <li>Finance will approve once they receive the money</li>
+                </ol>
+                {% else %}
+                <ol class="small mb-0">
+                    <li class="mb-2">Select the delegates who have paid cash</li>
+                    <li class="mb-2">Verify the total amount matches cash received</li>
+                    <li class="mb-2">Optionally enter a receipt number</li>
+                    <li>Click "Confirm & Issue Tickets"</li>
+                </ol>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if current_user.role == 'chair' %}
+        <div class="card mt-3">
+            <div class="card-body text-center">
+                <h6><i class="bi bi-hourglass-split me-2"></i>Previous Submissions</h6>
+                <hr>
+                <a href="{{ url_for('payments.my_submissions') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-list-check me-1"></i>View My Submissions
+                </a>
+                <small class="d-block text-muted mt-2">Track status of your submitted payments</small>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var delegateCheckboxes = document.querySelectorAll('.delegate-checkbox');
+    var selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    var selectAllBtn = document.getElementById('selectAllBtn');
+    var clearAllBtn = document.getElementById('clearAllBtn');
+    var selectedCount = document.getElementById('selectedCount');
+    var selectedSummary = document.getElementById('selectedSummary');
+    var totalAmount = document.getElementById('totalAmount');
+    var delegateIds = document.getElementById('delegateIds');
+    var submitBtn = document.getElementById('submitBtn');
+    var searchInput = document.getElementById('searchInput');
+    var delegateRows = document.querySelectorAll('.delegate-row');
+    var delegateFee = {{ delegate_fee }};
+    
+    function updateSummary() {
+        var selected = document.querySelectorAll('.delegate-checkbox:checked');
+        var count = selected.length;
+        var total = count * delegateFee;
+        var ids = Array.from(selected).map(function(cb) { return cb.value; });
+        
+        selectedCount.textContent = count;
+        totalAmount.value = total.toLocaleString();
+        delegateIds.value = ids.join(',');
+        submitBtn.disabled = count === 0;
+        
+        if (count > 0) {
+            selectedSummary.innerHTML = '<strong>' + count + '</strong> delegate(s) selected<br><small class="text-muted">Total: KSh ' + total.toLocaleString() + '</small>';
+        } else {
+            selectedSummary.innerHTML = '<span class="text-muted">No delegates selected</span>';
+        }
+    }
+    
+    // Checkbox change handlers
+    delegateCheckboxes.forEach(function(cb) {
+        cb.addEventListener('change', updateSummary);
+    });
+    
+    // Select all checkbox
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            var visibleCheckboxes = document.querySelectorAll('.delegate-row:not([style*="display: none"]) .delegate-checkbox');
+            visibleCheckboxes.forEach(function(cb) {
+                cb.checked = selectAllCheckbox.checked;
+            });
+            updateSummary();
+        });
+    }
+    
+    // Select all button
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function() {
+            var visibleCheckboxes = document.querySelectorAll('.delegate-row:not([style*="display: none"]) .delegate-checkbox');
+            visibleCheckboxes.forEach(function(cb) {
+                cb.checked = true;
+            });
+            updateSummary();
+        });
+    }
+    
+    // Clear all button
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function() {
+            delegateCheckboxes.forEach(function(cb) {
+                cb.checked = false;
+            });
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            updateSummary();
+        });
+    }
+    
+    // Search functionality
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            var searchTerm = this.value.toLowerCase();
+            delegateRows.forEach(function(row) {
+                var searchData = row.getAttribute('data-search');
+                if (searchData.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Form submission confirmation
+    document.getElementById('confirmForm').addEventListener('submit', function(e) {
+        var count = document.querySelectorAll('.delegate-checkbox:checked').length;
+        if (count === 0) {
+            e.preventDefault();
+            alert('Please select at least one delegate.');
+            return false;
+        }
+        
+        var total = count * delegateFee;
+        if (!confirm('Confirm cash payment of KSh ' + total.toLocaleString() + ' for ' + count + ' delegate(s)?')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+
+// M-Pesa number copy function
+function copyMpesaNumber(element) {
+    const number = element.textContent.trim();
+    navigator.clipboard.writeText(number).then(function() {
+        // Show feedback
+        const feedback = element.parentElement.querySelector('.copy-feedback');
+        if (feedback) {
+            feedback.style.display = 'block';
+            setTimeout(function() {
+                feedback.style.display = 'none';
+            }, 1500);
+        }
+        
+        // Brief visual feedback
+        element.style.backgroundColor = '#198754';
+        element.style.color = 'white';
+        setTimeout(function() {
+            element.style.backgroundColor = '';
+            element.style.color = '';
+        }, 300);
+    }).catch(function(err) {
+        // Fallback
+        const textArea = document.createElement('textarea');
+        textArea.value = number;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('M-Pesa number copied: ' + number);
+    });
+}
+</script>
+{% endblock %}

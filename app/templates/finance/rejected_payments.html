@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Rejected Payments - Finance{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-times-circle text-danger me-2"></i>
+                Rejected Payments
+            </h2>
+            <p class="text-muted mb-0">Payments that have been rejected</p>
+        </div>
+        <div>
+            <a href="{{ url_for('finance.payment_approvals') }}" class="btn btn-outline-warning me-2">
+                <i class="fas fa-clock me-1"></i> Pending
+            </a>
+            <a href="{{ url_for('finance.approved_payments') }}" class="btn btn-outline-success">
+                <i class="fas fa-check-circle me-1"></i> Approved
+            </a>
+        </div>
+    </div>
+
+    <!-- Payments Table -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            {% if payments %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Reference</th>
+                            <th>Submitted By</th>
+                            <th>Date</th>
+                            <th>Delegates</th>
+                            <th>Amount</th>
+                            <th>Rejection Reason</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td><strong>{{ payment.mpesa_receipt_number or ('PAY-' ~ payment.id) }}</strong></td>
+                            <td>
+                                {% if payment.confirmed_by_chair %}
+                                {{ payment.confirmed_by_chair.name }}
+                                <br><small class="text-muted">{{ payment.confirmed_by_chair.parish or '' }}</small>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ payment.created_at.strftime('%d %b %Y') }}
+                                <br><small class="text-muted">{{ payment.created_at.strftime('%H:%M') }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ payment.delegates.count() }}</span>
+                            </td>
+                            <td><strong>KES {{ "{:,.2f}".format(payment.amount) }}</strong></td>
+                            <td>
+                                {% if payment.rejection_reason %}
+                                <span class="text-danger">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    {{ payment.rejection_reason }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">No reason provided</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('finance.payment_details', payment_id=payment.id) }}" 
+                                   class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                <h5>No Rejected Payments</h5>
+                <p class="text-muted">All payments have been processed successfully.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

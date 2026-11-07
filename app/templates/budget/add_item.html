@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Add Budget Item - KAYO{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('budget.index') }}">Budgets</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('budget.view', id=budget.id) }}">{{ budget.name }}</a></li>
+            <li class="breadcrumb-item active">Add Item</li>
+        </ol>
+    </nav>
+    <h2><i class="bi bi-plus-lg me-2"></i>Add Budget Item</h2>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Item Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required
+                                   placeholder="e.g., Venue Hire, Lunch for Delegates">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-select">
+                                {% for value, label in categories %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="2"
+                                  placeholder="Additional details about this item"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" name="quantity" class="form-control" value="1" 
+                                   step="0.01" min="0" id="quantity">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Unit</label>
+                            <input type="text" name="unit" class="form-control" 
+                                   placeholder="pcs, days, persons">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Unit Cost (KSh)</label>
+                            <input type="number" name="unit_cost" class="form-control" value="0" 
+                                   step="0.01" min="0" id="unit_cost">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Total Amount (KSh) <span class="text-danger">*</span></label>
+                            <input type="number" name="budgeted_amount" class="form-control" required
+                                   step="0.01" min="0" id="budgeted_amount">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Priority</label>
+                            <select name="priority" class="form-select">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Assigned To</label>
+                            <input type="text" name="assigned_to" class="form-control"
+                                   placeholder="Person/role responsible">
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-2"></i>Add Item
+                        </button>
+                        <a href="{{ url_for('budget.view', id=budget.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6><i class="bi bi-calculator me-2"></i>Auto-Calculate</h6>
+                <p class="small text-muted">
+                    Total will be auto-calculated when you enter quantity and unit cost.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-calculate total
+document.getElementById('quantity').addEventListener('input', calculateTotal);
+document.getElementById('unit_cost').addEventListener('input', calculateTotal);
+
+function calculateTotal() {
+    const qty = parseFloat(document.getElementById('quantity').value) || 0;
+    const rate = parseFloat(document.getElementById('unit_cost').value) || 0;
+    const total = document.getElementById('budgeted_amount');
+    
+    if (qty > 0 && rate > 0) {
+        total.value = (qty * rate).toFixed(2);
+    }
+}
+</script>
+{% endblock %}

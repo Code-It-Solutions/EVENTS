@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Payment History - KAYO{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <div>
+        <h2><i class="bi bi-clock-history me-2"></i>Payment History</h2>
+        <p class="text-muted mb-0">View all your payment transactions</p>
+    </div>
+    {% if payments.items %}
+    <form action="{{ url_for('payments.clear_history') }}" method="POST" onsubmit="return confirm('Are you sure you want to clear all failed and pending payment records? Completed payments will NOT be deleted.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-outline-danger">
+            <i class="bi bi-trash me-1"></i>Clear Failed/Pending
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if payments.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Delegates</th>
+                        <th>Phone</th>
+                        <th>Receipt</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments.items %}
+                    <tr>
+                        <td>{{ loop.index + (payments.page - 1) * payments.per_page }}</td>
+                        <td>{{ payment.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+                        <td><strong>KSh {{ payment.amount | int }}</strong></td>
+                        <td>{{ payment.delegates_count }}</td>
+                        <td>{{ payment.phone_number or 'N/A' }}</td>
+                        <td>{{ payment.mpesa_receipt_number or 'N/A' }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if payment.status == 'completed' else 'warning' if payment.status == 'pending' else 'danger' }}">
+                                {{ payment.status | capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('payments.payment_status', payment_id=payment.id) }}" class="btn btn-outline-secondary" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if payment.status != 'completed' or current_user.role in ['admin', 'super_admin'] %}
+                                <form action="{{ url_for('payments.delete_payment', payment_id=payment.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this payment record?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if payments.pages > 1 %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if payments.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('payments.payment_history', page=payments.prev_num) }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in payments.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == payments.page %}
+                        <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                        {% else %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('payments.payment_history', page=page_num) }}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if payments.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('payments.payment_history', page=payments.next_num) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-credit-card text-muted" style="font-size: 3rem;"></i>
+            <p class="mt-3 text-muted">No payment history yet.</p>
+            {% if current_user.role != 'viewer' %}
+            <a href="{{ url_for('payments.payment_page') }}" class="btn btn-primary">Make First Payment</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

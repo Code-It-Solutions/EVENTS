@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Delegate - KAYO{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('delegates.list_delegates') }}">Delegates</a></li>
+            <li class="breadcrumb-item active">Edit {{ delegate.name }}</li>
+        </ol>
+    </nav>
+    <h2><i class="bi bi-pencil me-2"></i>Edit Delegate</h2>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST" class="no-mask" action="{{ url_for('delegates.edit_delegate', id=delegate.id) }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <h6 class="text-muted mb-3">Personal Information</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">{{ form.name.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.name(class="form-control") }}
+                            {% for error in form.name.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">{{ form.gender.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.gender(class="form-select") }}
+                            {% for error in form.gender.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.phone_number.label.text }}</label>
+                        {{ form.phone_number(class="form-control") }}
+                        {% for error in form.phone_number.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h6 class="text-muted mb-3">Church Details</h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.local_church.label.text }} <span class="text-danger">*</span></label>
+                        {{ form.local_church(class="form-control") }}
+                        {% for error in form.local_church.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.archdeaconry.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.archdeaconry(class="form-select", id="archdeaconry") }}
+                            {% for error in form.archdeaconry.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.parish.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.parish(class="form-select", id="parish") }}
+                            {% for error in form.parish.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('delegates.view_delegate', id=delegate.id) }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancel
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const archdeaconrySelect = document.getElementById('archdeaconry');
+    const parishSelect = document.getElementById('parish');
+    const currentParish = "{{ delegate.parish }}";
+    
+    function loadParishes(archdeaconry, selectedParish = null) {
+        // Clear existing parish options
+        parishSelect.innerHTML = '<option value="">-- Select Parish --</option>';
+        
+        if (archdeaconry) {
+            // Fetch parishes for the selected archdeaconry
+            fetch(`/api/parishes/${encodeURIComponent(archdeaconry)}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.parishes.forEach(parish => {
+                        const option = document.createElement('option');
+                        option.value = parish;
+                        option.textContent = parish;
+                        if (selectedParish && parish === selectedParish) {
+                            option.selected = true;
+                        }
+                        parishSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching parishes:', error);
+                });
+        }
+    }
+    
+    // Load parishes for the current archdeaconry on page load
+    if (archdeaconrySelect.value) {
+        loadParishes(archdeaconrySelect.value, currentParish);
+    }
+    
+    archdeaconrySelect.addEventListener('change', function() {
+        loadParishes(this.value);
+    });
+});
+</script>
+{% endblock %}

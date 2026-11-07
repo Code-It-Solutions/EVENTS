@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Scheduled Payment - {{ payment.source_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Payment Details -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-calendar-check me-2 text-primary"></i>
+                        Scheduled Payment Details
+                    </h4>
+                    <span class="badge bg-{{ 'success' if payment.status == 'completed' else 'primary' if payment.status == 'active' else 'warning' if payment.status == 'paused' else 'danger' }} fs-6">
+                        {{ payment.status.title() }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Source Name</h6>
+                            <p class="h5 mb-3">{{ payment.source_name }}</p>
+                            
+                            <h6 class="text-muted mb-1">Source Type</h6>
+                            <p class="mb-3">
+                                <span class="badge bg-{{ 'primary' if payment.source_type == 'delegate' else 'success' if payment.source_type == 'well_wisher' else 'info' }}">
+                                    {{ payment.source_type.replace('_', ' ').title() }}
+                                </span>
+                            </p>
+                            
+                            {% if payment.source_phone %}
+                            <h6 class="text-muted mb-1">Phone</h6>
+                            <p class="mb-3">{{ payment.source_phone }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Amount per Payment</h6>
+                            <p class="h4 text-primary mb-3">KSh {{ "{:,.2f}".format(payment.amount) }}</p>
+                            
+                            <h6 class="text-muted mb-1">Frequency</h6>
+                            <p class="h5 mb-3">{{ payment.frequency.title() }}</p>
+                            
+                            <h6 class="text-muted mb-1">Total Collected</h6>
+                            <p class="h4 text-success mb-3">KSh {{ "{:,.2f}".format(payment.total_collected) }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Start Date</h6>
+                            <p class="mb-0">{{ payment.start_date.strftime('%d %B %Y') }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">End Date</h6>
+                            <p class="mb-0">{{ payment.end_date.strftime('%d %B %Y') if payment.end_date else 'Ongoing' }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Next Payment Due</h6>
+                            <p class="mb-0 fw-bold text-{{ 'danger' if payment.next_payment_date and payment.next_payment_date < today else 'primary' }}">
+                                {{ payment.next_payment_date.strftime('%d %B %Y') if payment.next_payment_date else '-' }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if payment.description %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Description</h6>
+                        <p class="mb-0">{{ payment.description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Local Church</h6>
+                            <p class="mb-2">{{ payment.local_church or '-' }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Parish</h6>
+                            <p class="mb-2">{{ payment.parish or '-' }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Archdeaconry</h6>
+                            <p class="mb-2">{{ payment.archdeaconry or '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <a href="{{ url_for('fund_management.list_scheduled_payments') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Installments -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Installments</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for installment in installments %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ installment.due_date.strftime('%d %b %Y') }}</strong>
+                                    <br><small class="text-muted">Due: KSh {{ "{:,.0f}".format(installment.amount_due) }}</small>
+                                    {% if installment.amount_paid > 0 %}
+                                    <br><small class="text-success">Paid: KSh {{ "{:,.0f}".format(installment.amount_paid) }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-{{ 'success' if installment.status == 'paid' else 'warning' if installment.status == 'partial' else 'danger' if installment.status == 'overdue' else 'secondary' }}">
+                                        {{ installment.status.title() }}
+                                    </span>
+                                    {% if installment.status in ['pending', 'partial', 'overdue'] %}
+                                    <br>
+                                    <a href="{{ url_for('fund_management.pay_installment', payment_id=payment.id, installment_id=installment.id) }}" class="btn btn-sm btn-success mt-1">
+                                        <i class="fas fa-plus"></i> Pay
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center text-muted py-4">
+                            No installments yet
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

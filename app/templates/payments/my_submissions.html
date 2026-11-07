@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}My Submitted Payments{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-paper-plane text-primary me-2"></i>
+                My Submitted Payments
+            </h2>
+            <p class="text-muted mb-0">Track the status of cash payments you've submitted for finance approval</p>
+        </div>
+        <a href="{{ url_for('payments.confirm_cash_payment') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Record New Payment
+        </a>
+    </div>
+
+    <!-- Workflow Reminder -->
+    {% if pending|length > 0 %}
+    <div class="alert alert-warning mb-4">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle me-3 fa-2x"></i>
+            <div>
+                <h6 class="alert-heading mb-1">Action Required: Deliver Cash to Finance</h6>
+                <p class="mb-0">You have <strong>{{ pending|length }} payment(s)</strong> pending approval. 
+                Please deliver the total of <strong>KES {{ "{:,.2f}".format(total_pending) }}</strong> to Finance 
+                so they can approve and issue tickets.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Pending Approval</h6>
+                            <h3 class="mb-0">KES {{ "{:,.2f}".format(total_pending) }}</h3>
+                            <small>{{ pending|length }} payment(s)</small>
+                        </div>
+                        <i class="fas fa-hourglass-half fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Approved</h6>
+                            <h3 class="mb-0">KES {{ "{:,.2f}".format(total_approved) }}</h3>
+                            <small>{{ approved|length }} payment(s)</small>
+                        </div>
+                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Rejected</h6>
+                            <h3 class="mb-0">{{ rejected|length }}</h3>
+                            <small>payment(s)</small>
+                        </div>
+                        <i class="fas fa-times-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs mb-4" id="paymentTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button">
+                <i class="fas fa-clock me-1"></i> Pending 
+                <span class="badge bg-warning text-dark">{{ pending|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button">
+                <i class="fas fa-check me-1"></i> Approved
+                <span class="badge bg-success">{{ approved|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button">
+                <i class="fas fa-times me-1"></i> Rejected
+                <span class="badge bg-danger">{{ rejected|length }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="paymentTabsContent">
+        <!-- Pending Tab -->
+        <div class="tab-pane fade show active" id="pending" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    {% if pending %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Date Submitted</th>
+                                    <th>Delegates</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Status</th>
+                                    {% if current_user.role in ['admin', 'super_admin', 'finance'] %}
+                                    <th>Actions</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in pending %}
+                                <tr>
+                                    <td><strong>{{ payment.mpesa_receipt_number or ('PAY-' ~ payment.id) }}</strong></td>
+                                    <td>
+                                        {{ payment.created_at.strftime('%d %b %Y') }}
+                                        <br><small class="text-muted">{{ payment.created_at.strftime('%H:%M') }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ payment.delegates.count() }}</span>
+                                        {% for delegate in payment.delegates.limit(2) %}
+                                        <br><small>{{ delegate.name }}</small>
+                                        {% endfor %}
+                                        {% if payment.delegates.count() > 2 %}
+                                        <br><small class="text-muted">+{{ payment.delegates.count() - 2 }} more</small>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong class="text-success">KES {{ "{:,.2f}".format(payment.amount) }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            {{ payment.payment_mode or 'CASH' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-hourglass-half me-1"></i>
+                                            Awaiting Finance Approval
+                                        </span>
+                                    </td>
+                                    {% if current_user.role in ['admin', 'super_admin', 'finance'] %}
+                                    <td>
+                                        <form action="{{ url_for('payments.delete_payment', payment_id=payment.id) }}" 
+                                              method="POST" class="d-inline" 
+                                              onsubmit="return confirm('Delete this payment?\n\nAmount: KES {{ '{:,.2f}'.format(payment.amount) }}\nDelegates: {{ payment.delegates.count() }}\n\nThis will unlink all delegates from this payment.');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="redirect_url" value="{{ url_for('payments.my_submissions') }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Payment">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                        <h5>No Pending Payments</h5>
+                        <p class="text-muted">All your submitted payments have been processed.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Approved Tab -->
+        <div class="tab-pane fade" id="approved" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    {% if approved %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Submitted</th>
+                                    <th>Approved</th>
+                                    <th>Delegates</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    {% if current_user.role in ['admin', 'super_admin', 'finance'] %}
+                                    <th>Actions</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in approved %}
+                                <tr>
+                                    <td><strong>{{ payment.mpesa_receipt_number or ('PAY-' ~ payment.id) }}</strong></td>
+                                    <td>{{ payment.created_at.strftime('%d %b %Y') }}</td>
+                                    <td>
+                                        {% if payment.approved_by_finance_at %}
+                                        {{ payment.approved_by_finance_at.strftime('%d %b %Y') }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td><span class="badge bg-primary">{{ payment.delegates.count() }}</span></td>
+                                    <td><strong class="text-success">KES {{ "{:,.2f}".format(payment.amount) }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i> Approved
+                                        </span>
+                                        {% if payment.finance_notes %}
+                                        <br><small>{{ payment.finance_notes }}</small>
+                                        {% endif %}
+                                    </td>
+                                    {% if current_user.role in ['admin', 'super_admin', 'finance'] %}
+                                    <td>
+                                        <form action="{{ url_for('payments.delete_payment', payment_id=payment.id) }}" 
+                                              method="POST" class="d-inline" 
+                                              onsubmit="return confirm('Delete this approved payment?\n\nAmount: KES {{ '{:,.2f}'.format(payment.amount) }}\nDelegates: {{ payment.delegates.count() }}\n\nWARNING: This will mark all linked delegates as UNPAID!');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="redirect_url" value="{{ url_for('payments.my_submissions') }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Payment">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clock fa-4x text-muted mb-3"></i>
+                        <h5>No Approved Payments Yet</h5>
+                        <p class="text-muted">Your approved payments will appear here.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Rejected Tab -->
+        <div class="tab-pane fade" id="rejected" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    {% if rejected %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Rejection Reason</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in rejected %}
+                                <tr>
+                                    <td><strong>{{ payment.mpesa_receipt_number or ('PAY-' ~ payment.id) }}</strong></td>
+                                    <td>{{ payment.created_at.strftime('%d %b %Y') }}</td>
+                                    <td><strong>KES {{ "{:,.2f}".format(payment.amount) }}</strong></td>
+                                    <td>
+                                        <span class="text-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            {{ payment.rejection_reason or 'No reason provided' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if current_user.role in ['admin', 'super_admin', 'finance'] %}
+                                        <form action="{{ url_for('payments.delete_payment', payment_id=payment.id) }}" 
+                                              method="POST" class="d-inline" 
+                                              onsubmit="return confirm('Delete this rejected payment?\n\nAmount: KES {{ '{:,.2f}'.format(payment.amount) }}');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="redirect_url" value="{{ url_for('payments.my_submissions') }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Payment">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <small class="text-muted">Contact finance for clarification</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                        <h5>No Rejected Payments</h5>
+                        <p class="text-muted">Great! None of your payments have been rejected.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

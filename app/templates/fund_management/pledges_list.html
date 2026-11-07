@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Pledges{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Pledges</h1>
+            <p class="text-muted mb-0">Track all recorded pledges</p>
+        </div>
+        <a href="{{ url_for('fund_management.create_pledge') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Record New Pledge
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="pledgesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Source</th>
+                            <th>Type</th>
+                            <th>Church</th>
+                            <th>Pledged</th>
+                            <th>Collected</th>
+                            <th>Balance</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pledge in pledges %}
+                        <tr>
+                            <td>
+                                <strong>{{ pledge.source_name }}</strong>
+                                {% if pledge.source_phone %}
+                                <br><small class="text-muted">{{ pledge.source_phone }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if pledge.source_type == 'delegate' else 'success' if pledge.source_type == 'well_wisher' else 'info' }}">
+                                    {{ pledge.source_type.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ pledge.local_church or '-' }}</small>
+                                <br><small class="text-muted">{{ pledge.parish or '-' }}</small>
+                            </td>
+                            <td>KSh {{ "{:,.2f}".format(pledge.amount_pledged) }}</td>
+                            <td class="text-success">KSh {{ "{:,.2f}".format(pledge.amount_paid) }}</td>
+                            <td class="text-{{ 'danger' if pledge.get_balance() > 0 else 'success' }}">
+                                KSh {{ "{:,.2f}".format(pledge.get_balance()) }}
+                            </td>
+                            <td>
+                                {% if pledge.due_date %}
+                                {{ pledge.due_date.strftime('%d %b %Y') }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if pledge.status == 'fulfilled' else 'warning' if pledge.status == 'partial' else 'secondary' if pledge.status == 'pending' else 'danger' }}">
+                                    {{ pledge.status.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('fund_management.view_pledge', pledge_id=pledge.id) }}" class="btn btn-outline-primary" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if pledge.status not in ['fulfilled', 'cancelled'] %}
+                                    <a href="{{ url_for('fund_management.record_pledge_payment', pledge_id=pledge.id) }}" class="btn btn-outline-success" title="Record Payment">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if current_user.role in ['admin', 'super_admin'] or (pledge.recorded_by == current_user.id and pledge.amount_paid == 0) %}
+                                    <form action="{{ url_for('fund_management.delete_pledge', pledge_id=pledge.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this pledge from {{ pledge.source_name }}? This action cannot be undone.');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                <p class="mb-2">No pledges recorded yet</p>
+                                <a href="{{ url_for('fund_management.create_pledge') }}" class="btn btn-primary btn-sm">
+                                    Record First Pledge
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

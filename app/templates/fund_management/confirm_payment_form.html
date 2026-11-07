@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Payment{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Payment Details -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Payment Details</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="mb-1"><strong>Amount:</strong></p>
+                            <h4 class="text-success">KSh {{ "{:,.2f}".format(payment.amount) }}</h4>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-1"><strong>Method:</strong></p>
+                            <p>{{ payment.payment_method.replace('_', ' ').title() }}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="mb-1 text-muted">Pledge Source:</p>
+                            <p class="fw-semibold mb-0">{{ payment.pledge.source_name }}</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-1 text-muted">Reference:</p>
+                            <p class="font-monospace mb-0">{{ payment.reference or '-' }}</p>
+                        </div>
+                    </div>
+                    {% if payment.notes %}
+                    <hr>
+                    <p class="mb-1 text-muted">Notes:</p>
+                    <p class="mb-0">{{ payment.notes }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Confirmation Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-check-circle me-2 text-primary"></i>Confirm Payment</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="no-mask" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Action -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Action <span class="text-danger">*</span></label>
+                            <div class="d-grid gap-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="action" id="action_confirm" value="confirm" checked>
+                                    <label class="form-check-label" for="action_confirm">
+                                        <span class="badge bg-success me-2">Confirm</span>
+                                        Verify this payment is valid
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="action" id="action_reject" value="reject">
+                                    <label class="form-check-label" for="action_reject">
+                                        <span class="badge bg-danger me-2">Reject</span>
+                                        Mark this payment as invalid
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">{{ form.notes.label.text }}</label>
+                            {{ form.notes(class="form-control", rows="2", placeholder="Any notes about this confirmation...") }}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                            <a href="{{ url_for('fund_management.pending_payments') }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

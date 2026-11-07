@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a5f2a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- CSRF Token for AJAX and form submissions -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}KAYO{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    
+    <style>
+        :root {
+            /* KAYO Green Theme Colors */
+            --kayo-green: #1a5f2a;
+            --kayo-green-dark: #0d4a1c;
+            --kayo-green-light: #2d8f42;
+            --kayo-gold: #c9a227;
+            --kayo-gold-light: #e6c456;
+            --primary-color: #1a5f2a;
+            --secondary-color: #c9a227;
+            --accent-color: #2d8f42;
+        }
+        
+        * {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        [data-bs-theme="light"] body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4efe7 100%);
+        }
+        
+        [data-bs-theme="dark"] body {
+            background: linear-gradient(135deg, #1a1d20 0%, #0d1f12 100%);
+        }
+        
+        [data-bs-theme="dark"] {
+            --kayo-green: #2d8f42;
+            --kayo-green-dark: #1a5f2a;
+        }
+        
+        body {
+            min-height: 100vh;
+        }
+        
+        /* Navbar - KAYO Green */
+        .navbar {
+            background: linear-gradient(135deg, var(--kayo-green) 0%, var(--kayo-green-dark) 100%) !important;
+            box-shadow: 0 2px 15px rgba(26, 95, 42, 0.3);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.4rem;
+        }
+        
+        /* Diocese Logo Hover Effect */
+        .navbar-brand img {
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-brand img:hover {
+            transform: scale(1.15) rotate(-3deg);
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+        }
+        
+        /* Sidebar - KAYO Theme */
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background: linear-gradient(180deg, var(--kayo-green-dark) 0%, #0a3815 100%);
+            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.85);
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin: 4px 10px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link.active {
+            background: linear-gradient(90deg, var(--kayo-gold) 0%, var(--kayo-gold-light) 100%);
+            color: #000;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(201, 162, 39, 0.4);
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+        }
+        
+        .main-content {
+            padding: 15px;
+        }
+        
+        /* Global Search Styles */
+        .search-results-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 1050;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 5px;
+        }
+        
+        [data-bs-theme="dark"] .search-results-dropdown {
+            background: #2d3238;
+        }
+        
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            transition: background 0.2s;
+        }
+        
+        .search-result-item:hover,
+        .search-result-item.active {
+            background: rgba(26, 95, 42, 0.1);
+        }
+        
+        [data-bs-theme="dark"] .search-result-item:hover,
+        [data-bs-theme="dark"] .search-result-item.active {
+            background: rgba(45, 143, 66, 0.2);
+        }
+        
+        .search-result-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 1.2rem;
+        }
+        
+        .search-result-icon.delegate { background: #e3f2fd; color: #1976d2; }
+        .search-result-icon.user { background: #f3e5f5; color: #7b1fa2; }
+        .search-result-icon.payment { background: #e8f5e9; color: #388e3c; }
+        .search-result-icon.event { background: #fff3e0; color: #f57c00; }
+        
+        .search-result-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .search-result-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .search-result-subtitle {
+            font-size: 0.8rem;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .search-no-results {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+        }
+        
+        .search-category-header {
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            background: #f8f9fa;
+        }
+        
+        [data-bs-theme="dark"] .search-category-header {
+            background: #1a1d20;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        /* Prevent modal content from having hover transform effect */
+        .modal .card:hover,
+        .modal-content:hover,
+        .modal-content .card:hover {
+            transform: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Prevent table buttons from having hover transform that causes shaking */
+        .table .btn:hover,
+        .btn-group .btn:hover {
+            transform: none !important;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--kayo-green) 0%, var(--kayo-green-light) 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+        
+        /* Buttons - KAYO Theme */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--kayo-green) 0%, var(--kayo-green-light) 100%);
+            border: none;
+            font-weight: 500;
+            padding: 10px 24px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--kayo-green-dark) 0%, var(--kayo-green) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(26, 95, 42, 0.4);
+        }
+        
+        .btn-outline-primary {
+            color: var(--kayo-green);
+            border-color: var(--kayo-green);
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--kayo-green);
+            border-color: var(--kayo-green);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--kayo-gold) 0%, var(--kayo-gold-light) 100%);
+            border: none;
+            color: #000;
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #b8921f 0%, var(--kayo-gold) 100%);
+            color: #000;
+        }
+        
+        /* Stat Cards */
+        .stat-card {
+            padding: 20px;
+            border-left: 4px solid var(--kayo-green);
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--kayo-green);
+        }
+        
+        [data-bs-theme="dark"] .stat-card .stat-value {
+            color: var(--kayo-green-light);
+        }
+        
+        .stat-card .stat-label {
+            color: #6c757d;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-card .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.15;
+            color: var(--kayo-green);
+        }
+        
+        /* Tables */
+        .table th {
+            font-weight: 600;
+            color: var(--kayo-green-dark);
+            border-top: none;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Badges */
+        .badge-paid, .bg-success {
+            background: linear-gradient(135deg, var(--kayo-green) 0%, var(--kayo-green-light) 100%) !important;
+        }
+        
+        .badge-unpaid {
+            background-color: #dc3545;
+        }
+        
+        .badge-pending {
+            background: linear-gradient(135deg, var(--kayo-gold) 0%, var(--kayo-gold-light) 100%);
+            color: #000;
+        }
+        
+        /* Form Controls */
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--kayo-green);
+            box-shadow: 0 0 0 0.2rem rgba(26, 95, 42, 0.25);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px 16px;
+        }
+        
+        /* Alerts */
+        .alert {
+            border: none;
+            border-radius: 12px;
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, rgba(26, 95, 42, 0.1) 0%, rgba(45, 143, 66, 0.1) 100%);
+            color: var(--kayo-green-dark);
+            border-left: 4px solid var(--kayo-green);
+        }
+        
+        /* Links */
+        a {
+            color: var(--kayo-green);
+        }
+        
+        a:hover {
+            color: var(--kayo-green-dark);
+        }
+        
+        /* Progress Bars */
+        .progress-bar {
+            background: linear-gradient(90deg, var(--kayo-green) 0%, var(--kayo-green-light) 100%);
+        }
+        
+        /* Text Colors */
+        .text-primary {
+            color: var(--kayo-green) !important;
+        }
+        
+        .text-success {
+            color: var(--kayo-green) !important;
+        }
+        
+        .bg-primary {
+            background: linear-gradient(135deg, var(--kayo-green) 0%, var(--kayo-green-light) 100%) !important;
+        }
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 991px) {
+            .sidebar {
+                position: fixed;
+                top: 56px;
+                left: -280px;
+                width: 280px;
+                height: calc(100vh - 56px);
+                z-index: 1050;
+                transition: left 0.3s ease;
+            }
+            
+            .sidebar.show {
+                left: 0;
+            }
+            
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 56px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 1040;
+            }
+            
+            .sidebar-overlay.show {
+                display: block;
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+            
+            .navbar-brand span {
+                font-size: 1.1rem;
+            }
+            
+            .stat-card .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 10px;
+            }
+            
+            .card {
+                border-radius: 12px;
+            }
+            
+            .card-body {
+                padding: 15px;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            
+            h1, .h1 { font-size: 1.75rem; }
+            h2, .h2 { font-size: 1.5rem; }
+            h3, .h3 { font-size: 1.25rem; }
+            
+            .table {
+                font-size: 0.85rem;
+            }
+            
+            .d-flex.gap-2 {
+                flex-direction: column;
+            }
+            
+            .d-flex.gap-2 > * {
+                width: 100%;
+            }
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--kayo-green);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--kayo-green-dark);
+        }
+        
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            padding: 5px 10px;
+        }
+        
+        @media (max-width: 991px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+        }
+        
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, var(--kayo-green-dark) 0%, #0a3815 100%);
+            color: rgba(255,255,255,0.9);
+        }
+        
+        footer a {
+            color: var(--kayo-gold);
+        }
+        
+        /* Section Headers */
+        .section-header {
+            color: var(--kayo-green);
+            font-weight: 600;
+            position: relative;
+            padding-left: 15px;
+        }
+        
+        .section-header::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--kayo-green) 0%, var(--kayo-gold) 100%);
+            border-radius: 2px;
+        }
+        
+        /* Google Button */
+        .btn-google {
+            background: #fff;
+            color: #444;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-google:hover {
+            background: #f8f9fa;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <button class="mobile-menu-toggle me-2" id="sidebarToggle" type="button">
+                <i class="bi bi-list"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.dashboard') }}">
+                <img src="{{ url_for('static', filename='images/diocese_logo.png') }}" alt="ACK Diocese of Nambale" height="70" class="me-2 d-none d-sm-block" onerror="this.style.display='none'">
+                <div class="d-flex flex-column lh-1">
+                    <span class="fw-bold">KAYO</span>
+                    <small class="text-light opacity-75 d-none d-md-block" style="font-size: 0.6rem;">ACK Diocese of Nambale</small>
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                {% if current_user.is_authenticated %}
+                <!-- Global Search -->
+                <div class="mx-auto position-relative" style="width: 100%; max-width: 400px;">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" id="globalSearch" 
+                               placeholder="Search delegates, payments, events..." 
+                               autocomplete="off">
+                        <span class="input-group-text bg-white d-none" id="searchSpinner">
+                            <i class="bi bi-arrow-repeat spin"></i>
+                        </span>
+                    </div>
+                    <!-- Search Results Dropdown -->
+                    <div class="search-results-dropdown" id="searchResults" style="display: none;">
+                        <div class="search-results-list"></div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <!-- Dark Mode Toggle -->
+                    <li class="nav-item">
+                        <button class="nav-link btn" id="darkModeToggle" title="Toggle Dark Mode">
+                            <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+                        </button>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                    <!-- Notification Bell -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                            <i class="bi bi-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" id="notificationBadge" style="display: none; font-size: 0.6rem;">
+                                0
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="width: 320px; max-height: 400px; overflow-y: auto;" aria-labelledby="notificationDropdown">
+                            <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                <strong><i class="bi bi-bell me-1"></i>Notifications</strong>
+                                <button class="btn btn-sm btn-link text-muted p-0" onclick="markAllRead()" title="Mark all read">
+                                    <i class="bi bi-check-all"></i>
+                                </button>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <div id="notificationList">
+                                <li class="text-center py-3 text-muted small">
+                                    <i class="bi bi-bell-slash me-1"></i>Loading...
+                                </li>
+                            </div>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <div class="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                {% if current_user.profile_picture %}
+                                <img src="{{ current_user.profile_picture }}" class="rounded-circle" width="32" height="32" alt="">
+                                {% else %}
+                                <i class="bi bi-person-fill"></i>
+                                {% endif %}
+                            </div>
+                            <span class="d-none d-md-inline">{{ current_user.name.split()[0] }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><span class="dropdown-item-text text-muted small">{{ current_user.email }}</span></li>
+                            <li><span class="dropdown-item-text"><span class="badge bg-primary">{% if current_user.role == 'viewer' %}SUPER DYO{% else %}{{ current_user.role|title }}{% endif %}</span></span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('settings.my_sessions') }}"><i class="bi bi-laptop me-2"></i>Active Sessions</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="container-fluid">
+        <div class="row">
+            {% if current_user.is_authenticated %}
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar" id="sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        {% if current_user.is_admin() %}
+                        <!-- Current Event Indicator -->
+                        {% if current_user.get_current_event() %}
+                        <li class="nav-item px-3 mb-2">
+                            <small class="text-white-50">Current Event:</small>
+                            <div class="text-white small fw-bold">{{ current_user.get_current_event().name }}</div>
+                        </li>
+                        <li><hr class="my-2" style="border-color: rgba(255,255,255,0.1);"></li>
+                        {% endif %}
+                        
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">
+                                <i class="bi bi-speedometer2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'admin.pending_approvals' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.pending_approvals') }}">
+                                <i class="bi bi-person-check"></i>Approvals
+                                {% set pending_count = pending_registration_count|default(0) %}
+                                {% if pending_count > 0 %}
+                                <span class="badge bg-danger ms-1">{{ pending_count }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'admin.all_delegates' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.all_delegates') }}">
+                                <i class="bi bi-people"></i>All Delegates
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'admin.check_in' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.check_in') }}">
+                                <i class="bi bi-qr-code-scan"></i>Check-In
+                            </a>
+                        </li>
+                        
+                        <li><hr class="my-2" style="border-color: rgba(255,255,255,0.1);"></li>
+                        <li class="px-3"><small class="text-white-50 text-uppercase" style="font-size: 0.7rem;">Check-In System</small></li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'checkin.qr_scanner' in request.endpoint %}active{% endif %}" href="{{ url_for('checkin.qr_scanner') }}">
+                                <i class="bi bi-qrcode"></i>QR Scanner
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'checkin.dashboard' in request.endpoint %}active{% endif %}" href="{{ url_for('checkin.dashboard') }}">
+                                <i class="bi bi-clipboard-check"></i>Arrivals
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'checkin.session_attendance' in request.endpoint %}active{% endif %}" href="{{ url_for('checkin.session_attendance') }}">
+                                <i class="bi bi-calendar-check"></i>Sessions
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'admin.search' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.search') }}">
+                                <i class="bi bi-search"></i>Search
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'admin.all_users' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.all_users') }}">
+                                <i class="bi bi-person-badge"></i>Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'admin.all_payments' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.all_payments') }}">
+                                <i class="bi bi-credit-card"></i>Payments
+                            </a>
+                        </li>
+                        
+                        <li><hr class="my-2" style="border-color: rgba(255,255,255,0.1);"></li>
+                        <li class="px-3"><small class="text-white-50 text-uppercase" style="font-size: 0.7rem;">Analytics & Audit</small></li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'admin.charts_dashboard' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.charts_dashboard') }}">
+                                <i class="bi bi-graph-up"></i>Charts Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'admin.parish_heatmap' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.parish_heatmap') }}">
+                                <i class="bi bi-grid-3x3-gap"></i>Parish Heatmap
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'admin.audit_log' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.audit_log') }}">
+                                <i class="bi bi-clock-history"></i>Audit Log
+                            </a>
+                        </li>
+                        
+                        <li><hr class="my-2" style="border-color: rgba(255,255,255,0.1);"></li>
+                        <li class="px-3"><small class="text-white-50 text-uppercase" style="font-size: 0.7rem;">Fund Management</small></li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'fund_management.' in request.endpoint %}active{% endif %}" href="{{ url_for('fund_management.dashboard') }}">
+                                <i class="bi bi-cash-stack"></i>Funds Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'fund_management.list_pledges' in request.endpoint %}active{% endif %}" href="{{ url_for('fund_management.list_pledges') }}">
+                                <i class="bi bi-hand-thumbs-up"></i>Pledges
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'fund_management.list_scheduled_payments' in request.endpoint %}active{% endif %}" href="{{ url_for('fund_management.list_scheduled_payments') }}">
+                                <i class="bi bi-calendar-date"></i>Scheduled Payments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'fund_management.list_transfers' in request.endpoint %}active{% endif %}" href="{{ url_for('fund_management.list_transfers') }}">
+                                <i class="bi bi-arrow-left-right"></i>Fund Transfers
+                            </a>
+                        </li>
+                        
+                        <li><hr class="my-2" style="border-color: rgba(255,255,255,0.1);"></li>
+                        <li class="px-3"><small class="text-white-50 text-uppercase" style="font-size: 0.7rem;">Management</small></li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'events.' in request.endpoint %}active{% endif %}" href="{{ url_for('events.list_events') }}">
+                                <i class="bi bi-calendar-event"></i>Events
+                            </a>
+                        </li>
+                        
+                        <li><hr class="my-2" style="border-color: rgba(255,255,255,0.1);"></li>
+                        <li class="px-3"><small class="text-white-50 text-uppercase" style="font-size: 0.7rem;">Settings</small></li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'settings.list_users' in request.endpoint %}active{% endif %}" href="{{ url_for('settings.list_users') }}">
+                                <i class="bi bi-people-fill"></i>Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'settings.list_roles' in request.endpoint %}active{% endif %}" href="{{ url_for('settings.list_roles') }}">
+                                <i class="bi bi-shield-lock"></i>Roles
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'settings.audit_logs' in request.endpoint %}active{% endif %}" href="{{ url_for('settings.audit_logs') }}">
+                                <i class="bi bi-journal-text"></i>Audit Logs
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'analytics.' in request.endpoint %}active{% endif %}" href="{{ url_for('analytics.dashboard') }}">
+                                <i class="bi bi-graph-up-arrow"></i>Analytics
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'communications.' in request.endpoint %}active{% endif %}" href="{{ url_for('communications.index') }}">
+                                <i class="bi bi-chat-dots"></i>Comms
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'badges.' in request.endpoint %}active{% endif %}" href="{{ url_for('badges.index') }}">
+                                <i class="bi bi-person-vcard"></i>Badges
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}" href="{{ url_for('main.dashboard') }}">
+                                <i class="bi bi-speedometer2"></i>Dashboard
+                            </a>
+                        </li>
+                        {% if current_user.role != 'viewer' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'delegates.register_delegate' %}active{% endif %}" href="{{ url_for('delegates.register_delegate') }}">
+                                <i class="bi bi-person-plus"></i>Register
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'delegates.list_delegates' %}active{% endif %}" href="{{ url_for('delegates.list_delegates') }}">
+                                <i class="bi bi-list-ul"></i>{% if current_user.role == 'viewer' %}Delegates{% else %}My Delegates{% endif %}
+                            </a>
+                        </li>
+                        {% if current_user.role in ['chair', 'admin', 'super_admin'] %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'public.pending_approvals' in request.endpoint %}active{% endif %}" href="{{ url_for('public.pending_approvals') }}">
+                                <i class="bi bi-person-check"></i>Approvals
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if current_user.role != 'viewer' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'payments' in request.endpoint %}active{% endif %}" href="{{ url_for('payments.payment_page') }}">
+                                <i class="bi bi-wallet2"></i>Pay
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if current_user.role == 'chair' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'payments.my_submissions' in request.endpoint %}active{% endif %}" href="{{ url_for('payments.my_submissions') }}">
+                                <i class="bi bi-send-check"></i>My Submissions
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'payments.payment_history' %}active{% endif %}" href="{{ url_for('payments.payment_history') }}">
+                                <i class="bi bi-clock-history"></i>History
+                            </a>
+                        </li>
+                        {% if current_user.role in ['chair', 'finance', 'admin', 'super_admin'] %}
+                        <li><hr class="my-2" style="border-color: rgba(255,255,255,0.1);"></li>
+                        <li class="px-3"><small class="text-white-50 text-uppercase" style="font-size: 0.7rem;">Fund Management</small></li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'fund_management.' in request.endpoint %}active{% endif %}" href="{{ url_for('fund_management.dashboard') }}">
+                                <i class="bi bi-cash-stack"></i>Funds
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% if current_user.role == 'finance' %}
+                        <li><hr class="my-2" style="border-color: rgba(255,255,255,0.1);"></li>
+                        <li class="px-3"><small class="text-white-50 text-uppercase" style="font-size: 0.7rem;">Finance Management</small></li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'payments.finance_payment_dashboard' in request.endpoint %}active{% endif %}" href="{{ url_for('payments.finance_payment_dashboard') }}">
+                                <i class="bi bi-speedometer2"></i>Finance Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'finance.payment_approvals' in request.endpoint %}active{% endif %}" href="{{ url_for('finance.payment_approvals') }}">
+                                <i class="bi bi-check2-square"></i>Payment Approvals
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'payments.receive_payment' in request.endpoint %}active{% endif %}" href="{{ url_for('payments.receive_payment') }}">
+                                <i class="bi bi-cash-coin"></i>Receive Payments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'payments.all_payments' in request.endpoint %}active{% endif %}" href="{{ url_for('payments.all_payments') }}">
+                                <i class="bi bi-list-check"></i>All Payments
+                            </a>
+                        </li>
+                        
+                        <li><hr class="my-2" style="border-color: rgba(255,255,255,0.1);"></li>
+                        <li class="px-3"><small class="text-white-50 text-uppercase" style="font-size: 0.7rem;">Accounting</small></li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'finance.dashboard' in request.endpoint %}active{% endif %}" href="{{ url_for('finance.dashboard') }}">
+                                <i class="bi bi-calculator"></i>Finance Overview
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'finance.chart_of_accounts' in request.endpoint or 'finance.create_account' in request.endpoint %}active{% endif %}" href="{{ url_for('finance.chart_of_accounts') }}">
+                                <i class="bi bi-folder2-open"></i>Chart of Accounts
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'finance.list_journals' in request.endpoint or 'finance.create_journal' in request.endpoint %}active{% endif %}" href="{{ url_for('finance.list_journals') }}">
+                                <i class="bi bi-journal-bookmark"></i>Journal Entries
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'finance.list_vouchers' in request.endpoint or 'finance.create_voucher' in request.endpoint %}active{% endif %}" href="{{ url_for('finance.list_vouchers') }}">
+                                <i class="bi bi-receipt"></i>Vouchers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'finance.budget' in request.endpoint %}active{% endif %}" href="{{ url_for('finance.budget_overview') }}">
+                                <i class="bi bi-pie-chart"></i>Budget (Legacy)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'budget.' in request.endpoint %}active{% endif %}" href="{{ url_for('budget.index') }}">
+                                <i class="bi bi-wallet2"></i>Budget Manager
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'finance.reports' in request.endpoint or 'finance.trial_balance' in request.endpoint or 'finance.income_statement' in request.endpoint or 'finance.balance_sheet' in request.endpoint %}active{% endif %}" href="{{ url_for('finance.reports_index') }}">
+                                <i class="bi bi-file-earmark-bar-graph"></i>Reports
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Finance Quick Access for Admin -->
+                        {% if current_user.role in ['admin', 'super_admin'] %}
+                        <li><hr class="my-2" style="border-color: rgba(255,255,255,0.1);"></li>
+                        <li class="px-3"><small class="text-white-50 text-uppercase" style="font-size: 0.7rem;">💰 Finance Management</small></li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'payments.finance_payment_dashboard' in request.endpoint %}active{% endif %}" href="{{ url_for('payments.finance_payment_dashboard') }}">
+                                <i class="bi bi-speedometer2"></i>Finance Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'finance.payment_approvals' in request.endpoint %}active{% endif %}" href="{{ url_for('finance.payment_approvals') }}">
+                                <i class="bi bi-check2-square"></i>Payment Approvals
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'payments.receive_payment' in request.endpoint %}active{% endif %}" href="{{ url_for('payments.receive_payment') }}">
+                                <i class="bi bi-cash-coin"></i>Receive Payments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'payments.all_payments' in request.endpoint %}active{% endif %}" href="{{ url_for('payments.all_payments') }}">
+                                <i class="bi bi-list-check"></i>All Payments
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Help Section for Chairs -->
+                        {% if current_user.role in ['chair', 'finance', 'registration_officer', 'data_clerk'] %}
+                        <li><hr class="my-2" style="border-color: rgba(255,255,255,0.1);"></li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.help_page' %}active{% endif %}" href="{{ url_for('main.help_page') }}">
+                                <i class="bi bi-question-circle"></i>Help & Tutorial
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.chair_manual' %}active{% endif %}" href="{{ url_for('main.chair_manual') }}">
+                                <i class="bi bi-book"></i>Training Manual
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% endif %}
+                    </ul>
+                </div>
+            </nav>
+            {% endif %}
+
+            <!-- Main content -->
+            <main class="{% if current_user.is_authenticated %}col-md-9 ms-sm-auto col-lg-10{% else %}col-12{% endif %} px-md-4 main-content">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                            <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Scripts -->
+    <script>
+        // Global Search Functionality
+        (function() {
+            const searchInput = document.getElementById('globalSearch');
+            const searchResults = document.getElementById('searchResults');
+            const searchSpinner = document.getElementById('searchSpinner');
+            let searchTimeout = null;
+            let selectedIndex = -1;
+            
+            if (!searchInput) return;
+            
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim();
+                
+                // Clear previous timeout
+                if (searchTimeout) clearTimeout(searchTimeout);
+                
+                if (query.length < 2) {
+                    searchResults.style.display = 'none';
+                    return;
+                }
+                
+                // Debounce search
+                searchSpinner.classList.remove('d-none');
+                searchTimeout = setTimeout(() => performSearch(query), 300);
+            });
+            
+            searchInput.addEventListener('keydown', function(e) {
+                const items = searchResults.querySelectorAll('.search-result-item');
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                    updateSelection(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, 0);
+                    updateSelection(items);
+                } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    items[selectedIndex].click();
+                } else if (e.key === 'Escape') {
+                    searchResults.style.display = 'none';
+                    searchInput.blur();
+                }
+            });
+            
+            function updateSelection(items) {
+                items.forEach((item, i) => {
+                    item.classList.toggle('active', i === selectedIndex);
+                });
+                if (items[selectedIndex]) {
+                    items[selectedIndex].scrollIntoView({ block: 'nearest' });
+                }
+            }
+            
+            async function performSearch(query) {
+                try {
+                    const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                    const data = await response.json();
+                    displayResults(data.results);
+                } catch (error) {
+                    console.error('Search error:', error);
+                } finally {
+                    searchSpinner.classList.add('d-none');
+                }
+            }
+            
+            function displayResults(results) {
+                selectedIndex = -1;
+                const list = searchResults.querySelector('.search-results-list');
+                
+                if (results.length === 0) {
+                    list.innerHTML = '<div class="search-no-results"><i class="bi bi-search me-2"></i>No results found</div>';
+                    searchResults.style.display = 'block';
+                    return;
+                }
+                
+                // Group by type
+                const grouped = {};
+                results.forEach(r => {
+                    if (!grouped[r.type]) grouped[r.type] = [];
+                    grouped[r.type].push(r);
+                });
+                
+                let html = '';
+                const typeNames = { delegate: 'Delegates', user: 'Users', payment: 'Payments', event: 'Events' };
+                
+                for (const [type, items] of Object.entries(grouped)) {
+                    html += `<div class="search-category-header">${typeNames[type] || type}</div>`;
+                    items.forEach(item => {
+                        const badgeClass = item.badge === 'approved' || item.badge === 'Active' ? 'success' : 
+                                          item.badge === 'pending' ? 'warning' : 'secondary';
+                        html += `
+                            <div class="search-result-item" data-url="${item.url}">
+                                <div class="search-result-icon ${item.type}">
+                                    <i class="bi ${item.icon}"></i>
+                                </div>
+                                <div class="search-result-content">
+                                    <div class="search-result-title">${item.title}</div>
+                                    <div class="search-result-subtitle">${item.subtitle}</div>
+                                </div>
+                                <span class="badge bg-${badgeClass}">${item.badge}</span>
+                            </div>
+                        `;
+                    });
+                }
+                
+                list.innerHTML = html;
+                searchResults.style.display = 'block';
+                
+                // Add click handlers
+                list.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        window.location.href = this.dataset.url;
+                    });
+                });
+            }
+            
+            // Close results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                }
+            });
+            
+            // Keyboard shortcut: Ctrl+K or / to focus search
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && document.activeElement.tagName !== 'INPUT')) {
+                    e.preventDefault();
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            });
+        })();
+        
+        // Notification Center
+        (function() {
+            const notificationList = document.getElementById('notificationList');
+            const notificationBadge = document.getElementById('notificationBadge');
+            
+            if (!notificationList) return;
+            
+            async function loadNotifications() {
+                try {
+                    const response = await fetch('/api/notifications');
+                    const data = await response.json();
+                    
+                    if (data.notifications.length === 0) {
+                        notificationList.innerHTML = `
+                            <li class="text-center py-3 text-muted small">
+                                <i class="bi bi-bell-slash me-1"></i>No notifications
+                            </li>
+                        `;
+                        notificationBadge.style.display = 'none';
+                    } else {
+                        notificationList.innerHTML = data.notifications.map(n => `
+                            <li>
+                                <a class="dropdown-item py-2" href="${n.url}">
+                                    <div class="d-flex align-items-start">
+                                        <div class="notification-icon me-2 rounded-circle d-flex align-items-center justify-content-center" 
+                                             style="width: 36px; height: 36px; background: ${n.type === 'warning' ? 'rgba(255,193,7,0.15)' : n.type === 'success' ? 'rgba(25,135,84,0.15)' : 'rgba(13,110,253,0.15)'}">
+                                            <i class="bi ${n.icon} text-${n.type === 'warning' ? 'warning' : n.type === 'success' ? 'success' : 'primary'}"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-medium small">${n.title}</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">${n.message}</div>
+                                            <div class="text-muted" style="font-size: 0.7rem;">${n.time}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                        `).join('');
+                        
+                        if (data.unread_count > 0) {
+                            notificationBadge.textContent = data.unread_count;
+                            notificationBadge.style.display = 'block';
+                        } else {
+                            notificationBadge.style.display = 'none';
+                        }
+                    }
+                } catch (error) {
+                    notificationList.innerHTML = `
+                        <li class="text-center py-3 text-muted small">
+                            <i class="bi bi-wifi-off me-1"></i>Unable to load
+                        </li>
+                    `;
+                }
+            }
+            
+            // Load notifications on page load
+            loadNotifications();
+            
+            // Refresh every 60 seconds
+            setInterval(loadNotifications, 60000);
+            
+            // Make markAllRead available globally
+            window.markAllRead = function() {
+                notificationBadge.style.display = 'none';
+            };
+        })();
+        
+        // Dark Mode
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        updateIcon(savedTheme);
+        
+        document.getElementById('darkModeToggle').addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+        });
+        
+        function updateIcon(theme) {
+            const icon = document.getElementById('darkModeIcon');
+            if (theme === 'dark') {
+                icon.classList.remove('bi-moon-fill');
+                icon.classList.add('bi-sun-fill');
+            } else {
+                icon.classList.remove('bi-sun-fill');
+                icon.classList.add('bi-moon-fill');
+            }
+        }
+        
+        // Mobile Sidebar Toggle
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        
+        if (sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('show');
+                sidebarOverlay.classList.toggle('show');
+            });
+            
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('show');
+                sidebarOverlay.classList.remove('show');
+            });
+            
+            // Close sidebar when clicking a link on mobile
+            sidebar.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 992) {
+                        sidebar.classList.remove('show');
+                        sidebarOverlay.classList.remove('show');
+                    }
+                });
+            });
+        }
+        
+        // URL Masking - Single Page Navigation (Full Masking)
+        (function() {
+            const APP_BASE = '/app';
+            const PUBLIC_ROUTES = ['/', '/login', '/register', '/auth/login', '/auth/register'];
+            
+            // Mask URL on page load (except public routes)
+            function maskUrl() {
+                if (!PUBLIC_ROUTES.some(route => window.location.pathname === route || window.location.pathname.startsWith(route + '?'))) {
+                    window.history.replaceState({ masked: true }, document.title, APP_BASE);
+                }
+            }
+            maskUrl();
+            
+            // Intercept all internal link clicks
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a');
+                if (!link) return;
+                
+                const href = link.getAttribute('href');
+                
+                // Skip external links, anchors, and special links
+                if (!href || 
+                    href.startsWith('http') || 
+                    href.startsWith('#') || 
+                    href.startsWith('javascript:') ||
+                    href.startsWith('mailto:') ||
+                    href.startsWith('tel:') ||
+                    link.hasAttribute('download') ||
+                    link.getAttribute('target') === '_blank' ||
+                    link.classList.contains('no-mask')) {
+                    return;
+                }
+                
+                // Let logout work normally
+                if (href.includes('/logout')) {
+                    return;
+                }
+                
+                e.preventDefault();
+                loadPage(href);
+            });
+            
+            // Intercept form submissions
+            document.addEventListener('submit', function(e) {
+                const form = e.target;
+                
+                // Forms that should submit traditionally (file uploads, special cases)
+                if (form.getAttribute('enctype') === 'multipart/form-data' ||
+                    form.getAttribute('target') === '_blank') {
+                    return;  // Let form submit normally
+                }
+                
+                // Forms marked with no-mask will submit via AJAX but stay on current view
+                const isNoMask = form.classList.contains('no-mask') || 
+                                 form.hasAttribute('data-no-ajax') ||
+                                 form.getAttribute('data-turbo') === 'false';
+                
+                e.preventDefault();
+                
+                const formData = new FormData(form);
+                const method = form.method.toUpperCase() || 'POST';
+                // Use getAttribute to get the actual action URL, not the form.action property
+                // (form.action can be overridden by an input named "action")
+                let action = form.getAttribute('action') || window.location.href;
+                
+                // Show loading state on submit button
+                const submitBtn = form.querySelector('[type="submit"]');
+                const originalText = submitBtn ? submitBtn.innerHTML : '';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                }
+                
+                // Build fetch options - GET/HEAD cannot have body
+                const fetchOptions = {
+                    method: method,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                };
+                
+                if (method === 'GET' || method === 'HEAD') {
+                    // Convert FormData to URL params for GET requests
+                    const params = new URLSearchParams(formData);
+                    action = action + (action.includes('?') ? '&' : '?') + params.toString();
+                } else {
+                    fetchOptions.body = formData;
+                }
+                
+                fetch(action, fetchOptions)
+                .then(response => {
+                    // Handle redirects
+                    if (response.redirected) {
+                        return fetch(response.url, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                            credentials: 'same-origin'
+                        }).then(r => ({ html: r.text(), url: response.url }));
+                    }
+                    return response.text().then(html => ({ html: Promise.resolve(html), url: action }));
+                })
+                .then(result => result.html.then(html => ({ html, url: result.url })))
+                .then(({ html, url }) => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Update main content
+                    const newMain = doc.querySelector('main.main-content');
+                    const currentMain = document.querySelector('main.main-content');
+                    
+                    if (newMain && currentMain) {
+                        currentMain.innerHTML = newMain.innerHTML;
+                    }
+                    
+                    // Update page title
+                    const newTitle = doc.querySelector('title');
+                    if (newTitle) {
+                        document.title = newTitle.textContent;
+                    }
+                    
+                    // Update active sidebar links
+                    updateActiveSidebarLinks(url);
+                    
+                    // Execute inline scripts
+                    if (currentMain) {
+                        currentMain.querySelectorAll('script').forEach(script => {
+                            const newScript = document.createElement('script');
+                            if (script.src) {
+                                newScript.src = script.src;
+                            } else {
+                                newScript.textContent = script.textContent;
+                            }
+                            script.parentNode.replaceChild(newScript, script);
+                        });
+                    }
+                    
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                    
+                    // Keep URL masked
+                    maskUrl();
+                })
+                .catch(error => {
+                    console.error('Form submission error:', error);
+                    // Restore button and show error
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                    alert('An error occurred. Please try again.');
+                });
+            });
+            
+            // Load page via AJAX
+            function loadPage(url, options = {}) {
+                // Show loading indicator
+                const main = document.querySelector('main.main-content');
+                if (main) {
+                    main.style.opacity = '0.5';
+                    main.style.pointerEvents = 'none';
+                }
+                
+                const fetchOptions = {
+                    method: options.method || 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                };
+                
+                if (options.body) {
+                    fetchOptions.body = options.body;
+                }
+                
+                fetch(url, fetchOptions)
+                    .then(response => {
+                        if (response.redirected) {
+                            // Handle redirects
+                            return fetch(response.url, {
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                                credentials: 'same-origin'
+                            }).then(r => r.text());
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        // Parse the response
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Update main content
+                        const newMain = doc.querySelector('main.main-content');
+                        const currentMain = document.querySelector('main.main-content');
+                        
+                        if (newMain && currentMain) {
+                            currentMain.innerHTML = newMain.innerHTML;
+                            currentMain.style.opacity = '1';
+                            currentMain.style.pointerEvents = 'auto';
+                        }
+                        
+                        // Update page title
+                        const newTitle = doc.querySelector('title');
+                        if (newTitle) {
+                            document.title = newTitle.textContent;
+                        }
+                        
+                        // Update active sidebar links
+                        updateActiveSidebarLinks(url);
+                        
+                        // Execute any inline scripts in the new content
+                        const scripts = currentMain.querySelectorAll('script');
+                        scripts.forEach(script => {
+                            const newScript = document.createElement('script');
+                            if (script.src) {
+                                newScript.src = script.src;
+                            } else {
+                                newScript.textContent = script.textContent;
+                            }
+                            script.parentNode.replaceChild(newScript, script);
+                        });
+                        
+                        // Scroll to top
+                        window.scrollTo(0, 0);
+                        
+                        // Keep URL masked
+                        maskUrl();
+                    })
+                    .catch(error => {
+                        console.error('Navigation error:', error);
+                        // Fallback to normal navigation
+                        window.location.href = url;
+                    });
+            }
+            
+            // Update sidebar active state
+            function updateActiveSidebarLinks(currentUrl) {
+                const sidebar = document.getElementById('sidebar');
+                if (!sidebar) return;
+                
+                // Ensure currentUrl is a string
+                const urlStr = String(currentUrl || '');
+                
+                sidebar.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                    const href = link.getAttribute('href');
+                    if (href && urlStr.includes(href)) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+            
+            // Handle browser back/forward (just reload since URLs are masked)
+            window.addEventListener('popstate', function() {
+                window.location.reload();
+            });
+        })();
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Auto-inject CSRF token into all POST forms -->
+    <script>
+        (function() {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            if (csrfToken) {
+                document.querySelectorAll('form[method="POST"], form[method="post"]').forEach(function(form) {
+                    if (!form.querySelector('input[name="csrf_token"]')) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'csrf_token';
+                        input.value = csrfToken;
+                        form.appendChild(input);
+                    }
+                });
+            }
+        })();
+    </script>
+    
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" height="40" class="mb-2" alt="KAYO" onerror="this.style.display='none'">
+                    <p class="mb-1 small">
+                        <strong>KAYO</strong> - Kenya Anglican Youth Organization<br>
+                        <strong>ACK Diocese of Nambale</strong>
+                    </p>
+                    <p class="mb-0 small fst-italic opacity-75">
+                        "Be Strong in the Lord" - Eph. 6:10 | "The Lord is My Shepherd" - Ps. 23:1
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    {% if current_user.is_authenticated %}
+    <!-- Quick Actions FAB -->
+    <div class="quick-actions-fab">
+        <div class="fab-menu" id="fabMenu">
+            {% if current_user.is_admin() %}
+            <a href="{{ url_for('delegates.register_delegate') }}" class="fab-item" title="Register Delegate">
+                <i class="bi bi-person-plus"></i>
+                <span>Register Delegate</span>
+            </a>
+            <a href="{{ url_for('payments.receive_payment') }}" class="fab-item" title="Receive Payment">
+                <i class="bi bi-cash-coin"></i>
+                <span>Receive Payment</span>
+            </a>
+            <a href="{{ url_for('events.create_event') }}" class="fab-item" title="Create Event">
+                <i class="bi bi-calendar-plus"></i>
+                <span>Create Event</span>
+            </a>
+            {% elif current_user.role == 'chair' %}
+            <a href="{{ url_for('delegates.register_delegate') }}" class="fab-item" title="Register Delegate">
+                <i class="bi bi-person-plus"></i>
+                <span>Register Delegate</span>
+            </a>
+            <a href="{{ url_for('payments.initiate_payment') }}" class="fab-item" title="Submit Payment">
+                <i class="bi bi-credit-card"></i>
+                <span>Submit Payment</span>
+            </a>
+            {% endif %}
+            <a href="#" class="fab-item" id="scrollTopBtn" title="Back to Top">
+                <i class="bi bi-arrow-up"></i>
+                <span>Back to Top</span>
+            </a>
+        </div>
+        <button class="fab-main" id="fabToggle" title="Quick Actions">
+            <i class="bi bi-plus-lg fab-icon-default"></i>
+            <i class="bi bi-x-lg fab-icon-close"></i>
+        </button>
+    </div>
+    
+    <style>
+        /* Floating Action Button Styles */
+        .quick-actions-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1040;
+        }
+        
+        .fab-main {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--kayo-green) 0%, var(--kayo-green-dark) 100%);
+            border: none;
+            color: white;
+            box-shadow: 0 4px 20px rgba(26, 95, 42, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .fab-main:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(26, 95, 42, 0.5);
+        }
+        
+        .fab-main .fab-icon-close {
+            display: none;
+        }
+        
+        .fab-main.active .fab-icon-default {
+            display: none;
+        }
+        
+        .fab-main.active .fab-icon-close {
+            display: block;
+        }
+        
+        .fab-main.active {
+            transform: rotate(180deg);
+            background: #dc3545;
+        }
+        
+        .fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        
+        .fab-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .fab-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            text-decoration: none;
+            color: #333;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        
+        [data-bs-theme="dark"] .fab-item {
+            background: #2d3238;
+            color: #fff;
+        }
+        
+        .fab-item:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            color: var(--kayo-green);
+        }
+        
+        .fab-item i {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--kayo-green);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 768px) {
+            .quick-actions-fab {
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            .fab-item span {
+                display: none;
+            }
+            
+            .fab-item {
+                padding: 12px;
+                border-radius: 50%;
+            }
+            
+            .fab-item i {
+                width: 28px;
+                height: 28px;
+            }
+        }
+    </style>
+    
+    <script>
+        // FAB Toggle
+        const fabToggle = document.getElementById('fabToggle');
+        const fabMenu = document.getElementById('fabMenu');
+        const scrollTopBtn = document.getElementById('scrollTopBtn');
+        
+        if (fabToggle) {
+            fabToggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+                fabMenu.classList.toggle('show');
+            });
+            
+            // Close on click outside
+            document.addEventListener('click', function(e) {
+                if (!fabToggle.contains(e.target) && !fabMenu.contains(e.target)) {
+                    fabToggle.classList.remove('active');
+                    fabMenu.classList.remove('show');
+                }
+            });
+        }
+        
+        if (scrollTopBtn) {
+            scrollTopBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                fabToggle.classList.remove('active');
+                fabMenu.classList.remove('show');
+            });
+        }
+    </script>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Income Statement - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="bi bi-graph-up me-2"></i>Income Statement</h2>
+            <p class="text-muted mb-0">For the period {{ start_date.strftime('%d %b') }} - {{ end_date.strftime('%d %b %Y') }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('finance.reports_index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Reports
+            </a>
+            <button class="btn btn-outline-success" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="card border-0 shadow-sm mb-4 no-print">
+        <div class="card-body py-2">
+            <form method="GET" class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <label class="form-label mb-0 me-2">From:</label>
+                </div>
+                <div class="col-auto">
+                    <input type="date" name="start_date" class="form-control form-control-sm" 
+                           value="{{ start_date.strftime('%Y-%m-%d') }}">
+                </div>
+                <div class="col-auto">
+                    <label class="form-label mb-0 me-2">To:</label>
+                </div>
+                <div class="col-auto">
+                    <input type="date" name="end_date" class="form-control form-control-sm" 
+                           value="{{ end_date.strftime('%Y-%m-%d') }}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Income Statement Report -->
+    <div class="card border-0 shadow-sm" id="reportContent">
+        <div class="card-header bg-success text-white text-center py-3">
+            <h4 class="mb-1">KAYO - Kenya Anglican Youth Organization</h4>
+            <h5 class="mb-1">Statement of Income & Expenditure</h5>
+            <p class="mb-0">For the Period {{ start_date.strftime('%d %B %Y') }} to {{ end_date.strftime('%d %B %Y') }}</p>
+        </div>
+        <div class="card-body">
+            <!-- Revenue Section -->
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2 text-success"><i class="bi bi-arrow-down-circle me-2"></i>REVENUE / INCOME</h5>
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        {% for item in income_data %}
+                        <tr>
+                            <td class="ps-4" width="70%">{{ item.account.name }}</td>
+                            <td class="text-end" width="30%">KSh {{ "{:,.2f}".format(item.amount) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="2" class="text-muted text-center py-3">No income recorded</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="fw-bold border-top">
+                        <tr class="table-success">
+                            <td class="ps-4">Total Revenue</td>
+                            <td class="text-end">KSh {{ "{:,.2f}".format(total_income) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Expenses Section -->
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2 text-danger"><i class="bi bi-arrow-up-circle me-2"></i>EXPENSES</h5>
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        {% for item in expense_data %}
+                        <tr>
+                            <td class="ps-4" width="70%">{{ item.account.name }}</td>
+                            <td class="text-end" width="30%">KSh {{ "{:,.2f}".format(item.amount) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="2" class="text-muted text-center py-3">No expenses recorded</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="fw-bold border-top">
+                        <tr class="table-danger">
+                            <td class="ps-4">Total Expenses</td>
+                            <td class="text-end">KSh {{ "{:,.2f}".format(total_expenses) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Net Income -->
+            <div class="card {% if net_income >= 0 %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h4 class="mb-0">
+                                {% if net_income >= 0 %}
+                                <i class="bi bi-arrow-up-circle me-2"></i>NET SURPLUS
+                                {% else %}
+                                <i class="bi bi-arrow-down-circle me-2"></i>NET DEFICIT
+                                {% endif %}
+                            </h4>
+                            <p class="mb-0 small opacity-75">Revenue minus Expenses</p>
+                        </div>
+                        <div class="col-auto">
+                            <h2 class="mb-0">KSh {{ "{:,.2f}".format(net_income|abs) }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Statistics -->
+            <div class="row mt-4 text-center">
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <small class="text-muted">Gross Margin</small>
+                        <h4 class="mb-0 text-primary">
+                            {% if total_income > 0 %}
+                            {{ "{:.1f}".format((net_income / total_income) * 100) }}%
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </h4>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <small class="text-muted">Expense Ratio</small>
+                        <h4 class="mb-0 text-warning">
+                            {% if total_income > 0 %}
+                            {{ "{:.1f}".format((total_expenses / total_income) * 100) }}%
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </h4>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <small class="text-muted">Period Days</small>
+                        <h4 class="mb-0 text-info">{{ (end_date - start_date).days + 1 }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-light text-center small text-muted">
+            Generated on {{ end_date.strftime('%d %B %Y') }} | KAYO Financial Management System
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn, nav, .no-print, footer { display: none !important; }
+    .card { border: none !important; box-shadow: none !important; }
+    .card-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .bg-success, .bg-danger { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+{% endblock %}

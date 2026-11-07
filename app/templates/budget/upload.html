@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Budget - KAYO{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('budget.index') }}">Budgets</a></li>
+            <li class="breadcrumb-item active">Upload Budget</li>
+        </ol>
+    </nav>
+    <h2><i class="bi bi-cloud-upload me-2"></i>Upload Budget File</h2>
+    <p class="text-muted">Upload an Excel or CSV file and AI will automatically parse and categorize budget items</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Budget Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required 
+                               placeholder="e.g., KAYO 2025 Annual Conference Budget">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="2"
+                                  placeholder="Brief description of this budget"></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Event (Optional)</label>
+                        <select name="event_id" class="form-select">
+                            <option value="">-- Not linked to any event --</option>
+                            {% for event in events %}
+                            <option value="{{ event.id }}">{{ event.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Budget File <span class="text-danger">*</span></label>
+                        <input type="file" name="budget_file" class="form-control" required
+                               accept=".csv,.xlsx,.xls,.txt" id="budgetFile">
+                        <div class="form-text">
+                            Supported formats: Excel (.xlsx, .xls), CSV (.csv), Text (.txt)
+                        </div>
+                    </div>
+                    
+                    <!-- Preview Section -->
+                    <div id="previewSection" class="mb-4 d-none">
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading"><i class="bi bi-eye me-2"></i>Preview</h6>
+                            <p class="mb-2">AI detected <strong id="itemCount">0</strong> budget items totaling <strong id="totalAmount">KSh 0</strong></p>
+                            <div id="previewList" class="small" style="max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary" id="previewBtn">
+                            <i class="bi bi-eye me-2"></i>Preview Items
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-cloud-upload me-2"></i>Upload & Parse
+                        </button>
+                        <a href="{{ url_for('budget.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-info-circle me-2"></i>File Format Tips</h5>
+                <p class="small">For best results, your file should include columns like:</p>
+                <ul class="small">
+                    <li><strong>Item/Description</strong> - Name of the budget item</li>
+                    <li><strong>Quantity</strong> - Number of units</li>
+                    <li><strong>Unit Cost/Rate</strong> - Cost per unit</li>
+                    <li><strong>Total/Amount</strong> - Total budgeted amount</li>
+                    <li><strong>Category</strong> (optional) - Type of expense</li>
+                </ul>
+                
+                <h6 class="mt-3">AI Auto-Categorization</h6>
+                <p class="small text-muted">Items will be automatically categorized into:</p>
+                <div class="small">
+                    <span class="badge bg-primary me-1 mb-1">Venue</span>
+                    <span class="badge bg-success me-1 mb-1">Transport</span>
+                    <span class="badge bg-info me-1 mb-1">Catering</span>
+                    <span class="badge bg-warning me-1 mb-1">Materials</span>
+                    <span class="badge bg-secondary me-1 mb-1">Equipment</span>
+                    <span class="badge bg-danger me-1 mb-1">Personnel</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6><i class="bi bi-file-earmark-excel me-2"></i>Sample Format</h6>
+                <table class="table table-sm small">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Rate</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Venue Hire</td><td>3</td><td>50,000</td><td>150,000</td></tr>
+                        <tr><td>Lunch</td><td>500</td><td>500</td><td>250,000</td></tr>
+                        <tr><td>Sound System</td><td>1</td><td>30,000</td><td>30,000</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('previewBtn').addEventListener('click', function() {
+    const fileInput = document.getElementById('budgetFile');
+    if (!fileInput.files.length) {
+        alert('Please select a file first');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('budget_file', fileInput.files[0]);
+    
+    fetch('{{ url_for("budget.parse_preview") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const section = document.getElementById('previewSection');
+        if (data.success) {
+            document.getElementById('itemCount').textContent = data.count;
+            document.getElementById('totalAmount').textContent = 'KSh ' + data.total.toLocaleString();
+            
+            let html = '<table class="table table-sm mb-0"><tbody>';
+            data.items.slice(0, 10).forEach(item => {
+                html += `<tr><td>${item.name}</td><td class="text-end">KSh ${item.budgeted_amount.toLocaleString()}</td></tr>`;
+            });
+            if (data.items.length > 10) {
+                html += `<tr><td colspan="2" class="text-muted">... and ${data.items.length - 10} more items</td></tr>`;
+            }
+            html += '</tbody></table>';
+            document.getElementById('previewList').innerHTML = html;
+            
+            section.classList.remove('d-none');
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error parsing file: ' + error);
+    });
+});
+</script>
+{% endblock %}

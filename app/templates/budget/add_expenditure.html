@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Record Expenditure - KAYO{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('budget.index') }}">Budgets</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('budget.view', id=item.budget_id) }}">{{ item.budget.name }}</a></li>
+            <li class="breadcrumb-item active">Record Expenditure</li>
+        </ol>
+    </nav>
+    <h2><i class="bi bi-cash-coin me-2"></i>Record Expenditure</h2>
+    <p class="text-muted">Recording expenditure for: <strong>{{ item.name }}</strong></p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date <span class="text-danger">*</span></label>
+                            <input type="date" name="date" class="form-control" required
+                                   value="{{ now().strftime('%Y-%m-%d') if now else '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Amount (KSh) <span class="text-danger">*</span></label>
+                            <input type="number" name="amount" class="form-control" required
+                                   step="0.01" min="0" placeholder="0.00">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description <span class="text-danger">*</span></label>
+                        <input type="text" name="description" class="form-control" required
+                               placeholder="What was this payment for?">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Vendor/Supplier</label>
+                            <input type="text" name="vendor" class="form-control"
+                                   placeholder="Who did you pay?">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Payment Method</label>
+                            <select name="payment_method" class="form-select">
+                                <option value="">-- Select --</option>
+                                <option value="cash">Cash</option>
+                                <option value="mpesa">M-Pesa</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="cheque">Cheque</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Reference/Receipt Number</label>
+                        <input type="text" name="reference_number" class="form-control"
+                               placeholder="Transaction ID, receipt number, etc.">
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg me-2"></i>Record Expenditure
+                        </button>
+                        <a href="{{ url_for('budget.view', id=item.budget_id) }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Budget Item Summary</h6>
+            </div>
+            <div class="card-body">
+                <h5>{{ item.name }}</h5>
+                {% if item.description %}
+                <p class="text-muted small">{{ item.description }}</p>
+                {% endif %}
+                
+                <table class="table table-sm">
+                    <tr>
+                        <td class="text-muted">Budgeted:</td>
+                        <td class="text-end fw-bold">KSh {{ "{:,.0f}".format(item.budgeted_amount) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Already Spent:</td>
+                        <td class="text-end">KSh {{ "{:,.0f}".format(item.actual_spent) }}</td>
+                    </tr>
+                    <tr class="{{ 'table-danger' if item.variance < 0 else 'table-success' }}">
+                        <td class="text-muted">Remaining:</td>
+                        <td class="text-end fw-bold">KSh {{ "{:,.0f}".format(item.variance) }}</td>
+                    </tr>
+                </table>
+                
+                <div class="progress mt-3" style="height: 10px;">
+                    <div class="progress-bar bg-{{ 'danger' if item.utilization_percentage > 100 else 'warning' if item.utilization_percentage > 80 else 'success' }}" 
+                         style="width: {{ [item.utilization_percentage, 100]|min }}%"></div>
+                </div>
+                <small class="text-muted">{{ "%.1f"|format(item.utilization_percentage) }}% utilized</small>
+            </div>
+        </div>
+        
+        {% if item.variance < 0 %}
+        <div class="alert alert-danger mt-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Over Budget!</strong> This item has exceeded its budget by KSh {{ "{:,.0f}".format(-item.variance) }}
+        </div>
+        {% elif item.variance < item.budgeted_amount * 0.2 %}
+        <div class="alert alert-warning mt-3">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            <strong>Low Balance!</strong> Less than 20% of budget remaining.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

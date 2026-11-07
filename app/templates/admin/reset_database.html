@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Reset Database - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Warning Header -->
+            <div class="alert alert-danger border-danger mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill fs-1 me-3 text-danger"></i>
+                    <div>
+                        <h4 class="alert-heading mb-1">⚠️ Database Reset - Danger Zone</h4>
+                        <p class="mb-0">This action will permanently delete selected data. This cannot be undone!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Statistics -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-database me-2"></i>Current Database Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="p-3 bg-primary bg-opacity-10 rounded">
+                                <h3 class="text-primary mb-0">{{ total_delegates }}</h3>
+                                <small class="text-muted">Delegates</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="p-3 bg-success bg-opacity-10 rounded">
+                                <h3 class="text-success mb-0">{{ total_payments }}</h3>
+                                <small class="text-muted">Payments</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="p-3 bg-info bg-opacity-10 rounded">
+                                <h3 class="text-info mb-0">{{ total_checkins }}</h3>
+                                <small class="text-muted">Check-ins</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="p-3 bg-warning bg-opacity-10 rounded">
+                                <h3 class="text-warning mb-0">KES {{ "{:,.0f}".format(total_collected) }}</h3>
+                                <small class="text-muted">Total Collected</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reset Form -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-trash me-2"></i>Reset Options</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" onsubmit="return validateReset();">
+                        <!-- What to Delete -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Select what to delete:</label>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="delete_delegates" value="yes" id="deleteDelegates">
+                                <label class="form-check-label" for="deleteDelegates">
+                                    <i class="bi bi-people text-primary me-1"></i>
+                                    <strong>All Delegates</strong> ({{ total_delegates }} records)
+                                    <br><small class="text-muted">This will also delete all check-in records</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="delete_payments" value="yes" id="deletePayments">
+                                <label class="form-check-label" for="deletePayments">
+                                    <i class="bi bi-credit-card text-success me-1"></i>
+                                    <strong>All Payments</strong> ({{ total_payments }} records)
+                                    <br><small class="text-muted">Total amount: KES {{ "{:,.2f}".format(total_collected) }}</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Confirmation -->
+                        <div class="mb-4">
+                            <label for="confirmation" class="form-label fw-bold">
+                                Type <code class="text-danger">RESET</code> to confirm:
+                            </label>
+                            <input type="text" class="form-control" name="confirmation" id="confirmation" 
+                                   placeholder="Type RESET here" autocomplete="off" required>
+                        </div>
+
+                        <!-- Warning Summary -->
+                        <div class="alert alert-warning mb-4" id="warningBox" style="display: none;">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <span id="warningText">Select at least one option to proceed.</span>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger" id="resetBtn" disabled>
+                                <i class="bi bi-trash me-1"></i> Reset Database
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Usage Instructions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-question-circle me-2"></i>When to use this?</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li><strong>Testing:</strong> Clear test data before going live</li>
+                        <li><strong>New Event:</strong> Start fresh for a new event/conference</li>
+                        <li><strong>Data Cleanup:</strong> Remove corrupted or invalid data</li>
+                    </ul>
+                    <hr>
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-shield-lock me-1"></i>
+                        <strong>Note:</strong> User accounts are NOT deleted. Only delegates, payments, and check-in records.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function validateReset() {
+    const confirmation = document.getElementById('confirmation').value;
+    const deleteDelegates = document.getElementById('deleteDelegates').checked;
+    const deletePayments = document.getElementById('deletePayments').checked;
+    
+    if (!deleteDelegates && !deletePayments) {
+        alert('Please select at least one option to delete.');
+        return false;
+    }
+    
+    if (confirmation !== 'RESET') {
+        alert('Please type "RESET" exactly to confirm.');
+        return false;
+    }
+    
+    const selectedItems = [];
+    if (deleteDelegates) selectedItems.push('{{ total_delegates }} delegates');
+    if (deletePayments) selectedItems.push('{{ total_payments }} payments');
+    
+    return confirm(`Are you absolutely sure you want to delete:\n\n${selectedItems.join('\n')}\n\nThis action CANNOT be undone!`);
+}
+
+// Enable/disable submit button based on selection
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteDelegates = document.getElementById('deleteDelegates');
+    const deletePayments = document.getElementById('deletePayments');
+    const confirmation = document.getElementById('confirmation');
+    const resetBtn = document.getElementById('resetBtn');
+    const warningBox = document.getElementById('warningBox');
+    const warningText = document.getElementById('warningText');
+    
+    function updateState() {
+        const hasSelection = deleteDelegates.checked || deletePayments.checked;
+        const hasConfirmation = confirmation.value === 'RESET';
+        
+        resetBtn.disabled = !(hasSelection && hasConfirmation);
+        
+        if (!hasSelection) {
+            warningBox.style.display = 'block';
+            warningText.textContent = 'Select at least one option to proceed.';
+        } else if (!hasConfirmation) {
+            warningBox.style.display = 'block';
+            warningText.textContent = 'Type "RESET" in the confirmation box to enable the button.';
+        } else {
+            warningBox.style.display = 'none';
+        }
+    }
+    
+    deleteDelegates.addEventListener('change', updateState);
+    deletePayments.addEventListener('change', updateState);
+    confirmation.addEventListener('input', updateState);
+    
+    updateState();
+});
+</script>
+{% endblock %}

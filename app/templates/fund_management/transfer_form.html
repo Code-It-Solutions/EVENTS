@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h4 class="mb-0"><i class="fas fa-paper-plane me-2 text-primary"></i>{{ title }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Transfer Options:</strong>
+                        {% if is_chair %}
+                        <br><small>• <strong>Cash:</strong> Hand cash directly to Finance</small>
+                        <br><small>• <strong>M-Pesa Paybill:</strong> Pay directly to Finance via paybill</small>
+                        <br><small>• <strong>Bank Transfer:</strong> Transfer directly to Finance account</small>
+                        {% else %}
+                        Chair → Finance
+                        {% endif %}
+                    </div>
+
+                    <form method="POST" action="{{ url_for('fund_management.create_transfer') }}" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Amount -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.amount.label.text }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">KSh</span>
+                                {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), placeholder="0.00") }}
+                            </div>
+                            {% for error in form.amount.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        {% if is_chair %}
+                        <!-- Payment Method (for chairs) -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.payment_method.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.payment_method(class="form-select" + (" is-invalid" if form.payment_method.errors else ""), id="paymentMethod") }}
+                            {% for error in form.payment_method.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted" id="paymentMethodHelp">Select how you are transferring the funds</small>
+                        </div>
+
+                        <!-- M-Pesa Reference (shown only for paybill) -->
+                        <div class="mb-3" id="mpesaReferenceGroup" style="display: none;">
+                            <label class="form-label fw-semibold">{{ form.mpesa_reference.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.mpesa_reference(class="form-control" + (" is-invalid" if form.mpesa_reference.errors else ""), placeholder="e.g., QJK2ABC345") }}
+                            {% for error in form.mpesa_reference.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted">Enter the M-Pesa confirmation code from your transaction</small>
+                        </div>
+                        {% endif %}
+
+                        <!-- Recipient -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.to_user_id.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.to_user_id(class="form-select" + (" is-invalid" if form.to_user_id.errors else ""), id="recipientSelect") }}
+                            {% for error in form.to_user_id.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <small class="text-muted" id="recipientHelp"></small>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">{{ form.description.label.text }}</label>
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="3", placeholder="Notes about this transfer...") }}
+                            {% for error in form.description.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                            <a href="{{ url_for('fund_management.dashboard') }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if is_chair %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var paymentMethod = document.getElementById('paymentMethod');
+    var mpesaGroup = document.getElementById('mpesaReferenceGroup');
+    var recipientHelp = document.getElementById('recipientHelp');
+    var paymentHelp = document.getElementById('paymentMethodHelp');
+    
+    function updateUI() {
+        var method = paymentMethod.value;
+        
+        // Show/hide M-Pesa reference field
+        if (method === 'mpesa_paybill') {
+            mpesaGroup.style.display = 'block';
+            recipientHelp.innerHTML = '<i class="fas fa-arrow-right text-success me-1"></i>Select a Finance officer to receive the paybill payment';
+        } else if (method === 'bank_transfer') {
+            mpesaGroup.style.display = 'none';
+            recipientHelp.innerHTML = '<i class="fas fa-arrow-right text-success me-1"></i>Select a Finance officer to receive the bank transfer';
+        } else {
+            mpesaGroup.style.display = 'none';
+            recipientHelp.innerHTML = '<i class="fas fa-arrow-right text-primary me-1"></i>Select a Finance officer to hand cash to';
+        }
+    }
+    
+    paymentMethod.addEventListener('change', updateUI);
+    updateUI(); // Initial call
+});
+</script>
+{% endif %}
+{% endblock %}

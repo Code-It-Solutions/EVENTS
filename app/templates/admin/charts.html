@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Charts - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-graph-up me-2"></i>Analytics Dashboard</h2>
+            <p class="text-muted mb-0">Visual insights into registrations, payments, and more</p>
+        </div>
+        <div class="d-flex gap-2">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('admin.charts_dashboard', days=7) }}" 
+                   class="btn btn-outline-primary {% if days == 7 %}active{% endif %}">7 Days</a>
+                <a href="{{ url_for('admin.charts_dashboard', days=30) }}" 
+                   class="btn btn-outline-primary {% if days == 30 %}active{% endif %}">30 Days</a>
+                <a href="{{ url_for('admin.charts_dashboard', days=90) }}" 
+                   class="btn btn-outline-primary {% if days == 90 %}active{% endif %}">90 Days</a>
+            </div>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Registration & Payment Trends -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-graph-up me-2"></i>Registration & Payment Trends
+                </div>
+                <div class="card-body">
+                    <canvas id="trendsChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-pie-chart me-2"></i>Payment Status
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <canvas id="paymentStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archdeaconry & Gender Breakdown -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-bar-chart me-2"></i>Delegates by Archdeaconry
+                </div>
+                <div class="card-body">
+                    <canvas id="archdeaconryChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-gender-ambiguous me-2"></i>Gender Distribution
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <canvas id="genderChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-people me-2"></i>Category Distribution
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Age Brackets & Payment Methods -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-calendar-range me-2"></i>Age Bracket Distribution
+                </div>
+                <div class="card-body">
+                    <canvas id="ageBracketChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-credit-card me-2"></i>Payment Methods
+                </div>
+                <div class="card-body">
+                    <canvas id="paymentMethodsChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Check-in Progress -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-check2-circle me-2"></i>Daily Check-in Progress
+                </div>
+                <div class="card-body">
+                    <canvas id="checkinChart" height="60"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Data from server
+    const dailyRegistrations = {{ daily_registrations | tojson }};
+    const dailyPayments = {{ daily_payments | tojson }};
+    const byArchdeaconry = {{ by_archdeaconry | tojson }};
+    const paymentStatus = {{ payment_status | tojson }};
+    const genderBreakdown = {{ gender_breakdown | tojson }};
+    const categoryBreakdown = {{ category_breakdown | tojson }};
+    const ageBracketBreakdown = {{ age_bracket_breakdown | tojson }};
+    const checkinProgress = {{ checkin_progress | tojson }};
+    const paymentMethods = {{ payment_methods | tojson }};
+    
+    // Color palette - KAYO green theme
+    const colors = {
+        primary: '#1a5f2a',
+        secondary: '#28a745',
+        accent: '#20c997',
+        warning: '#ffc107',
+        danger: '#dc3545',
+        info: '#17a2b8',
+        purple: '#6f42c1',
+        orange: '#fd7e14',
+        pink: '#e83e8c'
+    };
+    
+    // Check for dark mode
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const textColor = isDarkMode ? '#ffffff' : '#333333';
+    const gridColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+    
+    // 1. Registration & Payment Trends
+    new Chart(document.getElementById('trendsChart'), {
+        type: 'line',
+        data: {
+            labels: dailyRegistrations.map(d => d.date),
+            datasets: [{
+                label: 'Registrations',
+                data: dailyRegistrations.map(d => d.count),
+                borderColor: colors.primary,
+                backgroundColor: 'rgba(26, 95, 42, 0.1)',
+                fill: true,
+                tension: 0.3
+            }, {
+                label: 'Payments (KSh)',
+                data: dailyPayments.map(d => d.amount / 1000), // Show in thousands
+                borderColor: colors.secondary,
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true,
+                tension: 0.3,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Registrations', color: textColor },
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    title: { display: true, text: 'Amount (K)', color: textColor },
+                    ticks: { color: textColor },
+                    grid: { display: false }
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                }
+            },
+            plugins: {
+                legend: { labels: { color: textColor } }
+            }
+        }
+    });
+    
+    // 2. Payment Status Pie
+    new Chart(document.getElementById('paymentStatusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Paid', 'Unpaid'],
+            datasets: [{
+                data: [paymentStatus.paid, paymentStatus.unpaid],
+                backgroundColor: [colors.secondary, colors.danger],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: { color: textColor }
+                }
+            }
+        }
+    });
+    
+    // 3. Archdeaconry Bar Chart
+    new Chart(document.getElementById('archdeaconryChart'), {
+        type: 'bar',
+        data: {
+            labels: byArchdeaconry.map(a => a.name),
+            datasets: [{
+                label: 'Delegates',
+                data: byArchdeaconry.map(a => a.count),
+                backgroundColor: [colors.primary, colors.secondary, colors.accent, colors.info, colors.purple, colors.orange],
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            scales: {
+                x: { 
+                    beginAtZero: true,
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                y: {
+                    ticks: { color: textColor },
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+    
+    // 4. Gender Distribution
+    new Chart(document.getElementById('genderChart'), {
+        type: 'pie',
+        data: {
+            labels: genderBreakdown.map(g => g.gender),
+            datasets: [{
+                data: genderBreakdown.map(g => g.count),
+                backgroundColor: [colors.info, colors.pink, colors.secondary],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: { color: textColor }
+                }
+            }
+        }
+    });
+    
+    // 5. Category Distribution
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'pie',
+        data: {
+            labels: categoryBreakdown.map(c => c.category),
+            datasets: [{
+                data: categoryBreakdown.map(c => c.count),
+                backgroundColor: [colors.primary, colors.secondary, colors.accent, colors.warning, colors.purple],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: { color: textColor }
+                }
+            }
+        }
+    });
+    
+    // 6. Age Bracket Distribution
+    new Chart(document.getElementById('ageBracketChart'), {
+        type: 'bar',
+        data: {
+            labels: ageBracketBreakdown.map(a => a.bracket),
+            datasets: [{
+                label: 'Delegates',
+                data: ageBracketBreakdown.map(a => a.count),
+                backgroundColor: colors.accent,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+    
+    // 7. Payment Methods
+    new Chart(document.getElementById('paymentMethodsChart'), {
+        type: 'bar',
+        data: {
+            labels: paymentMethods.map(p => p.method),
+            datasets: [{
+                label: 'Transactions',
+                data: paymentMethods.map(p => p.count),
+                backgroundColor: colors.primary,
+                borderRadius: 5
+            }, {
+                label: 'Amount (K)',
+                data: paymentMethods.map(p => p.amount / 1000),
+                backgroundColor: colors.secondary,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { 
+                    position: 'top',
+                    labels: { color: textColor }
+                }
+            }
+        }
+    });
+    
+    // 8. Check-in Progress
+    new Chart(document.getElementById('checkinChart'), {
+        type: 'line',
+        data: {
+            labels: checkinProgress.map(c => c.date),
+            datasets: [{
+                label: 'Check-ins',
+                data: checkinProgress.map(c => c.count),
+                borderColor: colors.purple,
+                backgroundColor: 'rgba(111, 66, 193, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                }
+            },
+            plugins: {
+                legend: { 
+                    labels: { color: textColor }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

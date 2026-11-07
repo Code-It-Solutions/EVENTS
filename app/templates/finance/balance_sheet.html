@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Balance Sheet - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Balance Sheet</h2>
+            <p class="text-muted mb-0">As at {{ as_of_date.strftime('%d %B %Y') }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('finance.reports_index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Reports
+            </a>
+            <button class="btn btn-outline-success" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="card border-0 shadow-sm mb-4 no-print">
+        <div class="card-body py-2">
+            <form method="GET" class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <label class="form-label mb-0 me-2">As at:</label>
+                </div>
+                <div class="col-auto">
+                    <input type="date" name="as_of_date" class="form-control form-control-sm" 
+                           value="{{ as_of_date.strftime('%Y-%m-%d') }}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Balance Sheet Report -->
+    <div class="card border-0 shadow-sm" id="reportContent">
+        <div class="card-header bg-info text-white text-center py-3">
+            <h4 class="mb-1">KAYO - Kenya Anglican Youth Organization</h4>
+            <h5 class="mb-1">Statement of Financial Position (Balance Sheet)</h5>
+            <p class="mb-0">As at {{ as_of_date.strftime('%d %B %Y') }}</p>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Assets Column -->
+                <div class="col-md-6 border-end">
+                    <h5 class="text-primary border-bottom pb-2 mb-3">
+                        <i class="bi bi-bank me-2"></i>ASSETS
+                    </h5>
+
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            {% for item in assets %}
+                            <tr>
+                                <td class="ps-3">{{ item.account.name }}</td>
+                                <td class="text-end">{{ "{:,.2f}".format(item.balance) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="2" class="text-muted text-center py-3">No assets recorded</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Total Assets -->
+                    <div class="bg-primary text-white p-3 rounded mt-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>TOTAL ASSETS</strong>
+                            <h4 class="mb-0">KSh {{ "{:,.2f}".format(total_assets) }}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Liabilities & Equity Column -->
+                <div class="col-md-6">
+                    <h5 class="text-danger border-bottom pb-2 mb-3">
+                        <i class="bi bi-credit-card me-2"></i>LIABILITIES
+                    </h5>
+
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            {% for item in liabilities %}
+                            <tr>
+                                <td class="ps-3">{{ item.account.name }}</td>
+                                <td class="text-end">{{ "{:,.2f}".format(item.balance|abs) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="2" class="text-muted text-center py-3">No liabilities recorded</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="bg-danger bg-opacity-75 text-white p-2 rounded mb-3 mt-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>Total Liabilities</strong>
+                            <h5 class="mb-0">KSh {{ "{:,.2f}".format(total_liabilities) }}</h5>
+                        </div>
+                    </div>
+
+                    <h5 class="text-success border-bottom pb-2 mb-3 mt-4">
+                        <i class="bi bi-piggy-bank me-2"></i>EQUITY / NET ASSETS
+                    </h5>
+
+                    <table class="table table-sm mb-3">
+                        <tbody>
+                            {% for item in equity %}
+                            <tr>
+                                <td class="ps-3">{{ item.account.name }}</td>
+                                <td class="text-end">{{ "{:,.2f}".format(item.balance|abs) }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr>
+                                <td class="ps-3">Retained Surplus/(Deficit)</td>
+                                <td class="text-end">{{ "{:,.2f}".format(retained_earnings) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="bg-success text-white p-2 rounded mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>Total Equity</strong>
+                            <h5 class="mb-0">KSh {{ "{:,.2f}".format(total_equity) }}</h5>
+                        </div>
+                    </div>
+
+                    <!-- Total Liabilities + Equity -->
+                    <div class="bg-dark text-white p-3 rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>TOTAL LIABILITIES & EQUITY</strong>
+                            <h4 class="mb-0">KSh {{ "{:,.2f}".format(total_liabilities + total_equity) }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balance Check -->
+            <div class="mt-4 text-center">
+                {% set diff = total_assets - (total_liabilities + total_equity) %}
+                {% if diff|abs < 0.01 %}
+                <span class="badge bg-success fs-6 px-4 py-2">
+                    <i class="bi bi-check-circle me-2"></i>Balance Sheet is in Balance ✓
+                </span>
+                {% else %}
+                <span class="badge bg-danger fs-6 px-4 py-2">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Out of Balance by KSh {{ "{:,.2f}".format(diff|abs) }}
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Key Ratios -->
+            <div class="row mt-4 text-center">
+                <div class="col-md-3">
+                    <div class="border rounded p-3">
+                        <small class="text-muted">Current Ratio</small>
+                        <h4 class="mb-0 text-primary">
+                            {% if total_liabilities > 0 %}
+                            {{ "{:.2f}".format(total_assets / total_liabilities) }}
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3">
+                        <small class="text-muted">Debt-to-Equity</small>
+                        <h4 class="mb-0 text-warning">
+                            {% if total_equity > 0 %}
+                            {{ "{:.2f}".format(total_liabilities / total_equity) }}
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3">
+                        <small class="text-muted">Equity Ratio</small>
+                        <h4 class="mb-0 text-success">
+                            {% if total_assets > 0 %}
+                            {{ "{:.1f}".format((total_equity / total_assets) * 100) }}%
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3">
+                        <small class="text-muted">Net Worth</small>
+                        <h4 class="mb-0 text-info">KSh {{ "{:,.0f}".format(total_equity) }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-light text-center small text-muted">
+            Generated on {{ as_of_date.strftime('%d %B %Y') }} | KAYO Financial Management System
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn, nav, .no-print, footer { display: none !important; }
+    .card { border: none !important; box-shadow: none !important; }
+    .bg-primary, .bg-info, .bg-success, .bg-danger, .bg-dark { 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+    }
+}
+</style>
+{% endblock %}

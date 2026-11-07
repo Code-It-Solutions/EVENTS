@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Custom Fields - {{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-list-alt me-2"></i>Custom Registration Fields</h2>
+            <p class="text-muted">{{ event.name }}</p>
+        </div>
+        <a href="{{ url_for('events.view_event', event_id=event.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Event
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Field Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="no-mask" id="customFieldsForm">
+                        <div id="fieldsContainer">
+                            {% for field in custom_fields %}
+                            <div class="field-row card mb-3">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Field Name</label>
+                                            <input type="text" name="field_name[]" class="form-control" 
+                                                   value="{{ field.name }}" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Type</label>
+                                            <select name="field_type[]" class="form-select field-type-select">
+                                                <option value="text" {% if field.type == 'text' %}selected{% endif %}>Text</option>
+                                                <option value="number" {% if field.type == 'number' %}selected{% endif %}>Number</option>
+                                                <option value="email" {% if field.type == 'email' %}selected{% endif %}>Email</option>
+                                                <option value="select" {% if field.type == 'select' %}selected{% endif %}>Dropdown</option>
+                                                <option value="checkbox" {% if field.type == 'checkbox' %}selected{% endif %}>Checkbox</option>
+                                                <option value="textarea" {% if field.type == 'textarea' %}selected{% endif %}>Text Area</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Options (for dropdown)</label>
+                                            <input type="text" name="field_options[]" class="form-control" 
+                                                   value="{{ field.options|join(',') if field.options else '' }}"
+                                                   placeholder="opt1,opt2,opt3">
+                                        </div>
+                                        <div class="col-md-1">
+                                            <label class="form-label">Required</label>
+                                            <div class="form-check">
+                                                <input type="checkbox" name="field_required[]" 
+                                                       class="form-check-input" value="{{ loop.index0 }}"
+                                                       {% if field.required %}checked{% endif %}>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1">
+                                            <label class="form-label">&nbsp;</label>
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-field">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <button type="button" id="addFieldBtn" class="btn btn-outline-primary mb-4">
+                            <i class="fas fa-plus me-2"></i>Add Field
+                        </button>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Custom Fields
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Field Types</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3">
+                            <strong>Text</strong>
+                            <p class="text-muted small mb-0">Single line text input</p>
+                        </li>
+                        <li class="mb-3">
+                            <strong>Number</strong>
+                            <p class="text-muted small mb-0">Numeric input only</p>
+                        </li>
+                        <li class="mb-3">
+                            <strong>Email</strong>
+                            <p class="text-muted small mb-0">Email with validation</p>
+                        </li>
+                        <li class="mb-3">
+                            <strong>Dropdown</strong>
+                            <p class="text-muted small mb-0">Select from options (comma-separated)</p>
+                        </li>
+                        <li class="mb-3">
+                            <strong>Checkbox</strong>
+                            <p class="text-muted small mb-0">Yes/No checkbox</p>
+                        </li>
+                        <li class="mb-0">
+                            <strong>Text Area</strong>
+                            <p class="text-muted small mb-0">Multi-line text input</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Common Fields</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm quick-add" 
+                                data-name="T-Shirt Size" data-type="select" data-options="S,M,L,XL,XXL">
+                            T-Shirt Size
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm quick-add"
+                                data-name="Dietary Requirements" data-type="select" data-options="None,Vegetarian,Vegan,Halal,Other">
+                            Dietary Requirements
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm quick-add"
+                                data-name="Accommodation Needed" data-type="checkbox">
+                            Accommodation
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm quick-add"
+                                data-name="Organization" data-type="text">
+                            Organization
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm quick-add"
+                                data-name="Emergency Contact" data-type="text">
+                            Emergency Contact
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="fieldTemplate">
+    <div class="field-row card mb-3">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label">Field Name</label>
+                    <input type="text" name="field_name[]" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select name="field_type[]" class="form-select field-type-select">
+                        <option value="text">Text</option>
+                        <option value="number">Number</option>
+                        <option value="email">Email</option>
+                        <option value="select">Dropdown</option>
+                        <option value="checkbox">Checkbox</option>
+                        <option value="textarea">Text Area</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Options (for dropdown)</label>
+                    <input type="text" name="field_options[]" class="form-control" placeholder="opt1,opt2,opt3">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Required</label>
+                    <div class="form-check">
+                        <input type="checkbox" name="field_required[]" class="form-check-input">
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-field">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('fieldsContainer');
+    const template = document.getElementById('fieldTemplate');
+    let fieldIndex = {{ custom_fields|length }};
+    
+    // Add field button
+    document.getElementById('addFieldBtn').addEventListener('click', function() {
+        addField();
+    });
+    
+    // Remove field
+    container.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-field')) {
+            e.target.closest('.field-row').remove();
+            updateRequiredIndices();
+        }
+    });
+    
+    // Quick add buttons
+    document.querySelectorAll('.quick-add').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            addField(this.dataset.name, this.dataset.type, this.dataset.options || '');
+        });
+    });
+    
+    function addField(name = '', type = 'text', options = '') {
+        const clone = template.content.cloneNode(true);
+        const nameInput = clone.querySelector('input[name="field_name[]"]');
+        const typeSelect = clone.querySelector('select[name="field_type[]"]');
+        const optionsInput = clone.querySelector('input[name="field_options[]"]');
+        const requiredCheckbox = clone.querySelector('input[name="field_required[]"]');
+        
+        nameInput.value = name;
+        typeSelect.value = type;
+        optionsInput.value = options;
+        requiredCheckbox.value = fieldIndex;
+        
+        container.appendChild(clone);
+        fieldIndex++;
+    }
+    
+    function updateRequiredIndices() {
+        document.querySelectorAll('.field-row').forEach((row, index) => {
+            const checkbox = row.querySelector('input[name="field_required[]"]');
+            if (checkbox) checkbox.value = index;
+        });
+    }
+});
+</script>
+{% endblock %}

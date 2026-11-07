@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}M-Pesa Configuration - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('settings.audit_logs') }}">Settings</a></li>
+                    <li class="breadcrumb-item active">M-Pesa Configuration</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-phone me-2"></i>M-Pesa STK Push Configuration</h2>
+            <p class="text-muted">Configure M-Pesa Daraja API for receiving payments via STK Push</p>
+        </div>
+    </div>
+
+    <!-- Status Card -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card {% if config.is_configured %}border-success{% else %}border-warning{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        {% if config.is_configured %}
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-check-circle text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1 text-success">M-Pesa Configured</h5>
+                            <p class="mb-0 text-muted">Environment: <strong>{{ config.environment|upper }}</strong></p>
+                        </div>
+                        {% else %}
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-exclamation-triangle text-warning fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1 text-warning">Configuration Incomplete</h5>
+                            <p class="mb-0 text-muted">Set environment variables to enable M-Pesa</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Quick Actions</h6>
+                    <button class="btn btn-primary me-2" onclick="testConnection()" {% if not config.is_configured %}disabled{% endif %}>
+                        <i class="bi bi-wifi me-1"></i>Test Connection
+                    </button>
+                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#stkTestModal" {% if not config.is_configured %}disabled{% endif %}>
+                        <i class="bi bi-phone me-1"></i>Test STK Push
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Configuration -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Current Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="200">Setting</th>
+                                    <th>Value</th>
+                                    <th width="150">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Consumer Key</strong></td>
+                                    <td><code>{{ config.consumer_key }}</code></td>
+                                    <td>
+                                        {% if 'Not configured' not in config.consumer_key %}
+                                        <span class="badge bg-success">Set</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Missing</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Consumer Secret</strong></td>
+                                    <td><code>{{ config.consumer_secret }}</code></td>
+                                    <td>
+                                        {% if 'Not configured' not in config.consumer_secret %}
+                                        <span class="badge bg-success">Set</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Missing</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Shortcode (Paybill)</strong></td>
+                                    <td><code>{{ config.shortcode }}</code></td>
+                                    <td>
+                                        {% if 'Not configured' not in config.shortcode %}
+                                        <span class="badge bg-success">Set</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Missing</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Passkey</strong></td>
+                                    <td><code>{{ config.passkey }}</code></td>
+                                    <td>
+                                        {% if 'Not configured' not in config.passkey %}
+                                        <span class="badge bg-success">Set</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Missing</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Callback URL</strong></td>
+                                    <td><code>{{ config.callback_url }}</code></td>
+                                    <td>
+                                        {% if 'Not configured' not in config.callback_url %}
+                                        <span class="badge bg-success">Set</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Missing</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Environment</strong></td>
+                                    <td>
+                                        {% if config.environment == 'production' %}
+                                        <span class="badge bg-danger fs-6">PRODUCTION</span>
+                                        {% else %}
+                                        <span class="badge bg-info fs-6">SANDBOX</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><span class="badge bg-success">Set</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Setup Instructions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-book me-2"></i>Setup Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="setupAccordion">
+                        <!-- Step 1 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#step1">
+                                    <strong>Step 1:</strong>&nbsp;Create Safaricom Developer Account
+                                </button>
+                            </h2>
+                            <div id="step1" class="accordion-collapse collapse show" data-bs-parent="#setupAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Go to <a href="https://developer.safaricom.co.ke/" target="_blank">Safaricom Developer Portal</a></li>
+                                        <li>Click <strong>Sign Up</strong> and create an account</li>
+                                        <li>Verify your email address</li>
+                                        <li>Log in to your account</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step2">
+                                    <strong>Step 2:</strong>&nbsp;Create an App (Sandbox)
+                                </button>
+                            </h2>
+                            <div id="step2" class="accordion-collapse collapse" data-bs-parent="#setupAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Go to <strong>My Apps</strong> in the developer portal</li>
+                                        <li>Click <strong>Add a New App</strong></li>
+                                        <li>Enter app name (e.g., "KAYO Event System")</li>
+                                        <li>Select <strong>Lipa Na M-Pesa Online</strong> (STK Push) API</li>
+                                        <li>Click <strong>Create App</strong></li>
+                                        <li>Copy your <strong>Consumer Key</strong> and <strong>Consumer Secret</strong></li>
+                                    </ol>
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Sandbox Test Credentials:</strong><br>
+                                        Shortcode: <code>174379</code><br>
+                                        Passkey: <code>bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step3">
+                                    <strong>Step 3:</strong>&nbsp;Configure Environment Variables
+                                </button>
+                            </h2>
+                            <div id="step3" class="accordion-collapse collapse" data-bs-parent="#setupAccordion">
+                                <div class="accordion-body">
+                                    <p>Add these to your <code>.env</code> file or PythonAnywhere environment variables:</p>
+                                    <pre class="bg-dark text-light p-3 rounded"><code># M-Pesa Daraja API Configuration
+MPESA_CONSUMER_KEY=your-consumer-key-here
+MPESA_CONSUMER_SECRET=your-consumer-secret-here
+MPESA_SHORTCODE=174379
+MPESA_PASSKEY=bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919
+MPESA_CALLBACK_URL=https://yourdomain.pythonanywhere.com/payments/callback
+MPESA_ENV=sandbox</code></pre>
+                                    
+                                    <h6 class="mt-4">For PythonAnywhere:</h6>
+                                    <ol>
+                                        <li>Go to <strong>Web</strong> tab</li>
+                                        <li>Click on your web app</li>
+                                        <li>Scroll to <strong>Code</strong> section</li>
+                                        <li>Click on <strong>WSGI configuration file</strong></li>
+                                        <li>Or set in <code>.env</code> file in your project directory</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step4">
+                                    <strong>Step 4:</strong>&nbsp;Go Live (Production)
+                                </button>
+                            </h2>
+                            <div id="step4" class="accordion-collapse collapse" data-bs-parent="#setupAccordion">
+                                <div class="accordion-body">
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        <strong>Important:</strong> Only switch to production after thorough testing in sandbox!
+                                    </div>
+                                    <ol>
+                                        <li>In Safaricom Developer Portal, go to <strong>Go Live</strong></li>
+                                        <li>Submit your organization documents:
+                                            <ul>
+                                                <li>Business registration certificate</li>
+                                                <li>KRA PIN certificate</li>
+                                                <li>ID of directors</li>
+                                            </ul>
+                                        </li>
+                                        <li>Wait for approval (usually 2-5 business days)</li>
+                                        <li>Once approved, you'll receive:
+                                            <ul>
+                                                <li>Production Consumer Key & Secret</li>
+                                                <li>Your actual Paybill/Till Number as shortcode</li>
+                                                <li>Production Passkey</li>
+                                            </ul>
+                                        </li>
+                                        <li>Update your environment variables with production credentials</li>
+                                        <li>Change <code>MPESA_ENV=production</code></li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 5 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step5">
+                                    <strong>Step 5:</strong>&nbsp;Test the Integration
+                                </button>
+                            </h2>
+                            <div id="step5" class="accordion-collapse collapse" data-bs-parent="#setupAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Click <strong>Test Connection</strong> above to verify API credentials</li>
+                                        <li>Click <strong>Test STK Push</strong> to send a test payment request</li>
+                                        <li>For sandbox, use test phone numbers: <code>254708374149</code></li>
+                                        <li>Check the callback URL is accessible from the internet</li>
+                                    </ol>
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        Your callback URL is: <code>{{ config.callback_url }}</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Display -->
+    <div id="testResult" class="row mb-4" style="display: none;">
+        <div class="col-12">
+            <div class="alert" id="resultAlert">
+                <span id="resultMessage"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STK Test Modal -->
+<div class="modal fade" id="stkTestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-phone me-2"></i>Test STK Push</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    This will send a <strong>1 KES</strong> payment request to the phone number.
+                    {% if config.environment == 'sandbox' %}
+                    <br><small>Sandbox test number: <code>254708374149</code></small>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" id="testPhoneNumber" 
+                           placeholder="254712345678" 
+                           value="{% if config.environment == 'sandbox' %}254708374149{% endif %}">
+                    <small class="text-muted">Format: 254XXXXXXXXX</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="testStkPush()">
+                    <i class="bi bi-send me-1"></i>Send STK Push
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testConnection() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Testing...';
+    btn.disabled = true;
+
+    fetch('{{ url_for("settings.test_mpesa_connection") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        showResult(data.success, data.success ? data.message : data.error);
+    })
+    .catch(error => {
+        showResult(false, 'Network error: ' + error.message);
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function testStkPush() {
+    const phoneNumber = document.getElementById('testPhoneNumber').value;
+    if (!phoneNumber) {
+        alert('Please enter a phone number');
+        return;
+    }
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById('stkTestModal'));
+    modal.hide();
+
+    fetch('{{ url_for("settings.test_stk_push") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ phone_number: phoneNumber })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showResult(true, data.message + '<br><small>Checkout ID: ' + data.checkout_request_id + '</small>');
+        } else {
+            showResult(false, data.error);
+        }
+    })
+    .catch(error => {
+        showResult(false, 'Network error: ' + error.message);
+    });
+}
+
+function showResult(success, message) {
+    const resultDiv = document.getElementById('testResult');
+    const alert = document.getElementById('resultAlert');
+    const msgSpan = document.getElementById('resultMessage');
+    
+    resultDiv.style.display = 'block';
+    alert.className = 'alert ' + (success ? 'alert-success' : 'alert-danger');
+    msgSpan.innerHTML = (success ? '<i class="bi bi-check-circle me-2"></i>' : '<i class="bi bi-x-circle me-2"></i>') + message;
+    
+    resultDiv.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+{% endblock %}

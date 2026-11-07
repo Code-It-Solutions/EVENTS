@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Create {{ voucher_type|title }} Voucher - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{{ url_for('finance.list_vouchers') }}" class="btn btn-outline-secondary me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h2 class="mb-0">
+                        <i class="bi bi-{{ 'cash-stack text-danger' if voucher_type == 'payment' else 'receipt text-success' }} me-2"></i>
+                        {{ voucher_type|title }} Voucher
+                    </h2>
+                    <p class="text-muted mb-0">Create a new {{ voucher_type }} voucher</p>
+                </div>
+            </div>
+
+            <form method="POST" id="voucherForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="voucher_type" value="{{ voucher_type }}">
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-{{ 'danger' if voucher_type == 'payment' else 'success' }} text-white">
+                        <h5 class="mb-0">Voucher Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Date <span class="text-danger">*</span></label>
+                                <input type="date" name="date" class="form-control" value="{{ today }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ 'Payee' if voucher_type == 'payment' else 'Payer' }} Name <span class="text-danger">*</span></label>
+                                <input type="text" name="payee_name" class="form-control" placeholder="Enter name" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ 'Payee' if voucher_type == 'payment' else 'Payer' }} Type</label>
+                                <select name="payee_type" class="form-select">
+                                    <option value="delegate">Delegate</option>
+                                    <option value="vendor">Vendor/Supplier</option>
+                                    <option value="staff">Staff</option>
+                                    <option value="church">Church/Parish</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Payment Method</label>
+                                <select name="payment_method" class="form-select">
+                                    <option value="cash">Cash</option>
+                                    <option value="mpesa">M-Pesa</option>
+                                    <option value="bank_transfer">Bank Transfer</option>
+                                    <option value="cheque">Cheque</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Reference Number</label>
+                                <input type="text" name="reference_number" class="form-control" 
+                                       placeholder="M-Pesa code, Cheque no, etc.">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Category</label>
+                                <select name="category" class="form-select">
+                                    <option value="">Select Category</option>
+                                    {% if voucher_type == 'payment' %}
+                                    <option value="venue">Venue & Accommodation</option>
+                                    <option value="catering">Catering & Meals</option>
+                                    <option value="transport">Transport</option>
+                                    <option value="printing">Printing & Stationery</option>
+                                    <option value="equipment">Equipment & Supplies</option>
+                                    <option value="honoraria">Honoraria & Allowances</option>
+                                    <option value="entertainment">Entertainment</option>
+                                    <option value="communication">Communication</option>
+                                    <option value="miscellaneous">Miscellaneous</option>
+                                    {% else %}
+                                    <option value="registration">Registration Fees</option>
+                                    <option value="donation">Donations</option>
+                                    <option value="sponsorship">Sponsorship</option>
+                                    <option value="offering">Offerings</option>
+                                    <option value="merchandise">Merchandise Sales</option>
+                                    <option value="other">Other Income</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Narration/Purpose <span class="text-danger">*</span></label>
+                                <textarea name="narration" class="form-control" rows="2" 
+                                          placeholder="Describe the purpose of this {{ voucher_type }}" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Line Items -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Line Items</h5>
+                        <button type="button" class="btn btn-sm btn-success" onclick="addLineItem()">
+                            <i class="bi bi-plus-lg me-1"></i>Add Item
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0" id="lineItemsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40%">Description</th>
+                                        <th style="width: 15%">Qty</th>
+                                        <th style="width: 15%">Unit Price</th>
+                                        <th style="width: 20%">Amount</th>
+                                        <th style="width: 10%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lineItems">
+                                    <tr class="line-item">
+                                        <td>
+                                            <input type="text" name="item_description[]" class="form-control form-control-sm" 
+                                                   placeholder="Item description" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="item_quantity[]" class="form-control form-control-sm qty-input" 
+                                                   value="1" min="1" step="0.01">
+                                        </td>
+                                        <td>
+                                            <input type="number" name="item_unit_price[]" class="form-control form-control-sm price-input" 
+                                                   placeholder="0" step="0.01">
+                                        </td>
+                                        <td>
+                                            <input type="number" name="item_amount[]" class="form-control form-control-sm amount-input" 
+                                                   placeholder="0" step="0.01" required>
+                                            <input type="hidden" name="item_account_id[]" value="">
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLineItem(this)" disabled>
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <th colspan="3" class="text-end">Total Amount:</th>
+                                        <th>
+                                            <span id="totalAmount" class="fs-5 text-{{ 'danger' if voucher_type == 'payment' else 'success' }}">KSh 0</span>
+                                            <input type="hidden" name="amount" id="amountInput" value="0">
+                                        </th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Amount in Words -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <label class="form-label">Amount in Words</label>
+                        <input type="text" name="amount_in_words" id="amountInWords" class="form-control" 
+                               placeholder="Will be auto-filled" readonly>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('finance.list_vouchers') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-1"></i>Cancel
+                    </a>
+                    <div>
+                        <button type="submit" name="action" value="draft" class="btn btn-secondary">
+                            <i class="bi bi-save me-1"></i>Save as Draft
+                        </button>
+                        <button type="submit" name="action" value="submit" class="btn btn-{{ 'danger' if voucher_type == 'payment' else 'success' }}">
+                            <i class="bi bi-check-lg me-1"></i>Create Voucher
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function addLineItem() {
+    const tbody = document.getElementById('lineItems');
+    const row = document.createElement('tr');
+    row.className = 'line-item';
+    row.innerHTML = `
+        <td>
+            <input type="text" name="item_description[]" class="form-control form-control-sm" 
+                   placeholder="Item description" required>
+        </td>
+        <td>
+            <input type="number" name="item_quantity[]" class="form-control form-control-sm qty-input" 
+                   value="1" min="1" step="0.01">
+        </td>
+        <td>
+            <input type="number" name="item_unit_price[]" class="form-control form-control-sm price-input" 
+                   placeholder="0" step="0.01">
+        </td>
+        <td>
+            <input type="number" name="item_amount[]" class="form-control form-control-sm amount-input" 
+                   placeholder="0" step="0.01" required>
+            <input type="hidden" name="item_account_id[]" value="">
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLineItem(this)">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(row);
+    attachCalculators(row);
+    updateDeleteButtons();
+}
+
+function removeLineItem(btn) {
+    btn.closest('tr').remove();
+    calculateTotal();
+    updateDeleteButtons();
+}
+
+function updateDeleteButtons() {
+    const rows = document.querySelectorAll('.line-item');
+    rows.forEach((row, index) => {
+        const btn = row.querySelector('.btn-outline-danger');
+        btn.disabled = rows.length === 1;
+    });
+}
+
+function attachCalculators(row) {
+    const qty = row.querySelector('.qty-input');
+    const price = row.querySelector('.price-input');
+    const amount = row.querySelector('.amount-input');
+    
+    const calculate = () => {
+        const qtyVal = parseFloat(qty.value) || 0;
+        const priceVal = parseFloat(price.value) || 0;
+        if (qtyVal && priceVal) {
+            amount.value = (qtyVal * priceVal).toFixed(2);
+        }
+        calculateTotal();
+    };
+    
+    qty.addEventListener('input', calculate);
+    price.addEventListener('input', calculate);
+    amount.addEventListener('input', calculateTotal);
+}
+
+function calculateTotal() {
+    const amounts = document.querySelectorAll('.amount-input');
+    let total = 0;
+    amounts.forEach(input => {
+        total += parseFloat(input.value) || 0;
+    });
+    document.getElementById('totalAmount').textContent = 'KSh ' + total.toLocaleString();
+    document.getElementById('amountInput').value = total;
+    document.getElementById('amountInWords').value = numberToWords(total) + ' Shillings Only';
+}
+
+function numberToWords(num) {
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+                  'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+                  'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    
+    if (num === 0) return 'Zero';
+    if (num < 0) return 'Negative ' + numberToWords(-num);
+    
+    let words = '';
+    
+    if (Math.floor(num / 1000000) > 0) {
+        words += numberToWords(Math.floor(num / 1000000)) + ' Million ';
+        num %= 1000000;
+    }
+    if (Math.floor(num / 1000) > 0) {
+        words += numberToWords(Math.floor(num / 1000)) + ' Thousand ';
+        num %= 1000;
+    }
+    if (Math.floor(num / 100) > 0) {
+        words += ones[Math.floor(num / 100)] + ' Hundred ';
+        num %= 100;
+    }
+    if (num > 0) {
+        if (num < 20) {
+            words += ones[num];
+        } else {
+            words += tens[Math.floor(num / 10)];
+            if (num % 10 > 0) {
+                words += '-' + ones[num % 10];
+            }
+        }
+    }
+    return words.trim();
+}
+
+// Initialize
+document.querySelectorAll('.line-item').forEach(attachCalculators);
+</script>
+{% endblock %}

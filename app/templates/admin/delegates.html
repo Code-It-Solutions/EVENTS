@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}All Delegates - KAYO Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <div>
+        <h2><i class="bi bi-people me-2"></i>All Delegates</h2>
+        <p class="text-muted mb-0">{{ delegates.total }} delegate(s) registered</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.export_delegates_excel', **filters) }}" class="btn btn-outline-success me-2">
+            <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+        </a>
+        <a href="{{ url_for('admin.export_delegates_pdf', **filters) }}" class="btn btn-outline-danger">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin.all_delegates') }}" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Archdeaconry</label>
+                <select name="archdeaconry" class="form-select">
+                    <option value="">All Archdeaconries</option>
+                    {% for arch in archdeaconries %}
+                    <option value="{{ arch }}" {% if filters.archdeaconry == arch %}selected{% endif %}>{{ arch }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Parish</label>
+                <select name="parish" class="form-select">
+                    <option value="">All Parishes</option>
+                    {% for par in parishes %}
+                    <option value="{{ par }}" {% if filters.parish == par %}selected{% endif %}>{{ par }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Payment Status</label>
+                <select name="payment_status" class="form-select">
+                    <option value="">All</option>
+                    <option value="paid" {% if filters.payment_status == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="unpaid" {% if filters.payment_status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Gender</label>
+                <select name="gender" class="form-select">
+                    <option value="">All</option>
+                    <option value="male" {% if filters.gender == 'male' %}selected{% endif %}>Male</option>
+                    <option value="female" {% if filters.gender == 'female' %}selected{% endif %}>Female</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Search</label>
+                <input type="text" name="search" class="form-control" placeholder="Name..." value="{{ filters.search }}">
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i>Filter
+                </button>
+                <a href="{{ url_for('admin.all_delegates') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x me-1"></i>Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if delegates.items %}
+        <!-- Bulk Actions -->
+        <form id="bulkDeleteForm" action="{{ url_for('admin.bulk_delete_delegates') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAll">
+                        <label class="form-check-label" for="selectAll">Select All</label>
+                    </div>
+                    <span id="selectedCount" class="text-muted small">(0 selected)</span>
+                </div>
+                <button type="submit" class="btn btn-danger" id="bulkDeleteBtn" disabled onclick="return confirm('Are you sure you want to delete the selected delegates? This cannot be undone.');">
+                    <i class="bi bi-trash me-1"></i>Delete Selected
+                </button>
+            </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"></th>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Local Church</th>
+                        <th>Parish</th>
+                        <th>Archdeaconry</th>
+                        <th>Registered By</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for delegate in delegates.items %}
+                    <tr>
+                        <td>
+                            <div class="form-check">
+                                <input class="form-check-input delegate-checkbox" type="checkbox" name="delegate_ids" value="{{ delegate.id }}">
+                            </div>
+                        </td>
+                        <td>{{ loop.index + (delegates.page - 1) * delegates.per_page }}</td>
+                        <td><strong>{{ delegate.name }}</strong></td>
+                        <td>{{ delegate.gender | capitalize }}</td>
+                        <td>{{ delegate.local_church }}</td>
+                        <td>{{ delegate.parish }}</td>
+                        <td>{{ delegate.archdeaconry }}</td>
+                        <td>{{ delegate.registered_by_user.name if delegate.registered_by_user else 'N/A' }}</td>
+                        <td>
+                            {% if delegate.is_paid %}
+                            <span class="badge badge-paid">Paid</span>
+                            {% else %}
+                            <span class="badge badge-unpaid">Unpaid</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ delegate.registered_at.strftime('%d %b %Y') }}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-single-btn" 
+                                    data-delegate-id="{{ delegate.id }}" 
+                                    data-delegate-name="{{ delegate.name }}" 
+                                    title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        </form>
+        
+        <!-- Pagination -->
+        {% if delegates.pages > 1 %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if delegates.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.all_delegates', page=delegates.prev_num, **filters) }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in delegates.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == delegates.page %}
+                        <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                        {% else %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('admin.all_delegates', page=page_num, **filters) }}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if delegates.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.all_delegates', page=delegates.next_num, **filters) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+            <p class="mt-3 text-muted">No delegates found matching your criteria.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Inline script to ensure it runs after AJAX navigation -->
+<script>
+(function() {
+    function initDelegatesPage() {
+        var selectAllCheckbox = document.getElementById('selectAll');
+        var delegateCheckboxes = document.querySelectorAll('.delegate-checkbox');
+        var bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        var selectedCountSpan = document.getElementById('selectedCount');
+        var singleDeleteForm = document.getElementById('singleDeleteForm');
+        
+        // Exit early if no delegates on page
+        if (!selectAllCheckbox || delegateCheckboxes.length === 0) {
+            console.log('No delegates found on page');
+            return;
+        }
+        
+        console.log('Initializing delegates page. Found', delegateCheckboxes.length, 'checkboxes');
+        
+        function updateSelectedCount() {
+            var checkedCount = document.querySelectorAll('.delegate-checkbox:checked').length;
+            if (selectedCountSpan) {
+                selectedCountSpan.textContent = '(' + checkedCount + ' selected)';
+            }
+            if (bulkDeleteBtn) {
+                bulkDeleteBtn.disabled = checkedCount === 0;
+            }
+            
+            // Update select all checkbox state
+            if (checkedCount === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCount === delegateCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+        
+        // Select All checkbox handler
+        selectAllCheckbox.onclick = function() {
+            var isChecked = this.checked;
+            delegateCheckboxes.forEach(function(checkbox) {
+                checkbox.checked = isChecked;
+            });
+            updateSelectedCount();
+        };
+        
+        // Individual checkbox handlers
+        delegateCheckboxes.forEach(function(checkbox) {
+            checkbox.onclick = function() {
+                updateSelectedCount();
+            };
+        });
+        
+        // Single delete button handlers
+        document.querySelectorAll('.delete-single-btn').forEach(function(btn) {
+            btn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                var delegateId = this.getAttribute('data-delegate-id');
+                var delegateName = this.getAttribute('data-delegate-name');
+                
+                if (confirm('Are you sure you want to delete ' + delegateName + '? This cannot be undone.')) {
+                    // Create and submit form directly
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/admin/delegates/' + delegateId + '/delete';
+                    form.setAttribute('data-turbo', 'false');
+                    form.classList.add('no-mask');
+                    
+                    var csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = 'csrf_token';
+                    csrfInput.value = document.querySelector('meta[name="csrf-token"]').content;
+                    form.appendChild(csrfInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+                return false;
+            };
+        });
+        
+        console.log('Delegates page initialization complete');
+    }
+    
+    // Run immediately
+    initDelegatesPage();
+    
+    // Also run on DOMContentLoaded in case script runs before DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDelegatesPage);
+    }
+})();
+</script>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

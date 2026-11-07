@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Submitted - KAYO | ACK Diocese of Nambale</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-green: #1a5f2a;
+            --secondary-gold: #D4AF37;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .success-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            padding: 50px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-green), #0d4a1c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(26, 95, 42, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(26, 95, 42, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(26, 95, 42, 0); }
+        }
+        
+        .success-icon i {
+            font-size: 3rem;
+            color: white;
+        }
+        
+        .token-box {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 2px dashed var(--primary-green);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        
+        .token-box .label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        
+        .token-box .token {
+            font-family: monospace;
+            font-size: 1rem;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            word-break: break-all;
+            color: var(--primary-green);
+            font-weight: 600;
+            border: 1px solid #dee2e6;
+        }
+        
+        .copy-btn {
+            margin-top: 15px;
+        }
+        
+        .info-box {
+            background: #fff8e1;
+            border-left: 4px solid var(--secondary-gold);
+            padding: 15px 20px;
+            text-align: left;
+            border-radius: 0 8px 8px 0;
+            margin: 30px 0;
+        }
+        
+        .info-box h6 {
+            color: #e65100;
+            margin-bottom: 10px;
+        }
+        
+        .info-box ul {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+        
+        .info-box li {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-row .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .detail-row .value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: #ffc107;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-card">
+        <div class="success-icon">
+            <i class="bi bi-check-lg"></i>
+        </div>
+        
+        <h2 class="mb-3">Registration Submitted!</h2>
+        <p class="text-muted mb-4">
+            Thank you, <strong>{{ pending.name }}</strong>! Your registration has been successfully submitted 
+            and is pending approval by your local church chairperson.
+        </p>
+        
+        <span class="status-badge">
+            <i class="bi bi-hourglass-split me-2"></i>Pending Approval
+        </span>
+        
+        <!-- Registration Token -->
+        <div class="token-box">
+            <div class="label">Your Registration Token (Save this!)</div>
+            <div class="token" id="tokenValue">{{ pending.registration_token }}</div>
+            <button class="btn btn-outline-primary btn-sm copy-btn" onclick="copyToken()">
+                <i class="bi bi-clipboard me-1"></i>Copy Token
+            </button>
+        </div>
+        
+        <!-- Registration Details -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h6 class="card-title text-start mb-3">
+                    <i class="bi bi-person-badge me-2"></i>Registration Details
+                </h6>
+                <div class="detail-row">
+                    <span class="label">Name</span>
+                    <span class="value">{{ pending.name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Local Church</span>
+                    <span class="value">{{ pending.local_church }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Parish</span>
+                    <span class="value">{{ pending.parish }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Archdeaconry</span>
+                    <span class="value">{{ pending.archdeaconry }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Submitted</span>
+                    <span class="value">{{ pending.submitted_at.strftime('%d %B %Y, %H:%M') }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Important Information -->
+        <div class="info-box">
+            <h6><i class="bi bi-lightbulb me-2"></i>What Happens Next?</h6>
+            <ul>
+                <li>Your local church chairperson will review your registration</li>
+                <li>Once approved, they will assign you a ticket number</li>
+                <li>Payment will be processed through your chairperson</li>
+                <li>Use your token above to check your registration status anytime</li>
+            </ul>
+        </div>
+        
+        <div class="d-flex justify-content-center gap-3 mt-4">
+            <a href="{{ url_for('public.registration_status', token=pending.registration_token) }}" class="btn btn-primary">
+                <i class="bi bi-search me-2"></i>Check Status
+            </a>
+            <a href="{{ url_for('public.register_landing') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-house me-2"></i>Back to Home
+            </a>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function copyToken() {
+            const token = document.getElementById('tokenValue').innerText;
+            navigator.clipboard.writeText(token).then(function() {
+                const btn = document.querySelector('.copy-btn');
+                btn.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+                btn.classList.remove('btn-outline-primary');
+                btn.classList.add('btn-success');
+                setTimeout(function() {
+                    btn.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy Token';
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-primary');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

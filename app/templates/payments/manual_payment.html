@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Manual Payment - KAYO{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-cash-stack me-2"></i>Submit Payment
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Alternative Payment Method</strong><br>
+                        Submit your payment details below. The Finance team will verify and approve your payment.
+                    </div>
+                    
+                    <!-- Summary -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-receipt me-2"></i>Payment Summary</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Delegate</th>
+                                            <th>Parish</th>
+                                            <th class="text-end">Fee</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for delegate in delegates %}
+                                        <tr>
+                                            <td>{{ delegate.full_name }}</td>
+                                            <td>{{ delegate.parish }}</td>
+                                            <td class="text-end">KSh {{ "{:,.0f}".format(delegate.get_registration_fee()) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot class="table-success">
+                                        <tr>
+                                            <th colspan="2">Total Amount</th>
+                                            <th class="text-end">KSh {{ "{:,.0f}".format(total_amount) }}</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Form -->
+                    <form method="POST" action="{{ url_for('payments.manual_payment_form') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-4">
+                            <label class="form-label"><strong>Payment Method</strong></label>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-check card h-100">
+                                        <div class="card-body text-center p-3">
+                                            <input class="form-check-input visually-hidden" type="radio" name="payment_method" id="methodCash" value="cash" checked>
+                                            <label class="form-check-label d-block cursor-pointer" for="methodCash">
+                                                <i class="bi bi-cash-coin text-success" style="font-size: 2rem;"></i>
+                                                <div class="mt-2 fw-bold">Cash</div>
+                                                <small class="text-muted">Pay in person</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check card h-100">
+                                        <div class="card-body text-center p-3">
+                                            <input class="form-check-input visually-hidden" type="radio" name="payment_method" id="methodBank" value="bank_transfer">
+                                            <label class="form-check-label d-block cursor-pointer" for="methodBank">
+                                                <i class="bi bi-bank text-primary" style="font-size: 2rem;"></i>
+                                                <div class="mt-2 fw-bold">Bank Transfer</div>
+                                                <small class="text-muted">Direct deposit</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check card h-100">
+                                        <div class="card-body text-center p-3">
+                                            <input class="form-check-input visually-hidden" type="radio" name="payment_method" id="methodMpesa" value="mpesa_manual">
+                                            <label class="form-check-label d-block cursor-pointer" for="methodMpesa">
+                                                <i class="bi bi-phone text-success" style="font-size: 2rem;"></i>
+                                                <div class="mt-2 fw-bold">M-Pesa (Manual)</div>
+                                                <small class="text-muted">Paybill/Till</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="reference" class="form-label">Transaction Reference <small class="text-muted">(Optional)</small></label>
+                            <input type="text" class="form-control" id="reference" name="reference" 
+                                   placeholder="e.g., M-Pesa code, Bank reference, Receipt number">
+                            <div class="form-text">If paying via M-Pesa or Bank, enter the confirmation code here.</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="notes" class="form-label">Additional Notes <small class="text-muted">(Optional)</small></label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2" 
+                                      placeholder="Any additional information about the payment"></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle me-2"></i>Submit Payment for Approval
+                            </button>
+                            <a href="{{ url_for('payments.payment_page') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Payment Options
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Help Section -->
+            <div class="card mt-4 border-0 bg-light">
+                <div class="card-body">
+                    <h6><i class="bi bi-question-circle me-2"></i>How Manual Payments Work</h6>
+                    <ol class="mb-0 small text-muted">
+                        <li>Select your payment method and submit this form</li>
+                        <li>Make the actual payment (cash to treasurer, bank transfer, or M-Pesa)</li>
+                        <li>The Finance team will verify and approve your payment</li>
+                        <li>Once approved, your delegates will be marked as paid</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-check.card {
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+    }
+    .form-check.card:hover {
+        border-color: #198754;
+    }
+    .form-check-input:checked + .form-check-label {
+        color: #198754;
+    }
+    .form-check.card:has(.form-check-input:checked) {
+        border-color: #198754;
+        background-color: rgba(25, 135, 84, 0.05);
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+</style>
+{% endblock %}

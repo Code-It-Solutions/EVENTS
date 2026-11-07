@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Cash Flow Statement - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Cash Flow Statement</h2>
+            <p class="text-muted mb-0">For the period {{ start_date.strftime('%d %b') }} - {{ end_date.strftime('%d %b %Y') }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('finance.reports_index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Reports
+            </a>
+            <button class="btn btn-outline-success" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="card border-0 shadow-sm mb-4 no-print">
+        <div class="card-body py-2">
+            <form method="GET" class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <label class="form-label mb-0 me-2">From:</label>
+                </div>
+                <div class="col-auto">
+                    <input type="date" name="start_date" class="form-control form-control-sm" 
+                           value="{{ start_date.strftime('%Y-%m-%d') }}">
+                </div>
+                <div class="col-auto">
+                    <label class="form-label mb-0 me-2">To:</label>
+                </div>
+                <div class="col-auto">
+                    <input type="date" name="end_date" class="form-control form-control-sm" 
+                           value="{{ end_date.strftime('%Y-%m-%d') }}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cash Flow Statement Report -->
+    <div class="card border-0 shadow-sm" id="reportContent">
+        <div class="card-header bg-warning text-dark text-center py-3">
+            <h4 class="mb-1">KAYO - Kenya Anglican Youth Organization</h4>
+            <h5 class="mb-1">Statement of Cash Flows</h5>
+            <p class="mb-0">For the Period {{ start_date.strftime('%d %B %Y') }} to {{ end_date.strftime('%d %B %Y') }}</p>
+        </div>
+        <div class="card-body">
+            <!-- Operating Activities -->
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2 text-primary">
+                    <i class="bi bi-gear me-2"></i>CASH FLOWS FROM OPERATING ACTIVITIES
+                </h5>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td class="ps-3">Cash Receipts (Delegate Payments, etc.)</td>
+                            <td class="text-end text-success">KSh {{ "{:,.2f}".format(total_receipts) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-3">Cash Payments (Expenses)</td>
+                            <td class="text-end text-danger">(KSh {{ "{:,.2f}".format(total_payments) }})</td>
+                        </tr>
+                    </tbody>
+                    <tfoot class="fw-bold border-top table-primary">
+                        <tr>
+                            <td class="ps-3">Net Cash from Operating Activities</td>
+                            <td class="text-end">KSh {{ "{:,.2f}".format(net_cash_flow) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Summary -->
+            <div class="card bg-dark text-white mb-4">
+                <div class="card-body">
+                    <table class="table table-dark table-sm mb-0">
+                        <tbody>
+                            <tr>
+                                <td>Net Increase/(Decrease) in Cash</td>
+                                <td class="text-end fw-bold">KSh {{ "{:,.2f}".format(net_cash_flow) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Cash at Beginning of Period</td>
+                                <td class="text-end">KSh {{ "{:,.2f}".format(opening_balance) }}</td>
+                            </tr>
+                            <tr class="border-top">
+                                <td class="fw-bold fs-5">Cash at End of Period</td>
+                                <td class="text-end fw-bold fs-5">KSh {{ "{:,.2f}".format(closing_balance) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Cash Flow Visualization -->
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <div class="card h-100 {% if total_receipts > 0 %}border-success{% else %}border-secondary{% endif %}">
+                        <div class="card-body">
+                            <i class="bi bi-arrow-down-circle fs-1 {% if total_receipts > 0 %}text-success{% else %}text-muted{% endif %}"></i>
+                            <h6 class="mt-2">Cash Inflows</h6>
+                            <h5 class="{% if total_receipts > 0 %}text-success{% else %}text-muted{% endif %}">
+                                KSh {{ "{:,.0f}".format(total_receipts) }}
+                            </h5>
+                            <small class="text-muted">{{ receipts|length }} transaction(s)</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 {% if total_payments > 0 %}border-danger{% else %}border-secondary{% endif %}">
+                        <div class="card-body">
+                            <i class="bi bi-arrow-up-circle fs-1 {% if total_payments > 0 %}text-danger{% else %}text-muted{% endif %}"></i>
+                            <h6 class="mt-2">Cash Outflows</h6>
+                            <h5 class="{% if total_payments > 0 %}text-danger{% else %}text-muted{% endif %}">
+                                KSh {{ "{:,.0f}".format(total_payments) }}
+                            </h5>
+                            <small class="text-muted">{{ payments|length }} payment(s)</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 bg-primary text-white">
+                        <div class="card-body">
+                            <i class="bi bi-wallet2 fs-1"></i>
+                            <h6 class="mt-2">Net Change</h6>
+                            <h5>KSh {{ "{:,.0f}".format(net_cash_flow) }}</h5>
+                            <small class="opacity-75">
+                                {% if net_cash_flow >= 0 %}Positive{% else %}Negative{% endif %} Cash Flow
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-light text-center small text-muted">
+            Generated on {{ end_date.strftime('%d %B %Y') }} | KAYO Financial Management System
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn, nav, .no-print, footer { display: none !important; }
+    .card { border: none !important; box-shadow: none !important; }
+    .bg-warning, .bg-primary, .bg-dark, .table-primary, .table-info, .table-success { 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+    }
+}
+</style>
+{% endblock %}

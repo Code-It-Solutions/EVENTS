@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}{{ delegate.name }} - KAYO{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('delegates.list_delegates') }}">Delegates</a></li>
+            <li class="breadcrumb-item active">{{ delegate.name }}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0"><i class="bi bi-person me-2"></i>Delegate Details</h5>
+                    <small class="text-muted">Ticket: <strong>{{ delegate.ticket_number }}</strong></small>
+                </div>
+                <div>
+                    <span class="badge bg-{{ 'success' if delegate.category == 'vip' else 'info' if delegate.category == 'speaker' else 'warning' if delegate.category == 'leader' else 'secondary' }} me-1">
+                        {{ delegate.category|upper }}
+                    </span>
+                    <span class="badge {{ 'badge-paid' if delegate.is_paid else 'badge-unpaid' }}">
+                        {{ 'Paid' if delegate.is_paid else 'Unpaid' }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">Full Name</label>
+                        <p class="fw-bold mb-0">{{ delegate.name }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">Gender</label>
+                        <p class="fw-bold mb-0">{{ delegate.gender | capitalize }}</p>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">Phone Number</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <p class="fw-bold mb-0">{{ delegate.phone_number or 'Not provided' }}</p>
+                            {% if delegate.phone_number %}
+                            <div class="btn-group btn-group-sm">
+                                <a href="tel:{{ delegate.phone_number }}" class="btn btn-outline-secondary btn-sm" title="Call">
+                                    <i class="bi bi-telephone"></i>
+                                </a>
+                                <a href="https://wa.me/{{ delegate.phone_number | replace('+', '') | replace(' ', '') }}?text=Hello%20{{ delegate.name | urlencode }},%20this%20is%20from%20KAYO%20Diocese%20of%20Nambale." 
+                                   target="_blank" class="btn btn-success btn-sm" title="WhatsApp">
+                                    <i class="bi bi-whatsapp"></i>
+                                </a>
+                                <a href="sms:{{ delegate.phone_number }}" class="btn btn-outline-info btn-sm" title="SMS">
+                                    <i class="bi bi-chat-dots"></i>
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">ID Number</label>
+                        <p class="fw-bold mb-0">{{ delegate.id_number or 'Not provided' }}</p>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">Registered On</label>
+                        <p class="fw-bold mb-0">{{ delegate.registered_at.strftime('%d %B %Y, %H:%M') }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">Check-In Status</label>
+                        <p class="fw-bold mb-0">
+                            {% if delegate.checked_in %}
+                            <span class="text-success"><i class="bi bi-check-circle me-1"></i>Checked In ({{ delegate.checked_in_at.strftime('%d %b %H:%M') }})</span>
+                            {% else %}
+                            <span class="text-muted"><i class="bi bi-clock me-1"></i>Not Yet Checked In</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label text-muted small">Local Church</label>
+                        <p class="fw-bold mb-0">{{ delegate.local_church }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label text-muted small">Parish</label>
+                        <p class="fw-bold mb-0">{{ delegate.parish }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label text-muted small">Archdeaconry</label>
+                        <p class="fw-bold mb-0">{{ delegate.archdeaconry }}</p>
+                    </div>
+                </div>
+                
+                {% if delegate.is_paid and delegate.payment %}
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <label class="form-label text-muted small">Payment Reference</label>
+                        <p class="fw-bold mb-0">{{ delegate.payment.mpesa_receipt_number or 'N/A' }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white">
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                    <a href="{{ url_for('delegates.list_delegates') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Back to List
+                    </a>
+                    <div class="btn-group">
+                        <a href="{{ url_for('delegates.view_ticket', id=delegate.id) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-ticket-perforated me-1"></i>Ticket
+                        </a>
+                        <a href="{{ url_for('delegates.print_badge', id=delegate.id) }}" class="btn btn-outline-info">
+                            <i class="bi bi-person-badge me-1"></i>Badge
+                        </a>
+                    </div>
+                    {% if (can_edit is not defined or can_edit) and current_user.role != 'viewer' %}
+                    <div>
+                        {% if not delegate.is_paid %}
+                        {% if delegate.phone_number %}
+                        <a href="https://wa.me/{{ delegate.phone_number | replace('+', '') | replace(' ', '') }}?text=Hello%20{{ delegate.name | urlencode }},%20this%20is%20a%20friendly%20reminder%20about%20your%20pending%20registration%20payment%20of%20KES%201,500%20for%20the%20KAYO%20Delegates%20Conference.%20Please%20make%20your%20payment%20to%20complete%20your%20registration.%20Paybill:%20247247%20Account:%20KAYO%20Nambale.%20Thank%20you!" 
+                           target="_blank" class="btn btn-success" title="Send WhatsApp Payment Reminder">
+                            <i class="bi bi-whatsapp me-1"></i>Remind via WhatsApp
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('delegates.edit_delegate', id=delegate.id) }}" class="btn btn-primary">
+                            <i class="bi bi-pencil me-2"></i>Edit
+                        </a>
+                        <form action="{{ url_for('delegates.delete_delegate', id=delegate.id) }}" method="POST" class="d-inline no-mask" onsubmit="return confirm('Are you sure you want to delete this delegate?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash me-2"></i>Delete
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Fund Management Reports{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Fund Management Reports</h1>
+            <p class="text-muted mb-0">Overview of all fund collections and transfers</p>
+        </div>
+        <button class="btn btn-outline-primary" onclick="window.print()">
+            <i class="fas fa-print me-2"></i>Print Report
+        </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-hand-holding-heart text-primary fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-0 small">Total Pledged</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(total_pledged) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-money-bill-wave text-success fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-0 small">Pledges Collected</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(total_collected) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-calendar-check text-info fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-0 small">Scheduled Collections</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(total_scheduled) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-exchange-alt text-warning fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-0 small">Transferred to Finance</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(total_transferred) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Overall Progress -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Collection Progress</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Pledge Collection -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Pledge Collection</span>
+                            <span>{{ "{:.1f}".format((total_collected / total_pledged * 100) if total_pledged > 0 else 0) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-success" style="width: {{ (total_collected / total_pledged * 100) if total_pledged > 0 else 0 }}%">
+                                KSh {{ "{:,.0f}".format(total_collected) }}
+                            </div>
+                        </div>
+                        <small class="text-muted">of KSh {{ "{:,.0f}".format(total_pledged) }} pledged</small>
+                    </div>
+                    
+                    <!-- Transfer Progress -->
+                    {% set total_collections = total_collected + total_scheduled %}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Fund Transfers</span>
+                            <span>{{ "{:.1f}".format((total_transferred / total_collections * 100) if total_collections > 0 else 0) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-primary" style="width: {{ (total_transferred / total_collections * 100) if total_collections > 0 else 0 }}%">
+                                KSh {{ "{:,.0f}".format(total_transferred) }}
+                            </div>
+                        </div>
+                        <small class="text-muted">of KSh {{ "{:,.0f}".format(total_collections) }} collected</small>
+                    </div>
+                    
+                    <!-- Pending Amount -->
+                    {% set pending = total_collections - total_transferred %}
+                    <div class="alert alert-{{ 'warning' if pending > 0 else 'success' }} mb-0">
+                        <i class="fas fa-{{ 'clock' if pending > 0 else 'check-circle' }} me-2"></i>
+                        <strong>KSh {{ "{:,.2f}".format(pending) }}</strong> pending transfer
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- By Source Type -->
+        {% if by_source %}
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>By Source Type</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Source Type</th>
+                                    <th class="text-end">Pledged</th>
+                                    <th class="text-end">Collected</th>
+                                    <th class="text-end">%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for source in by_source %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-{{ 'primary' if source[0] == 'delegate' else 'success' if source[0] == 'well_wisher' else 'info' }}">
+                                            {{ source[0].replace('_', ' ').title() if source[0] else 'Unknown' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">KSh {{ "{:,.0f}".format(source[1] or 0) }}</td>
+                                    <td class="text-end text-success">KSh {{ "{:,.0f}".format(source[2] or 0) }}</td>
+                                    <td class="text-end">{{ "{:.1f}".format((source[2] / source[1] * 100) if source[1] and source[1] > 0 else 0) }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- By Archdeaconry -->
+        {% if by_archdeaconry %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-church me-2"></i>By Archdeaconry</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Archdeaconry</th>
+                                    <th class="text-end">Pledged</th>
+                                    <th class="text-end">Collected</th>
+                                    <th class="text-end">Outstanding</th>
+                                    <th class="text-center" style="width: 200px;">Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for arch in by_archdeaconry %}
+                                <tr>
+                                    <td><strong>{{ arch[0] or 'Unspecified' }}</strong></td>
+                                    <td class="text-end">KSh {{ "{:,.0f}".format(arch[1] or 0) }}</td>
+                                    <td class="text-end text-success">KSh {{ "{:,.0f}".format(arch[2] or 0) }}</td>
+                                    <td class="text-end text-danger">KSh {{ "{:,.0f}".format((arch[1] or 0) - (arch[2] or 0)) }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar bg-success" style="width: {{ ((arch[2] or 0) / (arch[1] or 1) * 100) }}%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}Help & Tutorial - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold text-primary">
+                    <i class="fas fa-graduation-cap me-2"></i>KAYO Tutorial & Help
+                </h1>
+                <p class="lead text-muted">Complete guide to managing your parish delegates</p>
+            </div>
+
+            <!-- Comprehensive Manual Banner -->
+            <div class="card border-0 shadow mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-center text-white py-4">
+                    <h3 class="mb-2"><i class="fas fa-book-open me-2"></i>Comprehensive Chair Training Manual</h3>
+                    <p class="mb-3 opacity-75">Interactive guide with step-by-step instructions, diagrams, and FAQs</p>
+                    <a href="{{ url_for('main.chair_manual') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-external-link-alt me-2"></i>Open Training Manual
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Start Guide -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-rocket me-2"></i>Quick Start Guide</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-3 text-center">
+                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                <span class="display-6 text-primary">1</span>
+                            </div>
+                            <h5>Register Delegates</h5>
+                            <p class="text-muted small">Add your parish youth members to the system</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                <span class="display-6 text-primary">2</span>
+                            </div>
+                            <h5>Process Payments</h5>
+                            <p class="text-muted small">Record M-Pesa payments for delegates</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                <span class="display-6 text-primary">3</span>
+                            </div>
+                            <h5>Print Badges</h5>
+                            <p class="text-muted small">Generate badges for paid delegates</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                <span class="display-6 text-primary">4</span>
+                            </div>
+                            <h5>Check-in</h5>
+                            <p class="text-muted small">Scan badges at the event</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accordion for Detailed Guides -->
+            <div class="accordion" id="helpAccordion">
+                
+                <!-- Dashboard Section -->
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#dashboardSection">
+                            <i class="fas fa-home me-2 text-primary"></i>Dashboard Overview
+                        </button>
+                    </h2>
+                    <div id="dashboardSection" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            <p>Your dashboard is your central hub showing:</p>
+                            <ul>
+                                <li><strong>Total Delegates:</strong> Number of youth you've registered</li>
+                                <li><strong>Paid Delegates:</strong> Those who have completed payment</li>
+                                <li><strong>Unpaid Delegates:</strong> Those awaiting payment</li>
+                                <li><strong>Recent Activity:</strong> Latest registrations and payments</li>
+                            </ul>
+                            <div class="alert alert-info">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                <strong>Tip:</strong> Check your dashboard daily to track registration progress.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delegate Registration Section -->
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#delegateSection">
+                            <i class="fas fa-user-plus me-2 text-success"></i>Registering Delegates
+                        </button>
+                    </h2>
+                    <div id="delegateSection" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            <h5>Single Registration</h5>
+                            <ol>
+                                <li>Go to <strong>Delegates → Register New</strong></li>
+                                <li>Fill in the required information:
+                                    <ul>
+                                        <li>Full Name (as per ID)</li>
+                                        <li>Phone Number (for M-Pesa)</li>
+                                        <li>Gender</li>
+                                        <li>Category (Delegate/Counsellor/Archdeaconry Chair/NAV/Intercessor/Clergy/Arise Band/Speaker/VIP)</li>
+                                    </ul>
+                                </li>
+                                <li>Click <strong>"Register Delegate"</strong></li>
+                            </ol>
+
+                            <h5 class="mt-4">Bulk Registration</h5>
+                            <ol>
+                                <li>Go to <strong>Delegates → Bulk Registration</strong></li>
+                                <li>Download the Excel template</li>
+                                <li>Fill in delegate details in the spreadsheet</li>
+                                <li>Upload the completed file</li>
+                                <li>Review and confirm the import</li>
+                            </ol>
+
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Important:</strong> Double-check phone numbers! They're used for M-Pesa payments and badge printing.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Section -->
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#paymentSection">
+                            <i class="fas fa-money-bill-wave me-2 text-warning"></i>Processing Payments
+                        </button>
+                    </h2>
+                    <div id="paymentSection" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            <h5>Recording Payments</h5>
+                            <ol>
+                                <li>Go to <strong>Payments → Make Payment</strong></li>
+                                <li>Select delegates from your list</li>
+                                <li>Enter the M-Pesa transaction code</li>
+                                <li>Enter amount paid</li>
+                                <li>Click <strong>"Record Payment"</strong></li>
+                            </ol>
+
+                            <h5 class="mt-4">Payment Methods</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6><i class="fas fa-mobile-alt me-2 text-success"></i>M-Pesa</h6>
+                                            <p class="small mb-0">Recommended method. Delegates send to the official paybill/till number.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6><i class="fas fa-money-bill me-2 text-warning"></i>Cash</h6>
+                                            <p class="small mb-0">For in-person payments. Enter "CASH" as transaction code.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                <strong>Tip:</strong> Always verify M-Pesa message before recording payment.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Badges Section -->
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#badgeSection">
+                            <i class="fas fa-id-badge me-2 text-info"></i>Printing Badges
+                        </button>
+                    </h2>
+                    <div id="badgeSection" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            <h5>Single Badge</h5>
+                            <ol>
+                                <li>Go to delegate's profile</li>
+                                <li>Click <strong>"Print Badge"</strong> button</li>
+                                <li>Badge opens in print preview</li>
+                                <li>Print on card stock or regular paper</li>
+                            </ol>
+
+                            <h5 class="mt-4">Bulk Badge Printing</h5>
+                            <ol>
+                                <li>Go to <strong>Badges → Bulk Print</strong></li>
+                                <li>Filter by payment status (Paid Only recommended)</li>
+                                <li>Select delegates or click "Select All"</li>
+                                <li>Click <strong>"Print Selected"</strong></li>
+                            </ol>
+
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Badge includes:</strong> Name, Photo (if uploaded), Parish, QR Code for check-in, and Delegate ID.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Check-in Section -->
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#checkinSection">
+                            <i class="fas fa-qrcode me-2 text-danger"></i>Event Check-in
+                        </button>
+                    </h2>
+                    <div id="checkinSection" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            <h5>Using the Scanner</h5>
+                            <ol>
+                                <li>Go to <strong>Check-in → Scanner</strong></li>
+                                <li>Allow camera access when prompted</li>
+                                <li>Point camera at delegate's badge QR code</li>
+                                <li>System automatically records check-in</li>
+                            </ol>
+
+                            <h5 class="mt-4">Manual Check-in</h5>
+                            <ol>
+                                <li>Go to <strong>Check-in → Dashboard</strong></li>
+                                <li>Search for delegate by name or ID</li>
+                                <li>Click <strong>"Check In"</strong> button</li>
+                            </ol>
+
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Note:</strong> Only paid delegates can be checked in. Unpaid delegates will show a warning.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Section -->
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#reportSection">
+                            <i class="fas fa-chart-bar me-2 text-purple"></i>Viewing Reports
+                        </button>
+                    </h2>
+                    <div id="reportSection" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            <h5>Available Reports</h5>
+                            <ul>
+                                <li><strong>Delegate List:</strong> All your registered delegates with status</li>
+                                <li><strong>Payment History:</strong> All recorded payments</li>
+                                <li><strong>Check-in Report:</strong> Attendance tracking</li>
+                            </ul>
+
+                            <h5 class="mt-4">Exporting Data</h5>
+                            <p>Most reports can be exported to Excel for offline use:</p>
+                            <ol>
+                                <li>Go to the desired report page</li>
+                                <li>Click <strong>"Export to Excel"</strong> button</li>
+                                <li>File downloads automatically</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Troubleshooting Section -->
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#troubleshootSection">
+                            <i class="fas fa-wrench me-2 text-secondary"></i>Troubleshooting
+                        </button>
+                    </h2>
+                    <div id="troubleshootSection" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Problem</th>
+                                            <th>Solution</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Can't log in</td>
+                                            <td>Check your email for OTP code. Check spam folder. Request new OTP if expired.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Payment not reflecting</td>
+                                            <td>Wait 5 minutes for M-Pesa confirmation. Verify transaction code is correct.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Badge not printing</td>
+                                            <td>Enable pop-ups in your browser. Try a different browser.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>QR scanner not working</td>
+                                            <td>Allow camera permission. Use Chrome or Safari. Ensure good lighting.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Can't edit delegate</td>
+                                            <td>Only unpaid delegates can be edited. Contact admin for paid delegate changes.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Support -->
+                <div class="accordion-item border-0 mb-3 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#supportSection">
+                            <i class="fas fa-headset me-2 text-success"></i>Contact Support
+                        </button>
+                    </h2>
+                    <div id="supportSection" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
+                                            <h5>Email Support</h5>
+                                            <p class="mb-0"><a href="mailto:monsieuraloo@gmail.com">monsieuraloo@gmail.com</a></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <i class="fab fa-whatsapp fa-2x text-success mb-2"></i>
+                                            <h5>WhatsApp</h5>
+                                            <p class="mb-0"><a href="https://wa.me/254790190578" target="_blank">+254 790 190 578</a></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-clock me-2"></i>
+                                Support hours: Monday - Friday, 8:00 AM - 6:00 PM
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back to Dashboard -->
+            <div class="text-center mt-4">
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-purple {
+    color: #6f42c1;
+}
+.accordion-button:not(.collapsed) {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+.accordion-button:focus {
+    box-shadow: none;
+    border-color: rgba(0,0,0,.125);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Pay Installment{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Installment Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Recording Payment For</h6>
+                    <h5 class="mb-1">{{ payment.source_name }}</h5>
+                    <p class="text-muted mb-3">Installment due {{ installment.due_date.strftime('%d %B %Y') }}</p>
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <small class="text-muted d-block">Amount Due</small>
+                            <strong class="text-primary">KSh {{ "{:,.0f}".format(installment.amount_due) }}</strong>
+                        </div>
+                        <div class="col-6 text-center">
+                            <small class="text-muted d-block">Already Paid</small>
+                            <strong class="text-success">KSh {{ "{:,.0f}".format(installment.amount_paid) }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2 text-success"></i>Record Payment</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="no-mask" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Amount -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.amount_paid.label.text }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">KSh</span>
+                                {{ form.amount_paid(class="form-control" + (" is-invalid" if form.amount_paid.errors else ""), placeholder="0.00", value="{:,.0f}".format(installment.amount_due - installment.amount_paid)) }}
+                            </div>
+                            {% for error in form.amount_paid.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.payment_method.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.payment_method(class="form-select" + (" is-invalid" if form.payment_method.errors else "")) }}
+                            {% for error in form.payment_method.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Reference -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">{{ form.reference.label.text }}</label>
+                            {{ form.reference(class="form-control" + (" is-invalid" if form.reference.errors else ""), placeholder="M-Pesa code, receipt number, etc.") }}
+                            {% for error in form.reference.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-success btn-lg") }}
+                            <a href="{{ url_for('fund_management.view_scheduled_payment', payment_id=payment.id) }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

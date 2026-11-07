@@ -1,0 +1,510 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - KAYO{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Role-Based Theme Colors */
+    :root {
+        --super-admin-gold: #FFD700;
+        --super-admin-bg: #1a1a2e;
+        --super-admin-glow: rgba(255, 215, 0, 0.4);
+        
+        --admin-green: #1a5f2a;
+        --admin-gold: #D4AF37;
+    }
+    
+    /* Welcome Card Base */
+    .welcome-card {
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .welcome-card .role-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .welcome-card h2 {
+        margin: 12px 0 8px;
+        font-weight: 700;
+    }
+    
+    .welcome-card .access-level {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    /* Super Admin - Premium Gold Theme */
+    .welcome-card.super-admin {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+        color: white;
+        border: 2px solid var(--super-admin-gold);
+        box-shadow: 0 0 30px var(--super-admin-glow), inset 0 0 60px rgba(255, 215, 0, 0.05);
+        animation: superAdminGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes superAdminGlow {
+        0%, 100% { box-shadow: 0 0 30px var(--super-admin-glow), inset 0 0 60px rgba(255, 215, 0, 0.05); }
+        50% { box-shadow: 0 0 50px var(--super-admin-glow), inset 0 0 80px rgba(255, 215, 0, 0.1); }
+    }
+    
+    .welcome-card.super-admin .role-badge {
+        background: linear-gradient(135deg, var(--super-admin-gold), #FFA500);
+        color: #1a1a2e;
+    }
+    
+    .welcome-card.super-admin h2 {
+        background: linear-gradient(90deg, var(--super-admin-gold), #FFA500);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .welcome-card.super-admin::before {
+        content: '⚡';
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 3rem;
+        opacity: 0.3;
+    }
+    
+    /* Admin - Green with Gold */
+    .welcome-card.admin {
+        background: linear-gradient(135deg, var(--admin-green) 0%, #0d4a1c 100%);
+        color: white;
+        border-left: 4px solid var(--admin-gold);
+    }
+    
+    .welcome-card.admin .role-badge {
+        background: var(--admin-gold);
+        color: #1a1a2e;
+    }
+    
+    .welcome-card.admin::before {
+        content: '🛡️';
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 2.5rem;
+        opacity: 0.3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Role-Based Welcome Card -->
+{% set role_class = current_user.role | replace('_', '-') %}
+<div class="welcome-card {{ role_class }}">
+    <span class="role-badge">
+        {% if current_user.role == 'super_admin' %}
+            ⚡ Super Admin
+        {% else %}
+            🛡️ Administrator
+        {% endif %}
+    </span>
+    <h2>Welcome back, {{ current_user.name }}!</h2>
+    <p class="access-level mb-0">
+        {% if current_user.role == 'super_admin' %}
+            Full system access • All permissions granted • KAYO Diocese of Nambale
+        {% else %}
+            Event administration • System management • KAYO Diocese of Nambale
+        {% endif %}
+    </p>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h4>
+        <p class="text-muted mb-0 small">Overview of all registrations and payments</p>
+    </div>
+    <div class="btn-group">
+        <a href="{{ url_for('admin.charts_dashboard') }}" class="btn btn-outline-info" title="Charts">
+            <i class="bi bi-graph-up me-1"></i>Charts
+        </a>
+        <a href="{{ url_for('admin.parish_heatmap') }}" class="btn btn-outline-success" title="Parish Heatmap">
+            <i class="bi bi-grid-3x3-gap me-1"></i>Heatmap
+        </a>
+        <a href="{{ url_for('admin.audit_log') }}" class="btn btn-outline-secondary" title="Audit Log">
+            <i class="bi bi-clock-history me-1"></i>Audit
+        </a>
+        <a href="{{ url_for('admin.search') }}" class="btn btn-outline-primary">
+            <i class="bi bi-search me-1"></i>Search
+        </a>
+        <a href="{{ url_for('admin.check_in') }}" class="btn btn-outline-success">
+            <i class="bi bi-qr-code-scan me-1"></i>Check-In
+        </a>
+        <a href="{{ url_for('admin.export_delegates_excel') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-file-earmark-excel me-1"></i>Excel
+        </a>
+        <a href="{{ url_for('admin.export_delegates_pdf') }}" class="btn btn-outline-danger">
+            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card stat-card bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value">{{ total_delegates }}</div>
+                    <div class="stat-label text-white-50">Total Delegates</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card stat-card bg-success text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value">{{ paid_delegates }}</div>
+                    <div class="stat-label text-white-50">Paid</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card stat-card bg-info text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value">{{ checked_in }}</div>
+                    <div class="stat-label text-white-50">Checked In</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-person-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card stat-card bg-warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-value">KSh {{ "{:,.0f}".format(total_collected) }}</div>
+                    <div class="stat-label">Collected</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Registration Trend Chart -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Registration Trend (Last 30 Days)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="registrationChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Stats by Archdeaconry -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Delegates by Archdeaconry</h5>
+            </div>
+            <div class="card-body">
+                {% if archdeaconry_stats %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Archdeaconry</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">Paid</th>
+                                <th class="text-center">Unpaid</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in archdeaconry_stats %}
+                            <tr>
+                                <td>{{ stat.archdeaconry }}</td>
+                                <td class="text-center">{{ stat.total }}</td>
+                                <td class="text-center text-success">{{ stat.paid | int }}</td>
+                                <td class="text-center text-danger">{{ stat.unpaid | int }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">No data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gender Stats -->
+    <div class="col-lg-3 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-gender-ambiguous me-2"></i>By Gender</h5>
+            </div>
+            <div class="card-body">
+                {% if gender_stats %}
+                {% for stat in gender_stats %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span><i class="bi bi-{% if stat.gender == 'male' %}gender-male{% else %}gender-female{% endif %} me-2"></i>{{ stat.gender | capitalize }}</span>
+                    <span class="badge bg-primary fs-6">{{ stat.count }}</span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted text-center py-3">No data</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="col-lg-3 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Users</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span>Total Chairs/Ministers</span>
+                    <span class="badge bg-secondary fs-6">{{ total_users }}</span>
+                </div>
+                <hr>
+                <a href="{{ url_for('admin.all_users') }}" class="btn btn-outline-primary w-100">
+                    Manage Users
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Registrations -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-person-plus me-2"></i>Recent Registrations</h5>
+                <a href="{{ url_for('admin.all_delegates') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_delegates %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parish</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for delegate in recent_delegates %}
+                            <tr>
+                                <td>{{ delegate.name }}</td>
+                                <td>{{ delegate.parish }}</td>
+                                <td>
+                                    <span class="badge {{ 'badge-paid' if delegate.is_paid else 'badge-unpaid' }}">
+                                        {{ 'Paid' if delegate.is_paid else 'Unpaid' }}
+                                    </span>
+                                </td>
+                                <td>{{ delegate.registered_at.strftime('%d %b') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">No registrations yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Payments -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>Recent Payments</h5>
+                <a href="{{ url_for('admin.all_payments') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_payments %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Amount</th>
+                                <th>Receipt</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in recent_payments %}
+                            <tr>
+                                <td>{{ payment.user.name if payment.user else 'N/A' }}</td>
+                                <td>KSh {{ payment.amount | int }}</td>
+                                <td>{{ payment.mpesa_receipt_number or 'N/A' }}</td>
+                                <td>{{ payment.completed_at.strftime('%d %b') if payment.completed_at else 'N/A' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">No payments yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Stats Row -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-tags me-2"></i>Delegates by Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Payment Status</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="paymentChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.role == 'super_admin' %}
+<!-- Super Admin Danger Zone -->
+<div class="card border-danger mt-4 mb-4">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Danger Zone - Super Admin Only</h5>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h6 class="text-danger"><i class="bi bi-database-x me-2"></i>Reset Database</h6>
+                <p class="text-muted mb-0">
+                    Delete all registered delegates and payments to start fresh. 
+                    This is useful for testing or starting a new event.
+                    <strong class="text-danger">This action cannot be undone!</strong>
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{{ url_for('admin.reset_database') }}" class="btn btn-outline-danger">
+                    <i class="bi bi-trash me-1"></i>Reset Database
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Registration Trend Chart
+const dailyData = {{ daily_stats | tojson if daily_stats else '[]' }};
+const labels = dailyData.map(d => d.date || d[0]);
+const counts = dailyData.map(d => d.count || d[1]);
+
+new Chart(document.getElementById('registrationChart'), {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Registrations',
+            data: counts,
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            fill: true,
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+// Category Chart
+const categoryData = {{ category_stats | tojson if category_stats else '[]' }};
+new Chart(document.getElementById('categoryChart'), {
+    type: 'doughnut',
+    data: {
+        labels: categoryData.map(d => (d.category || d[0] || 'Unknown').toUpperCase()),
+        datasets: [{
+            data: categoryData.map(d => d.count || d[1]),
+            backgroundColor: ['#6c757d', '#ffc107', '#17a2b8', '#28a745']
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+});
+
+// Payment Status Chart
+new Chart(document.getElementById('paymentChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Paid', 'Unpaid'],
+        datasets: [{
+            data: [{{ paid_delegates }}, {{ unpaid_delegates }}],
+            backgroundColor: ['#28a745', '#ffc107']
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+});
+</script>
+{% endblock %}

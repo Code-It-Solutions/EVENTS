@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Users Management - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-users-cog me-2"></i>Users Management</h2>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users.items %}
+                        <tr class="{% if not user.is_active %}table-secondary{% endif %}">
+                            <td>
+                                <strong>{{ user.name }}</strong>
+                                {% if user.id == current_user.id %}
+                                <span class="badge bg-info">You</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.id != current_user.id and current_user.is_super_admin() %}
+                                <form method="POST" action="{{ url_for('settings.assign_role', user_id=user.id) }}" class="d-flex no-mask">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <select name="role_id" class="form-select form-select-sm" 
+                                            onchange="this.form.submit()" style="width: auto;">
+                                        <option value="">No Role</option>
+                                        {% for role in roles %}
+                                        <option value="{{ role.id }}" 
+                                                {% if user.role_id == role.id %}selected{% endif %}>
+                                            {{ role.name|replace('_', ' ')|title }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </form>
+                                {% else %}
+                                <span class="badge bg-{{ 'danger' if user.role == 'super_admin' else 'primary' if user.role == 'admin' else 'secondary' }}">
+                                    {{ user.role|replace('_', ' ')|title }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>
+                                    {% if user.archdeaconry %}{{ user.archdeaconry }}{% endif %}
+                                    {% if user.parish %}<br>{{ user.parish }}{% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.last_login %}
+                                <small>{{ user.last_login.strftime('%b %d, %H:%M') }}</small>
+                                {% else %}
+                                <small class="text-muted">Never</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.id != current_user.id and current_user.is_super_admin() %}
+                                <form method="POST" action="{{ url_for('settings.toggle_user_active', user_id=user.id) }}" class="d-inline no-mask">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-{{ 'warning' if user.is_active else 'success' }}"
+                                            title="{{ 'Deactivate' if user.is_active else 'Activate' }}">
+                                        <i class="fas fa-{{ 'ban' if user.is_active else 'check' }}"></i>
+                                    </button>
+                                </form>
+                                <a href="{{ url_for('settings.audit_logs') }}?user_id={{ user.id }}" 
+                                   class="btn btn-sm btn-outline-info" title="View Activity">
+                                    <i class="fas fa-history"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="fas fa-users fa-2x mb-2"></i>
+                                <p>No users found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if users.pages > 1 %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if users.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('settings.list_users', page=users.prev_num) }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page in users.iter_pages() %}
+                        {% if page %}
+                        <li class="page-item {% if page == users.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('settings.list_users', page=page) }}">{{ page }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if users.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('settings.list_users', page=users.next_num) }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Budget Report - {{ budget.name }} - KAYO{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('budget.index') }}">Budgets</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('budget.view', id=budget.id) }}">{{ budget.name }}</a></li>
+            <li class="breadcrumb-item active">Report</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="bi bi-graph-up me-2"></i>Budget Implementation Report</h2>
+            <p class="text-muted">{{ budget.name }}</p>
+        </div>
+        <button class="btn btn-outline-primary" onclick="window.print()">
+            <i class="bi bi-printer me-2"></i>Print Report
+        </button>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary mb-0">{{ stats.total_items }}</h3>
+                <small class="text-muted">Total Items</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success mb-0">{{ stats.completed_items }}</h3>
+                <small class="text-muted">Completed</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning mb-0">{{ stats.in_progress_items }}</h3>
+                <small class="text-muted">In Progress</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-secondary mb-0">{{ stats.pending_items }}</h3>
+                <small class="text-muted">Pending</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Summary -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-currency-exchange me-2"></i>Financial Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h4 class="text-primary">KSh {{ "{:,.0f}".format(stats.total_budgeted) }}</h4>
+                        <p class="text-muted mb-0">Total Budget</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h4 class="{{ 'text-danger' if stats.total_spent > stats.total_budgeted else 'text-success' }}">
+                            KSh {{ "{:,.0f}".format(stats.total_spent) }}
+                        </h4>
+                        <p class="text-muted mb-0">Total Spent</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h4 class="{{ 'text-danger' if stats.balance < 0 else 'text-info' }}">
+                            KSh {{ "{:,.0f}".format(stats.balance) }}
+                        </h4>
+                        <p class="text-muted mb-0">Balance Remaining</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Budget Utilization</span>
+                        <span class="fw-bold">{{ "%.1f"|format(stats.utilization) }}%</span>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-{{ 'danger' if stats.utilization > 100 else 'warning' if stats.utilization > 80 else 'success' }}" 
+                             style="width: {{ [stats.utilization, 100]|min }}%">
+                            {{ "%.1f"|format(stats.utilization) }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Implementation Progress</h5>
+            </div>
+            <div class="card-body">
+                {% set completion = (stats.completed_items / stats.total_items * 100) if stats.total_items > 0 else 0 %}
+                <div class="text-center mb-3">
+                    <h2 class="text-success">{{ "%.0f"|format(completion) }}%</h2>
+                    <p class="text-muted">Items Completed</p>
+                </div>
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar bg-success" style="width: {{ completion }}%">
+                        {{ stats.completed_items }}/{{ stats.total_items }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Breakdown -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Breakdown by Category</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Category</th>
+                        <th class="text-center">Items</th>
+                        <th class="text-end">Budgeted</th>
+                        <th class="text-end">Spent</th>
+                        <th class="text-end">Variance</th>
+                        <th>Utilization</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat, data in category_stats.items() %}
+                    {% set variance = data.budgeted - data.spent %}
+                    {% set util = (data.spent / data.budgeted * 100) if data.budgeted > 0 else 0 %}
+                    <tr>
+                        <td>
+                            <strong>{{ categories.get(cat, cat|title) }}</strong>
+                        </td>
+                        <td class="text-center">{{ data.item_count }}</td>
+                        <td class="text-end">KSh {{ "{:,.0f}".format(data.budgeted) }}</td>
+                        <td class="text-end {{ 'text-danger fw-bold' if data.spent > data.budgeted else '' }}">
+                            KSh {{ "{:,.0f}".format(data.spent) }}
+                        </td>
+                        <td class="text-end {{ 'text-danger' if variance < 0 else 'text-success' }}">
+                            {{ "+" if variance >= 0 else "" }}KSh {{ "{:,.0f}".format(variance) }}
+                        </td>
+                        <td style="width: 150px;">
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-{{ 'danger' if util > 100 else 'warning' if util > 80 else 'success' }}" 
+                                     style="width: {{ [util, 100]|min }}%">
+                                    {{ "%.0f"|format(util) }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-secondary">
+                    <tr class="fw-bold">
+                        <td>TOTAL</td>
+                        <td class="text-center">{{ stats.total_items }}</td>
+                        <td class="text-end">KSh {{ "{:,.0f}".format(stats.total_budgeted) }}</td>
+                        <td class="text-end">KSh {{ "{:,.0f}".format(stats.total_spent) }}</td>
+                        <td class="text-end {{ 'text-danger' if stats.balance < 0 else 'text-success' }}">
+                            KSh {{ "{:,.0f}".format(stats.balance) }}
+                        </td>
+                        <td>{{ "%.1f"|format(stats.utilization) }}%</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- All Items Detail -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-list-task me-2"></i>All Budget Items</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th class="text-end">Budgeted</th>
+                        <th class="text-end">Spent</th>
+                        <th class="text-end">Variance</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in budget.items.order_by('category', 'item_number') %}
+                    <tr>
+                        <td>{{ item.item_number }}</td>
+                        <td>{{ item.name }}</td>
+                        <td><span class="badge bg-secondary">{{ categories.get(item.category, item.category) }}</span></td>
+                        <td class="text-end">KSh {{ "{:,.0f}".format(item.budgeted_amount) }}</td>
+                        <td class="text-end {{ 'text-danger' if item.actual_spent > item.budgeted_amount else '' }}">
+                            KSh {{ "{:,.0f}".format(item.actual_spent) }}
+                        </td>
+                        <td class="text-end {{ 'text-danger' if item.variance < 0 else 'text-success' }}">
+                            KSh {{ "{:,.0f}".format(item.variance) }}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if item.status == 'completed' else 'primary' if item.status == 'in_progress' else 'secondary' }}">
+                                {{ item.status | replace('_', ' ') | title }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .breadcrumb, .btn, nav { display: none !important; }
+    .card { border: 1px solid #ddd !important; break-inside: avoid; }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Log - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-clock-history me-2"></i>Audit Log</h2>
+            <p class="text-muted mb-0">Track who did what and when in the system</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">Action</label>
+                    <select name="action" class="form-select">
+                        <option value="">All Actions</option>
+                        {% for action in actions %}
+                        <option value="{{ action }}" {% if filters.action == action %}selected{% endif %}>{{ action | title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Resource Type</label>
+                    <select name="resource_type" class="form-select">
+                        <option value="">All Types</option>
+                        {% for type in resource_types %}
+                        <option value="{{ type }}" {% if filters.resource_type == type %}selected{% endif %}>{{ type | title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">User</label>
+                    <select name="user_id" class="form-select">
+                        <option value="">All Users</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if filters.user_id == user.id %}selected{% endif %}>{{ user.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">From Date</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ filters.date_from }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">To Date</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ filters.date_to }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-funnel me-1"></i> Filter
+                    </button>
+                    <a href="{{ url_for('admin.audit_log') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Audit Log Table -->
+    <div class="card">
+        <div class="card-header">
+            <span class="badge bg-secondary">{{ logs.total }} entries</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Resource</th>
+                            <th>Description</th>
+                            <th>IP Address</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs.items %}
+                        <tr>
+                            <td>
+                                <small>
+                                    <strong>{{ log.created_at.strftime('%b %d, %Y') }}</strong><br>
+                                    <span class="text-muted">{{ log.created_at.strftime('%H:%M:%S') }}</span>
+                                </small>
+                            </td>
+                            <td>
+                                {% if log.user_email %}
+                                <span class="fw-medium">{{ log.user_email }}</span>
+                                {% else %}
+                                <span class="text-muted">System</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.action == 'create' %}
+                                <span class="badge bg-success">Create</span>
+                                {% elif log.action == 'update' %}
+                                <span class="badge bg-warning">Update</span>
+                                {% elif log.action == 'delete' %}
+                                <span class="badge bg-danger">Delete</span>
+                                {% elif log.action == 'login' %}
+                                <span class="badge bg-info">Login</span>
+                                {% elif log.action == 'logout' %}
+                                <span class="badge bg-secondary">Logout</span>
+                                {% elif log.action == 'payment' %}
+                                <span class="badge bg-primary">Payment</span>
+                                {% elif log.action == 'check_in' %}
+                                <span class="badge bg-purple" style="background-color: #6f42c1;">Check-in</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ log.action | title }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="text-capitalize">{{ log.resource_type }}</span>
+                                {% if log.resource_id %}
+                                <span class="text-muted">#{{ log.resource_id }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="text-truncate d-inline-block" style="max-width: 250px;" title="{{ log.description }}">
+                                    {{ log.description or '-' }}
+                                </span>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ log.ip_address or '-' }}</small>
+                            </td>
+                            <td>
+                                {% if log.old_values or log.new_values %}
+                                <button class="btn btn-sm btn-outline-secondary" 
+                                        type="button" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#detailsModal{{ log.id }}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                
+                                <!-- Details Modal -->
+                                <div class="modal fade" id="detailsModal{{ log.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">
+                                                    <i class="bi bi-info-circle me-2"></i>
+                                                    Change Details
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <strong>Action:</strong> {{ log.action | title }}<br>
+                                                    <strong>Resource:</strong> {{ log.resource_type | title }} #{{ log.resource_id }}<br>
+                                                    <strong>Time:</strong> {{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}<br>
+                                                    <strong>By:</strong> {{ log.user_email or 'System' }}
+                                                </div>
+                                                
+                                                {% if log.old_values %}
+                                                <div class="mb-3">
+                                                    <h6 class="text-danger"><i class="bi bi-dash-circle me-1"></i>Old Values</h6>
+                                                    <pre class="bg-light p-2 rounded small">{{ log.old_values }}</pre>
+                                                </div>
+                                                {% endif %}
+                                                
+                                                {% if log.new_values %}
+                                                <div class="mb-3">
+                                                    <h6 class="text-success"><i class="bi bi-plus-circle me-1"></i>New Values</h6>
+                                                    <pre class="bg-light p-2 rounded small">{{ log.new_values }}</pre>
+                                                </div>
+                                                {% endif %}
+                                                
+                                                {% if log.user_agent %}
+                                                <div class="mb-0">
+                                                    <small class="text-muted">
+                                                        <strong>User Agent:</strong> {{ log.user_agent[:100] }}...
+                                                    </small>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <i class="bi bi-inbox display-4 text-muted"></i>
+                                <p class="text-muted mt-2">No audit logs found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        {% if logs.pages > 1 %}
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination justify-content-center mb-0">
+                    {% if logs.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.audit_log', page=logs.prev_num, **filters) }}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in logs.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+                        {% if page_num %}
+                        <li class="page-item {% if page_num == logs.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.audit_log', page=page_num, **filters) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if logs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.audit_log', page=logs.next_num, **filters) }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

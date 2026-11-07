@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Reminders - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-bell me-2 text-warning"></i>Payment Reminders
+            </h2>
+            <p class="text-muted mb-0">Send payment reminders to unpaid delegates</p>
+        </div>
+        <a href="{{ url_for('communications.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+
+    <!-- Stats & Action -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-1">Unpaid Delegates</h5>
+                            <div class="display-5 fw-bold text-warning">{{ unpaid_count }}</div>
+                            <p class="text-muted mb-0">Delegates with pending payments</p>
+                        </div>
+                        <div class="col-md-6">
+                            <form method="POST" action="{{ url_for('communications.send_payment_reminders') }}">
+                                <div class="mb-3">
+                                    <label for="message" class="form-label">Reminder Message</label>
+                                    <textarea class="form-control" id="message" name="message" rows="3"
+                                        placeholder="Hello {name}, this is a reminder...">Hello {name}, this is a reminder that your KAYO registration payment is pending. Please complete your payment to confirm your attendance. Thank you!</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Send via</label>
+                                    <div class="d-flex gap-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="channel" id="channelSms" value="sms" checked>
+                                            <label class="form-check-label" for="channelSms">
+                                                <i class="bi bi-chat-dots text-info me-1"></i>SMS
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-warning w-100" 
+                                    {% if unpaid_count == 0 %}disabled{% endif %}
+                                    onclick="return confirm('Send payment reminders to {{ unpaid_count }} delegates?');">
+                                    <i class="bi bi-send me-2"></i>Send SMS Reminders
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">Quick Stats</h6>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Total Reminders Sent</span>
+                            <strong>{{ reminders|length }}</strong>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Today's Reminders</span>
+                            <strong>{{ reminders|selectattr('sent_at', 'ge', now)|list|length if now else 0 }}</strong>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6 class="text-success mb-2">
+                        <i class="bi bi-whatsapp me-1"></i>WhatsApp Option
+                    </h6>
+                    <p class="text-muted small mb-2">Click below to open WhatsApp with pre-filled message:</p>
+                    <a href="https://wa.me/?text=Hello%2C%20this%20is%20a%20reminder%20that%20your%20KAYO%20registration%20payment%20is%20pending.%20Please%20complete%20your%20payment%20of%20KES%201%2C500%20to%20confirm%20your%20attendance.%20Paybill%3A%20247247%20Account%3A%20KAYO%20Nambale.%20Thank%20you!" 
+                       target="_blank" class="btn btn-success btn-sm w-100">
+                        <i class="bi bi-whatsapp me-1"></i>Open WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unpaid Delegates List -->
+    {% if unpaid_delegates %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-people me-2 text-warning"></i>Unpaid Delegates ({{ unpaid_count }})</h5>
+            <small class="text-muted">Click WhatsApp to send individual reminders</small>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0">Name</th>
+                            <th class="border-0">Phone</th>
+                            <th class="border-0">Church</th>
+                            <th class="border-0">Archdeaconry</th>
+                            <th class="border-0">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for delegate in unpaid_delegates[:20] %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('delegates.view_delegate', id=delegate.id) }}" class="text-decoration-none">
+                                    {{ delegate.name }}
+                                </a>
+                            </td>
+                            <td>{{ delegate.phone_number or '-' }}</td>
+                            <td>{{ delegate.local_church }}</td>
+                            <td>{{ delegate.archdeaconry }}</td>
+                            <td>
+                                {% if delegate.phone_number %}
+                                <div class="btn-group btn-group-sm">
+                                    <a href="https://wa.me/{{ delegate.phone_number | replace('+', '') | replace(' ', '') }}?text=Hello%20{{ delegate.name | urlencode }}%2C%20this%20is%20a%20reminder%20that%20your%20KAYO%20registration%20payment%20of%20KES%201%2C500%20is%20pending.%20Please%20complete%20your%20payment%20to%20Paybill%3A%20247247%20Account%3A%20KAYO%20Nambale.%20Thank%20you!" 
+                                       target="_blank" class="btn btn-success btn-sm" title="Send WhatsApp Reminder">
+                                        <i class="bi bi-whatsapp"></i>
+                                    </a>
+                                    <a href="tel:{{ delegate.phone_number }}" class="btn btn-outline-secondary btn-sm" title="Call">
+                                        <i class="bi bi-telephone"></i>
+                                    </a>
+                                </div>
+                                {% else %}
+                                <span class="text-muted small">No phone</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if unpaid_count > 20 %}
+            <div class="card-footer bg-transparent text-center">
+                <small class="text-muted">Showing 20 of {{ unpaid_count }} unpaid delegates</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Reminder History -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0">
+            <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Reminder History</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if reminders %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0">Delegate</th>
+                            <th class="border-0">Phone</th>
+                            <th class="border-0">Channel</th>
+                            <th class="border-0">Status</th>
+                            <th class="border-0">Sent At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reminder in reminders %}
+                        <tr>
+                            <td>
+                                {% if reminder.delegate %}
+                                    {{ reminder.delegate.name }}
+                                {% else %}
+                                    <span class="text-muted">Unknown</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if reminder.delegate %}
+                                    {{ reminder.delegate.phone }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-chat-square-text me-1"></i>{{ reminder.channel }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if reminder.status == 'sent' %}bg-success{% elif reminder.status == 'delivered' %}bg-primary{% else %}bg-danger{% endif %}">
+                                    {{ reminder.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ reminder.sent_at.strftime('%b %d, %Y %H:%M') }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-bell-slash display-3 text-muted"></i>
+                <h5 class="text-muted mt-3">No reminders sent yet</h5>
+                <p class="text-muted">Send your first payment reminder to unpaid delegates</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

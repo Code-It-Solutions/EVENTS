@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Roles Management - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-user-shield me-2"></i>Roles & Permissions</h2>
+        <a href="{{ url_for('settings.create_role') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create Role
+        </a>
+    </div>
+    
+    <div class="row">
+        {% for role in roles %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 {% if role.is_system %}border-primary{% endif %}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        {{ role.name|replace('_', ' ')|title }}
+                    </h5>
+                    {% if role.is_system %}
+                    <span class="badge bg-primary">System</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{ role.description or 'No description' }}</p>
+                    
+                    <h6 class="mt-3">Permissions:</h6>
+                    <div class="permissions-list" style="max-height: 200px; overflow-y: auto;">
+                        {% set perms = role.get_permissions() %}
+                        {% if '*' in perms %}
+                        <span class="badge bg-success mb-1">All Permissions</span>
+                        {% else %}
+                        {% for perm in perms %}
+                        <span class="badge bg-secondary mb-1">
+                            {{ permissions.get(perm, perm)|replace('.', ' ')|title }}
+                        </span>
+                        {% endfor %}
+                        {% endif %}
+                        {% if not perms %}
+                        <span class="text-muted">No permissions</span>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    <small class="text-muted">
+                        <i class="fas fa-users me-1"></i>
+                        {{ role.users|length }} user(s) with this role
+                    </small>
+                </div>
+                <div class="card-footer">
+                    {% if not role.is_system or role.name != 'super_admin' %}
+                    <a href="{{ url_for('settings.edit_role', role_id=role.id) }}" 
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </a>
+                    {% endif %}
+                    {% if not role.is_system %}
+                    <form method="POST" action="{{ url_for('settings.delete_role', role_id=role.id) }}" 
+                          class="d-inline no-mask"
+                          onsubmit="return confirm('Are you sure you want to delete this role?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash me-1"></i>Delete
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Permissions Reference -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-key me-2"></i>Available Permissions</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for perm, desc in permissions.items() %}
+                <div class="col-md-4 col-lg-3 mb-2">
+                    <code class="small">{{ perm }}</code>
+                    <br><small class="text-muted">{{ desc }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

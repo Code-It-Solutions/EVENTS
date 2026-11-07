@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Status - KAYO{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center p-5">
+                {% if payment.status == 'pending' and payment.checkout_request_id %}
+                {# M-Pesa STK Push pending #}
+                <div id="waiting-section">
+                    <div class="spinner-border text-primary mb-4" role="status" style="width: 4rem; height: 4rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h3>Processing Payment</h3>
+                    <p class="text-muted">Please check your phone and enter your M-Pesa PIN to complete the payment.</p>
+                    <p class="text-muted small">Amount: <strong>KSh {{ payment.amount | int }}</strong></p>
+                    
+                    <div class="alert alert-info mt-4" id="status-message">
+                        <i class="bi bi-phone me-2"></i>
+                        Waiting for M-Pesa confirmation...
+                        <div class="mt-2">
+                            <small class="text-muted">Time remaining: <span id="countdown">30</span> seconds</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Timeout Section - Hidden Initially -->
+                <div id="timeout-section" style="display: none;">
+                    <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 5rem;"></i>
+                    <h3 class="mt-4">STK Push Timeout</h3>
+                    <p class="text-muted">The M-Pesa prompt was not responded to in time. Please choose how to proceed:</p>
+                    
+                    <div class="d-grid gap-3 mt-4">
+                        <button class="btn btn-primary btn-lg" onclick="resendSTK()">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Resend M-Pesa STK Push
+                        </button>
+                        <a href="{{ url_for('payments.cancel_and_retry', payment_id=payment.id) }}" class="btn btn-outline-success btn-lg">
+                            <i class="bi bi-cash me-2"></i>Pay via Cash/Bank Transfer
+                        </a>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Cancel Payment
+                        </a>
+                    </div>
+                    
+                    <div class="alert alert-light mt-4 text-start small">
+                        <strong><i class="bi bi-info-circle me-1"></i>Why did this happen?</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>The STK push might not have reached your phone</li>
+                            <li>You may have dismissed the prompt accidentally</li>
+                            <li>Network issues may have caused a delay</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                {% elif payment.status == 'pending' and payment.finance_status == 'pending_approval' %}
+                {# Cash/manual payment pending finance approval #}
+                <i class="bi bi-clock-fill text-warning" style="font-size: 5rem;"></i>
+                <h3 class="mt-4">Payment Submitted</h3>
+                <p class="text-muted">Your payment has been submitted and is awaiting Finance approval.</p>
+                
+                <div class="alert alert-warning mt-4">
+                    <strong>Amount:</strong> KSh {{ "{:,.2f}".format(payment.amount) }}<br>
+                    <strong>Method:</strong> {{ payment.payment_mode or 'Cash' }}<br>
+                    <strong>Delegates:</strong> {{ payment.delegates_count }}<br>
+                    <strong>Status:</strong> <span class="badge bg-warning">Pending Approval</span>
+                </div>
+                
+                <a href="{{ url_for('payments.my_submissions') }}" class="btn btn-primary mt-3">
+                    <i class="bi bi-list-check me-2"></i>View My Submissions
+                </a>
+                
+                {% elif payment.status == 'completed' %}
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                <h3 class="mt-4">Payment Successful!</h3>
+                <p class="text-muted">Your payment has been received and confirmed.</p>
+                
+                <div class="alert alert-success mt-4">
+                    <strong>Amount:</strong> KSh {{ payment.amount | int }}<br>
+                    <strong>Receipt:</strong> {{ payment.mpesa_receipt_number or 'N/A' }}<br>
+                    <strong>Delegates:</strong> {{ payment.delegates_count }}
+                </div>
+                
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary mt-3">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                </a>
+                
+                {% else %}
+                <i class="bi bi-x-circle-fill text-danger" style="font-size: 5rem;"></i>
+                <h3 class="mt-4">Payment Failed</h3>
+                <p class="text-muted">{{ payment.result_desc or 'The payment could not be processed.' }}</p>
+                
+                <div class="alert alert-danger mt-4">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Don't worry! You can try again with the same or different payment method.
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{{ url_for('payments.payment_page') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Try Again
+                    </a>
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-house me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if payment.status == 'pending' and payment.checkout_request_id %}
+<script>
+    // Timeout configuration
+    const TIMEOUT_SECONDS = 30;
+    let countdown = TIMEOUT_SECONDS;
+    let checkCount = 0;
+    let timedOut = false;
+    
+    // Countdown timer
+    const countdownEl = document.getElementById('countdown');
+    const countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdownEl) countdownEl.textContent = countdown;
+        
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            showTimeoutScreen();
+        }
+    }, 1000);
+    
+    function showTimeoutScreen() {
+        timedOut = true;
+        document.getElementById('waiting-section').style.display = 'none';
+        document.getElementById('timeout-section').style.display = 'block';
+    }
+    
+    function resendSTK() {
+        // Show loading state
+        event.target.disabled = true;
+        event.target.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+        
+        fetch('{{ url_for("payments.resend_stk", payment_id=payment.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reset and show waiting section
+                countdown = TIMEOUT_SECONDS;
+                timedOut = false;
+                document.getElementById('timeout-section').style.display = 'none';
+                document.getElementById('waiting-section').style.display = 'block';
+                
+                // Restart countdown
+                const newCountdownInterval = setInterval(() => {
+                    countdown--;
+                    if (countdownEl) countdownEl.textContent = countdown;
+                    
+                    if (countdown <= 0) {
+                        clearInterval(newCountdownInterval);
+                        showTimeoutScreen();
+                    }
+                }, 1000);
+                
+                // Show success message
+                document.getElementById('status-message').innerHTML = 
+                    '<i class="bi bi-check-circle me-2 text-success"></i>New STK push sent! Check your phone.<div class="mt-2"><small class="text-muted">Time remaining: <span id="countdown">' + countdown + '</span> seconds</small></div>';
+            } else {
+                alert(data.message || 'Failed to resend STK push. Please try again.');
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            location.reload();
+        });
+    }
+    
+    function checkPaymentStatus() {
+        if (timedOut) return; // Stop checking if timed out
+        
+        fetch('{{ url_for("payments.check_payment_status", payment_id=payment.id) }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'completed') {
+                    clearInterval(countdownInterval);
+                    location.reload();
+                } else if (data.status === 'failed') {
+                    clearInterval(countdownInterval);
+                    location.reload();
+                } else if (!timedOut) {
+                    checkCount++;
+                    setTimeout(checkPaymentStatus, 3000); // Check every 3 seconds
+                }
+            })
+            .catch(error => {
+                console.error('Error checking payment status:', error);
+                if (!timedOut) {
+                    checkCount++;
+                    setTimeout(checkPaymentStatus, 3000);
+                }
+            });
+    }
+    
+    // Start checking after 3 seconds
+    setTimeout(checkPaymentStatus, 3000);
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Status - KAYO | ACK Diocese of Nambale</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-green: #1a5f2a;
+            --secondary-gold: #D4AF37;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .status-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .status-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .status-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2.5rem;
+        }
+        
+        .status-icon.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-icon.approved {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-icon.rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+        
+        .status-badge.pending {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .status-badge.approved {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-badge.rejected {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .detail-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .detail-section h6 {
+            color: var(--primary-green);
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        
+        .detail-row .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .detail-row .value {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .ticket-box {
+            background: linear-gradient(135deg, var(--primary-green), #0d4a1c);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin: 25px 0;
+        }
+        
+        .ticket-box .label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .ticket-box .ticket-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+        
+        .rejection-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+        
+        .rejection-box h6 {
+            color: #721c24;
+            margin-bottom: 10px;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin: 25px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dee2e6;
+        }
+        
+        .timeline-item.completed::before {
+            background: var(--primary-green);
+        }
+        
+        .timeline-item.current::before {
+            background: #ffc107;
+            box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.3);
+        }
+        
+        .timeline-item .time {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-card">
+        <div class="status-header">
+            {% if pending.status == 'pending' %}
+            <div class="status-icon pending">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <span class="status-badge pending">
+                <i class="bi bi-clock me-2"></i>Pending Approval
+            </span>
+            {% elif pending.status == 'approved' %}
+            <div class="status-icon approved">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <span class="status-badge approved">
+                <i class="bi bi-check-lg me-2"></i>Approved
+            </span>
+            {% elif pending.status == 'rejected' %}
+            <div class="status-icon rejected">
+                <i class="bi bi-x-circle"></i>
+            </div>
+            <span class="status-badge rejected">
+                <i class="bi bi-x-lg me-2"></i>Rejected
+            </span>
+            {% endif %}
+            
+            <h4 class="mb-2">{{ pending.name }}</h4>
+            <p class="text-muted mb-0">Registration Status</p>
+        </div>
+        
+        {% if pending.status == 'approved' and pending.delegate %}
+        <!-- Approved - Show Ticket -->
+        <div class="ticket-box">
+            <div class="label">Your Ticket Number</div>
+            <div class="ticket-number">{{ pending.delegate.ticket_number }}</div>
+        </div>
+        
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>
+            Congratulations! Your registration has been approved. Please contact your chairperson 
+            for payment arrangements.
+        </div>
+        {% endif %}
+        
+        {% if pending.status == 'rejected' %}
+        <!-- Rejected - Show Reason -->
+        <div class="rejection-box">
+            <h6><i class="bi bi-exclamation-triangle me-2"></i>Rejection Reason</h6>
+            <p class="mb-0">{{ pending.rejection_reason or 'No specific reason provided.' }}</p>
+        </div>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            Please contact your local church chairperson for more information or to submit a new registration.
+        </div>
+        {% endif %}
+        
+        <!-- Registration Details -->
+        <div class="detail-section">
+            <h6><i class="bi bi-person me-2"></i>Registration Details</h6>
+            <div class="detail-row">
+                <span class="label">Full Name</span>
+                <span class="value">{{ pending.name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Gender</span>
+                <span class="value">{{ pending.gender | capitalize }}</span>
+            </div>
+            {% if pending.phone_number %}
+            <div class="detail-row">
+                <span class="label">Phone</span>
+                <span class="value">{{ pending.phone_number }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="detail-section">
+            <h6><i class="bi bi-building me-2"></i>Church Information</h6>
+            <div class="detail-row">
+                <span class="label">Local Church</span>
+                <span class="value">{{ pending.local_church }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Parish</span>
+                <span class="value">{{ pending.parish }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Archdeaconry</span>
+                <span class="value">{{ pending.archdeaconry }}</span>
+            </div>
+        </div>
+        
+        <!-- Timeline -->
+        <div class="detail-section">
+            <h6><i class="bi bi-clock-history me-2"></i>Timeline</h6>
+            <div class="timeline">
+                <div class="timeline-item completed">
+                    <strong>Registration Submitted</strong>
+                    <div class="time">{{ pending.submitted_at.strftime('%d %B %Y at %H:%M') }}</div>
+                </div>
+                
+                {% if pending.status == 'pending' %}
+                <div class="timeline-item current">
+                    <strong>Awaiting Chairperson Approval</strong>
+                    <div class="time">In progress...</div>
+                </div>
+                {% elif pending.status == 'approved' %}
+                <div class="timeline-item completed">
+                    <strong>Approved by {{ pending.reviewer.name if pending.reviewer else 'Chairperson' }}</strong>
+                    <div class="time">{{ pending.reviewed_at.strftime('%d %B %Y at %H:%M') if pending.reviewed_at else '' }}</div>
+                </div>
+                {% elif pending.status == 'rejected' %}
+                <div class="timeline-item completed">
+                    <strong>Rejected by {{ pending.reviewer.name if pending.reviewer else 'Chairperson' }}</strong>
+                    <div class="time">{{ pending.reviewed_at.strftime('%d %B %Y at %H:%M') if pending.reviewed_at else '' }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{ url_for('public.register_landing') }}" class="btn btn-outline-primary">
+                <i class="bi bi-house me-2"></i>Back to Home
+            </a>
+            {% if pending.status == 'rejected' %}
+            <a href="{{ url_for('public.register_delegate') }}" class="btn btn-primary ms-2">
+                <i class="bi bi-arrow-repeat me-2"></i>Register Again
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

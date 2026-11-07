@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Badge - {{ delegate.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <div class="card shadow badge-card" id="badge" style="width: 3.5in; margin: 0 auto;">
+                <!-- Header with Category Color -->
+                <div class="card-header text-white text-center py-2" style="background: {{ '#28a745' if delegate.category == 'vip' else '#17a2b8' if delegate.category == 'speaker' else '#ffc107' if delegate.category == 'leader' else '#0d6efd' }};">
+                    <h5 class="mb-0">KAYO 2025</h5>
+                </div>
+                
+                <div class="card-body text-center p-3">
+                    <!-- Category Badge -->
+                    <span class="badge fs-6 mb-2" style="background: {{ '#28a745' if delegate.category == 'vip' else '#17a2b8' if delegate.category == 'speaker' else '#ffc107' if delegate.category == 'leader' else '#0d6efd' }};">
+                        {{ delegate.category|upper }}
+                    </span>
+                    
+                    <!-- Name -->
+                    <h3 class="fw-bold mb-1" style="font-size: 1.4rem;">{{ delegate.name }}</h3>
+                    
+                    <!-- Church Info -->
+                    <p class="text-muted mb-1 small">{{ delegate.local_church }}</p>
+                    <p class="mb-2 small"><strong>{{ delegate.archdeaconry }}</strong></p>
+                    
+                    <!-- QR Code -->
+                    <div class="my-2">
+                        <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" style="max-width: 100px;">
+                    </div>
+                    
+                    <!-- Ticket Number -->
+                    <p class="mb-0 small fw-bold">{{ delegate.ticket_number }}</p>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-center gap-2 mt-4 no-print">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="bi bi-printer me-2"></i>Print Badge
+                </button>
+                <a href="{{ url_for('delegates.view_delegate', id=delegate.id) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back
+                </a>
+            </div>
+            
+            <p class="text-center text-muted small mt-3 no-print">
+                Recommended: Print on badge paper (3.5" x 2.5")
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+.badge-card {
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+}
+
+@media print {
+    .no-print, nav, footer { display: none !important; }
+    body { background: white !important; margin: 0; padding: 0; }
+    .container { max-width: none !important; }
+    .badge-card { 
+        border: 2px solid #000 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+    @page {
+        size: 3.5in 2.5in;
+        margin: 0;
+    }
+}
+</style>
+{% endblock %}

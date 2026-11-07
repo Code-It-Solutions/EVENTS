@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Login - KAYO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .otp-container {
+        max-width: 450px;
+        margin: 60px auto;
+    }
+    
+    .otp-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .otp-header {
+        background: linear-gradient(135deg, #1a5f2a 0%, #0d4a1c 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+    }
+    
+    .otp-header .icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+    
+    .otp-header h2 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .otp-header p {
+        margin: 10px 0 0;
+        opacity: 0.9;
+    }
+    
+    .otp-body {
+        padding: 30px;
+    }
+    
+    .user-info {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+    
+    .user-info .email {
+        font-weight: 600;
+        color: #1a5f2a;
+    }
+    
+    .otp-input {
+        text-align: center;
+        font-size: 24px;
+        letter-spacing: 8px;
+        font-weight: 600;
+        padding: 15px;
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+    
+    .otp-input:focus {
+        border-color: #1a5f2a;
+        box-shadow: 0 0 0 3px rgba(26, 95, 42, 0.1);
+    }
+    
+    .btn-verify {
+        background: linear-gradient(135deg, #1a5f2a 0%, #0d4a1c 100%);
+        border: none;
+        padding: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .btn-verify:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(26, 95, 42, 0.3);
+    }
+    
+    .resend-section {
+        text-align: center;
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #eee;
+    }
+    
+    .timer {
+        color: #6c757d;
+        font-size: 14px;
+    }
+    
+    .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 20px;
+        color: #6c757d;
+        text-decoration: none;
+    }
+    
+    .back-link:hover {
+        color: #1a5f2a;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="otp-container">
+    <div class="otp-card">
+        <div class="otp-header">
+            <div class="icon">🔐</div>
+            <h2>Verify Your Login</h2>
+            <p>Enter the code sent to your email</p>
+        </div>
+        
+        <div class="otp-body">
+            <div class="user-info">
+                <small class="text-muted">Verification code sent to:</small>
+                <div class="email">{{ user.email }}</div>
+            </div>
+            
+            <form method="POST" action="{{ url_for('auth.verify_otp') }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-4">
+                    {{ form.otp(class="form-control otp-input", inputmode="numeric", pattern="[0-9]*") }}
+                    {% for error in form.otp.errors %}
+                    <div class="text-danger text-center small mt-2">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-verify w-100">
+                    <i class="bi bi-shield-check me-2"></i>Verify & Login
+                </button>
+            </form>
+            
+            <div class="resend-section">
+                <p class="timer mb-2">Didn't receive the code?</p>
+                <form method="POST" action="{{ url_for('auth.resend_otp') }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Resend Code
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <a href="{{ url_for('auth.login') }}" class="back-link">
+        <i class="bi bi-arrow-left me-1"></i>Back to Login
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-focus on OTP input
+    document.querySelector('.otp-input').focus();
+    
+    // Only allow numeric input
+    document.querySelector('.otp-input').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Financial Reports - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="mb-4">
+        <h2 class="mb-0"><i class="bi bi-file-earmark-bar-graph me-2"></i>Financial Reports</h2>
+        <p class="text-muted">Generate comprehensive financial statements</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Trial Balance -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 64px; height: 64px;">
+                        <i class="bi bi-calculator fs-2 text-primary"></i>
+                    </div>
+                    <h5>Trial Balance</h5>
+                    <p class="text-muted small">Summary of all account balances to verify debits equal credits</p>
+                    <a href="{{ url_for('finance.trial_balance') }}" class="btn btn-primary">
+                        <i class="bi bi-eye me-1"></i>View Report
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Income Statement -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center">
+                    <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 64px; height: 64px;">
+                        <i class="bi bi-graph-up fs-2 text-success"></i>
+                    </div>
+                    <h5>Income Statement</h5>
+                    <p class="text-muted small">Revenue, expenses, and net income for the period</p>
+                    <a href="{{ url_for('finance.income_statement') }}" class="btn btn-success">
+                        <i class="bi bi-eye me-1"></i>View Report
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Balance Sheet -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center">
+                    <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 64px; height: 64px;">
+                        <i class="bi bi-bar-chart-line fs-2 text-info"></i>
+                    </div>
+                    <h5>Balance Sheet</h5>
+                    <p class="text-muted small">Assets, liabilities, and equity at a point in time</p>
+                    <a href="{{ url_for('finance.balance_sheet') }}" class="btn btn-info text-white">
+                        <i class="bi bi-eye me-1"></i>View Report
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cash Flow Statement -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center">
+                    <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 64px; height: 64px;">
+                        <i class="bi bi-cash-stack fs-2 text-warning"></i>
+                    </div>
+                    <h5>Cash Flow</h5>
+                    <p class="text-muted small">Cash inflows and outflows during the period</p>
+                    <a href="{{ url_for('finance.cash_flow_statement') }}" class="btn btn-warning">
+                        <i class="bi bi-eye me-1"></i>View Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Report Generator -->
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Report Settings</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Period</label>
+                        <select class="form-select" name="period" id="periodSelect">
+                            <option value="month">This Month</option>
+                            <option value="quarter">This Quarter</option>
+                            <option value="year" selected>This Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" id="startDateGroup" style="display: none;">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="start_date" class="form-control">
+                    </div>
+                    <div class="col-md-3" id="endDateGroup" style="display: none;">
+                        <label class="form-label">End Date</label>
+                        <input type="date" name="end_date" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Report</label>
+                        <select class="form-select" name="report" id="reportSelect">
+                            <option value="trial_balance">Trial Balance</option>
+                            <option value="income_statement">Income Statement</option>
+                            <option value="balance_sheet">Balance Sheet</option>
+                            <option value="cash_flow">Cash Flow Statement</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-primary w-100" onclick="generateReport()">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>Generate Report
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="bi bi-download me-2"></i>Export Data</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <a href="{{ url_for('finance.export_accounts') }}" class="btn btn-outline-success w-100">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>Chart of Accounts (Excel)
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ url_for('finance.export_journals') }}" class="btn btn-outline-success w-100">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>Journal Entries (Excel)
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ url_for('finance.export_vouchers') }}" class="btn btn-outline-success w-100">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>Vouchers (Excel)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('periodSelect').addEventListener('change', function() {
+    const custom = this.value === 'custom';
+    document.getElementById('startDateGroup').style.display = custom ? 'block' : 'none';
+    document.getElementById('endDateGroup').style.display = custom ? 'block' : 'none';
+});
+
+function generateReport() {
+    const report = document.getElementById('reportSelect').value;
+    const urls = {
+        'trial_balance': "{{ url_for('finance.trial_balance') }}",
+        'income_statement': "{{ url_for('finance.income_statement') }}",
+        'balance_sheet': "{{ url_for('finance.balance_sheet') }}",
+        'cash_flow': "{{ url_for('finance.cash_flow_statement') }}"
+    };
+    window.location.href = urls[report];
+}
+</script>
+{% endblock %}

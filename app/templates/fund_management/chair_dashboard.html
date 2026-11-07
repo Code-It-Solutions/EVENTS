@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Chair Fund Management Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Fund Management Dashboard</h1>
+            <p class="text-muted mb-0">Track pledges, payments, and fund transfers</p>
+        </div>
+        <div>
+            <a href="{{ url_for('fund_management.create_pledge') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Record Pledge
+            </a>
+            <a href="{{ url_for('fund_management.create_scheduled_payment') }}" class="btn btn-outline-primary">
+                <i class="fas fa-calendar-plus me-2"></i>Schedule Payment
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-hand-holding-heart text-primary fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-0 small">Total Pledged</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(total_pledged) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-money-bill-wave text-success fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-0 small">Pledges Collected</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(total_pledge_collected) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-calendar-check text-info fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-0 small">Scheduled Collections</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(total_scheduled) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-exchange-alt text-warning fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-muted mb-0 small">Pending Transfer</p>
+                            <h3 class="mb-0">KSh {{ "{:,.2f}".format(pending_transfer) }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Recent Pledges -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Pledges</h5>
+                    <a href="{{ url_for('fund_management.list_pledges') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Source</th>
+                                    <th>Type</th>
+                                    <th>Pledged</th>
+                                    <th>Collected</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pledge in pledges[:10] %}
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong>{{ pledge.source_name }}</strong>
+                                            {% if pledge.source_phone %}
+                                            <br><small class="text-muted">{{ pledge.source_phone }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'primary' if pledge.source_type == 'delegate' else 'success' if pledge.source_type == 'well_wisher' else 'info' }}">
+                                            {{ pledge.source_type.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>KSh {{ "{:,.2f}".format(pledge.amount_pledged) }}</td>
+                                    <td>KSh {{ "{:,.2f}".format(pledge.amount_paid) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if pledge.status == 'fulfilled' else 'warning' if pledge.status == 'partial' else 'secondary' if pledge.status == 'pending' else 'danger' }}">
+                                            {{ pledge.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('fund_management.view_pledge', pledge_id=pledge.id) }}" class="btn btn-outline-primary" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if pledge.status != 'fulfilled' and pledge.status != 'cancelled' %}
+                                            <a href="{{ url_for('fund_management.record_pledge_payment', pledge_id=pledge.id) }}" class="btn btn-outline-success" title="Record Payment">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                                        <p class="mb-0">No pledges recorded yet</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scheduled Payments -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Scheduled Payments</h5>
+                    <a href="{{ url_for('fund_management.list_scheduled_payments') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Source</th>
+                                    <th>Amount</th>
+                                    <th>Frequency</th>
+                                    <th>Next Due</th>
+                                    <th>Collected</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sp in scheduled_payments[:5] %}
+                                <tr>
+                                    <td>{{ sp.source_name }}</td>
+                                    <td>KSh {{ "{:,.2f}".format(sp.amount) }}</td>
+                                    <td>{{ sp.frequency.title() }}</td>
+                                    <td>{{ sp.next_payment_date.strftime('%d %b %Y') if sp.next_payment_date else '-' }}</td>
+                                    <td>KSh {{ "{:,.2f}".format(sp.total_collected) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if sp.status == 'completed' else 'primary' if sp.status == 'active' else 'secondary' }}">
+                                            {{ sp.status.title() }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        No scheduled payments
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fund Transfer Section -->
+        <div class="col-lg-4">
+            <!-- Quick Transfer -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-paper-plane me-2"></i>Transfer Funds</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Transfer collected funds to Finance</p>
+                    <form action="{{ url_for('fund_management.create_transfer') }}" method="GET">
+                        <a href="{{ url_for('fund_management.create_transfer') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-arrow-right me-2"></i>Initiate Transfer
+                        </a>
+                    </form>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Available for transfer: <strong>KSh {{ "{:,.2f}".format(pending_transfer) }}</strong>
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transfers -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Transfers</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for transfer in transfers[:5] %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted">{{ transfer.reference_number }}</small>
+                                <p class="mb-0 fw-semibold">KSh {{ "{:,.2f}".format(transfer.amount) }}</p>
+                                <small class="text-muted">To: {{ transfer.to_user.name }}</small>
+                            </div>
+                            <span class="badge bg-{{ 'success' if transfer.status == 'completed' else 'warning' if transfer.status == 'approved' else 'info' if transfer.status == 'pending' else 'danger' }}">
+                                {{ transfer.status.title() }}
+                            </span>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center text-muted py-4">
+                            No transfers yet
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% if transfers %}
+                <div class="card-footer bg-white border-0">
+                    <a href="{{ url_for('fund_management.list_transfers') }}" class="btn btn-sm btn-outline-primary w-100">View All Transfers</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('fund_management.create_pledge') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-hand-holding-heart me-2"></i>Record New Pledge
+                        </a>
+                        <a href="{{ url_for('fund_management.create_scheduled_payment') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-calendar-plus me-2"></i>Schedule Payment
+                        </a>
+                        <a href="{{ url_for('fund_management.reports') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-chart-bar me-2"></i>View Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

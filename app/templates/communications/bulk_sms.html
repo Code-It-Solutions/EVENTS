@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk SMS - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-chat-square-text me-2 text-primary"></i>Bulk SMS
+            </h2>
+            <p class="text-muted mb-0">Send SMS messages to multiple delegates at once</p>
+        </div>
+        <a href="{{ url_for('communications.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="POST" id="bulkSmsForm">
+                        <!-- Target Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Target Recipients</label>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check card p-3 border">
+                                        <input class="form-check-input" type="radio" name="target_group" value="all" id="targetAll" checked>
+                                        <label class="form-check-label d-flex justify-content-between w-100" for="targetAll">
+                                            <span><i class="bi bi-people me-2"></i>All Delegates</span>
+                                            <span class="badge bg-primary">{{ delegate_counts.all }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check card p-3 border">
+                                        <input class="form-check-input" type="radio" name="target_group" value="paid" id="targetPaid">
+                                        <label class="form-check-label d-flex justify-content-between w-100" for="targetPaid">
+                                            <span><i class="bi bi-check-circle me-2 text-success"></i>Paid Only</span>
+                                            <span class="badge bg-success">{{ delegate_counts.paid }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check card p-3 border">
+                                        <input class="form-check-input" type="radio" name="target_group" value="unpaid" id="targetUnpaid">
+                                        <label class="form-check-label d-flex justify-content-between w-100" for="targetUnpaid">
+                                            <span><i class="bi bi-clock me-2 text-warning"></i>Unpaid/Partial</span>
+                                            <span class="badge bg-warning text-dark">{{ delegate_counts.unpaid }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check card p-3 border">
+                                        <input class="form-check-input" type="radio" name="target_group" value="not_checked_in" id="targetNotChecked">
+                                        <label class="form-check-label d-flex justify-content-between w-100" for="targetNotChecked">
+                                            <span><i class="bi bi-x-circle me-2 text-danger"></i>Not Checked In</span>
+                                            <span class="badge bg-danger">{{ delegate_counts.not_checked_in }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Event Filter -->
+                        {% if events %}
+                        <div class="mb-4">
+                            <label for="event_id" class="form-label fw-semibold">Filter by Event (Optional)</label>
+                            <select class="form-select" id="event_id" name="event_id">
+                                <option value="">All Events</option>
+                                {% for event in events %}
+                                <option value="{{ event.id }}">{{ event.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <!-- Message -->
+                        <div class="mb-4">
+                            <label for="message" class="form-label fw-semibold">Message</label>
+                            <textarea class="form-control" id="message" name="message" rows="5" 
+                                placeholder="Enter your message here..." required></textarea>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small class="text-muted">
+                                    Available placeholders: {name}, {phone}, {payment_status}, {ticket_number}, {delegate_number}, {category}
+                                </small>
+                                <small class="text-muted">
+                                    <span id="charCount">0</span>/160 characters
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Message Templates -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Quick Templates</label>
+                            <div class="btn-group flex-wrap" role="group">
+                                <button type="button" class="btn btn-outline-secondary template-btn" 
+                                    data-template="Hello {name}, your registration for KAYO has been confirmed. Your delegate number is {delegate_number}. See you at the event!">
+                                    <i class="bi bi-check-circle me-1"></i>Confirmation
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary template-btn"
+                                    data-template="Hello {name}, this is a reminder that your KAYO payment is still pending. Please complete your payment to confirm attendance. Thank you!">
+                                    <i class="bi bi-bell me-1"></i>Payment Reminder
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary template-btn"
+                                    data-template="Hello {name}, KAYO event is tomorrow! Please arrive by 8:00 AM for registration. Don't forget your ID. See you there!">
+                                    <i class="bi bi-calendar-event me-1"></i>Event Reminder
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Message Preview</label>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-start">
+                                        <i class="bi bi-phone display-6 text-muted me-3"></i>
+                                        <div id="messagePreview" class="text-muted">
+                                            Your message preview will appear here...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted">Will send to </span>
+                                <strong id="recipientCount">{{ delegate_counts.all }}</strong>
+                                <span class="text-muted"> recipients</span>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-send me-2"></i>Send SMS
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Sidebar -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>SMS Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-check text-success me-2"></i>
+                            Keep messages under 160 characters for single SMS
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check text-success me-2"></i>
+                            Use personalization placeholders
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check text-success me-2"></i>
+                            Avoid ALL CAPS (looks like spam)
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check text-success me-2"></i>
+                            Include a clear call-to-action
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Sends</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted text-center">No recent SMS sends</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const messageInput = document.getElementById('message');
+    const charCount = document.getElementById('charCount');
+    const preview = document.getElementById('messagePreview');
+    const recipientCount = document.getElementById('recipientCount');
+
+    // Character counter
+    messageInput.addEventListener('input', function() {
+        charCount.textContent = this.value.length;
+        if (this.value.length > 160) {
+            charCount.classList.add('text-danger');
+        } else {
+            charCount.classList.remove('text-danger');
+        }
+        updatePreview();
+    });
+
+    // Template buttons
+    document.querySelectorAll('.template-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            messageInput.value = this.dataset.template;
+            messageInput.dispatchEvent(new Event('input'));
+        });
+    });
+
+    // Update preview
+    function updatePreview() {
+        let text = messageInput.value || 'Your message preview will appear here...';
+        // Replace placeholders with sample data
+        text = text.replace(/{name}/g, '<strong>John Doe</strong>');
+        text = text.replace(/{phone}/g, '0712345678');
+        text = text.replace(/{payment_status}/g, 'pending');
+        text = text.replace(/{ticket_number}/g, 'TKT-001');
+        text = text.replace(/{delegate_number}/g, 'DEL-001');
+        text = text.replace(/{category}/g, 'Youth');
+        preview.innerHTML = text;
+    }
+
+    // Update recipient count on target change
+    document.querySelectorAll('input[name="target_group"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const counts = {{ delegate_counts|tojson }};
+            recipientCount.textContent = counts[this.value] || 0;
+        });
+    });
+
+    // Form submission confirmation
+    document.getElementById('bulkSmsForm').addEventListener('submit', function(e) {
+        const count = recipientCount.textContent;
+        if (!confirm(`Are you sure you want to send this SMS to ${count} recipients?`)) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket - {{ delegate.ticket_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow" id="ticket">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h3 class="mb-1"><i class="bi bi-ticket-perforated me-2"></i>KAYO 2025</h3>
+                    <small>Delegate Registration Ticket</small>
+                </div>
+                
+                <div class="card-body text-center p-4">
+                    <!-- QR Code -->
+                    <div class="mb-4">
+                        <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                    </div>
+                    
+                    <!-- Ticket Number -->
+                    <h4 class="text-primary fw-bold mb-3">{{ delegate.ticket_number }}</h4>
+                    
+                    <!-- Delegate Info -->
+                    <div class="border-top border-bottom py-3 my-3">
+                        <h5 class="mb-2">{{ delegate.name }}</h5>
+                        <span class="badge bg-{{ 'success' if delegate.category == 'vip' else 'info' if delegate.category == 'speaker' else 'warning' if delegate.category == 'leader' else 'secondary' }} mb-2">
+                            {{ delegate.category|upper }}
+                        </span>
+                        <p class="text-muted mb-1">{{ delegate.local_church }}</p>
+                        <p class="text-muted mb-0 small">{{ delegate.parish }} | {{ delegate.archdeaconry }}</p>
+                    </div>
+                    
+                    <!-- Payment Status -->
+                    <div class="mb-3">
+                        {% if delegate.is_paid %}
+                        <span class="badge bg-success fs-6"><i class="bi bi-check-circle me-1"></i>PAID</span>
+                        {% else %}
+                        <span class="badge bg-warning fs-6"><i class="bi bi-clock me-1"></i>UNPAID</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Instructions -->
+                    <p class="small text-muted">
+                        Present this ticket at the registration desk for check-in.
+                    </p>
+                </div>
+                
+                <div class="card-footer text-center text-muted small">
+                    Registered: {{ delegate.registered_at.strftime('%B %d, %Y at %H:%M') }}
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-center gap-2 mt-3 no-print">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="bi bi-printer me-2"></i>Print Ticket
+                </button>
+                <a href="{{ url_for('delegates.view_delegate', id=delegate.id) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .no-print, nav, footer { display: none !important; }
+    .card { border: 2px solid #000 !important; }
+    body { background: white !important; }
+}
+</style>
+{% endblock %}

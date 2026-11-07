@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Automated Payment Reminders - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-bell text-warning me-2"></i>Automated Payment Reminders</h2>
+                    <p class="text-muted mb-0">Send payment reminders to unpaid delegates</p>
+                </div>
+                <a href="{{ url_for('communications.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Send Reminders Form -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-paper-plane me-2"></i>Send Payment Reminders</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="reminderForm">
+                        <!-- Event Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Event</label>
+                            <select name="event_id" class="form-select" id="eventSelect">
+                                <option value="">All Events ({{ total_unpaid }} unpaid)</option>
+                                {% for event in events %}
+                                <option value="{{ event.id }}">
+                                    {{ event.name }} ({{ unpaid_counts.get(event.id, 0) }} unpaid)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Reminder Type -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Reminder Type</label>
+                            <div class="row g-3">
+                                {% for template in reminder_templates %}
+                                <div class="col-md-4">
+                                    <div class="card reminder-card h-100" data-template-id="{{ template.id }}">
+                                        <div class="card-body">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" 
+                                                       name="reminder_type" value="{{ template.id }}"
+                                                       id="reminder_{{ template.id }}"
+                                                       {% if loop.first %}checked{% endif %}>
+                                                <label class="form-check-label fw-bold" for="reminder_{{ template.id }}">
+                                                    {% if template.id == 'first_reminder' %}
+                                                    <i class="fas fa-envelope text-info me-1"></i>
+                                                    {% elif template.id == 'second_reminder' %}
+                                                    <i class="fas fa-exclamation-circle text-warning me-1"></i>
+                                                    {% else %}
+                                                    <i class="fas fa-exclamation-triangle text-danger me-1"></i>
+                                                    {% endif %}
+                                                    {{ template.title }}
+                                                </label>
+                                            </div>
+                                            <small class="text-muted d-block mt-2">
+                                                {{ template.sms[:80] }}...
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Channels -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Delivery Channels</label>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-check channel-option">
+                                        <input class="form-check-input" type="checkbox" name="channels" 
+                                               value="sms" id="channelSMS" checked>
+                                        <label class="form-check-label" for="channelSMS">
+                                            <i class="fas fa-sms text-primary me-1"></i>SMS
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check channel-option">
+                                        <input class="form-check-input" type="checkbox" name="channels" 
+                                               value="whatsapp" id="channelWhatsApp">
+                                        <label class="form-check-label" for="channelWhatsApp">
+                                            <i class="fab fa-whatsapp text-success me-1"></i>WhatsApp
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Message (Optional) -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                Custom Message <span class="text-muted fw-normal">(optional)</span>
+                            </label>
+                            <textarea name="custom_message" class="form-control" rows="4" 
+                                      id="customMessage" placeholder="Leave empty to use the template message...
+
+Available placeholders:
+{name}, {first_name}, {event_name}, {ticket_number}, {payment_status}"></textarea>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                If left empty, the selected template will be used.
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Message Preview</label>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div id="messagePreview" class="text-dark" style="white-space: pre-wrap;">
+                                        {{ reminder_templates[0].sms if reminder_templates else 'No template selected' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recipient Info -->
+                        <div class="alert alert-warning mb-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-users fa-2x me-3"></i>
+                                <div>
+                                    <strong>Target Recipients:</strong>
+                                    <span id="unpaidCount">{{ total_unpaid }}</span> delegates with pending payments
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Delegates who received a reminder in the last 24 hours will be skipped.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fas fa-paper-plane me-2"></i>Send Reminders
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Stats -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Reminder Stats</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="h3 text-warning mb-0">{{ total_unpaid }}</div>
+                            <small class="text-muted">Unpaid Delegates</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="h3 text-info mb-0">{{ recent_reminders|length }}</div>
+                            <small class="text-muted">Recent Reminders</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Reminders -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-history me-2"></i>Recent Reminders</h6>
+                    <a href="{{ url_for('communications.payment_reminders') }}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_reminders %}
+                    <div class="list-group list-group-flush">
+                        {% for reminder in recent_reminders[:10] %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>Delegate #{{ reminder.delegate_id }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="fas fa-{{ 'sms' if reminder.channel == 'sms' else 'whatsapp' }} me-1"></i>
+                                        {{ reminder.channel|upper }}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-{{ 'success' if reminder.status == 'sent' else 'danger' }}">
+                                        {{ reminder.status }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ reminder.sent_at.strftime('%b %d, %H:%M') if reminder.sent_at else 'N/A' }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p>No reminders sent yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.reminder-card {
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+.reminder-card:hover {
+    border-color: #ffc107;
+}
+.reminder-card:has(input:checked) {
+    border-color: #ffc107;
+    background: rgba(255, 193, 7, 0.1);
+}
+.channel-option {
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+.channel-option:hover {
+    background: #f8f9fa;
+}
+.channel-option:has(input:checked) {
+    border-color: #198754;
+    background: rgba(25, 135, 84, 0.1);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const templates = {{ reminder_templates|tojson }};
+    const messagePreview = document.getElementById('messagePreview');
+    const customMessage = document.getElementById('customMessage');
+    const eventSelect = document.getElementById('eventSelect');
+    const unpaidCount = document.getElementById('unpaidCount');
+    
+    // Update preview when template changes
+    document.querySelectorAll('input[name="reminder_type"]').forEach(radio => {
+        radio.addEventListener('change', updatePreview);
+    });
+    
+    // Update preview when custom message changes
+    customMessage.addEventListener('input', updatePreview);
+    
+    function updatePreview() {
+        const selectedTemplate = document.querySelector('input[name="reminder_type"]:checked').value;
+        const custom = customMessage.value.trim();
+        
+        let preview = custom;
+        if (!preview) {
+            const template = templates.find(t => t.id === selectedTemplate);
+            preview = template ? template.sms : 'No template selected';
+        }
+        
+        // Replace placeholders with sample data
+        preview = preview.replace(/{name}/g, 'John Doe');
+        preview = preview.replace(/{first_name}/g, 'John');
+        preview = preview.replace(/{event_name}/g, 'KAYO Annual Conference 2024');
+        preview = preview.replace(/{ticket_number}/g, 'KAYO-2024-001');
+        preview = preview.replace(/{payment_status}/g, 'Pending');
+        
+        messagePreview.textContent = preview;
+    }
+    
+    // Update unpaid count when event changes
+    eventSelect.addEventListener('change', function() {
+        const eventId = this.value;
+        fetch(`{{ url_for('communications.get_unpaid_count') }}?event_id=${eventId}`)
+            .then(response => response.json())
+            .then(data => {
+                unpaidCount.textContent = data.count;
+            });
+    });
+    
+    // Click on card to select radio
+    document.querySelectorAll('.reminder-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.type !== 'radio') {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

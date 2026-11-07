@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Search Delegates - KAYO Admin{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <h2><i class="bi bi-search me-2"></i>Search Delegates</h2>
+    <p class="text-muted">Search by name, phone, ID number, ticket number, or filter by criteria.</p>
+</div>
+
+<!-- Search Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin.search') }}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    {{ form.query(class="form-control form-control-lg") }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.archdeaconry(class="form-select", id="archdeaconry") }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.parish(class="form-select", id="parish") }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.submit(class="btn btn-primary w-100") }}
+                </div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-3">
+                    {{ form.gender(class="form-select") }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.payment_status(class="form-select") }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.category(class="form-select") }}
+                </div>
+                <div class="col-md-3">
+                    <a href="{{ url_for('admin.search') }}" class="btn btn-outline-secondary w-100">Clear Filters</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results -->
+{% if delegates %}
+<div class="card">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Found {{ delegates|length }} delegate(s)</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Ticket</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Church</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for delegate in delegates %}
+                <tr>
+                    <td><code>{{ delegate.ticket_number }}</code></td>
+                    <td>
+                        <strong>{{ delegate.name }}</strong>
+                        <br><small class="text-muted">{{ delegate.gender|capitalize }}</small>
+                    </td>
+                    <td>{{ delegate.phone_number or '-' }}</td>
+                    <td>
+                        {{ delegate.local_church }}
+                        <br><small class="text-muted">{{ delegate.archdeaconry }}</small>
+                    </td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if delegate.category == 'vip' else 'info' if delegate.category == 'speaker' else 'warning' if delegate.category == 'leader' else 'secondary' }}">
+                            {{ delegate.category|upper }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if delegate.is_paid %}
+                        <span class="badge bg-success"><i class="bi bi-check"></i> Paid</span>
+                        {% else %}
+                        <span class="badge bg-warning"><i class="bi bi-clock"></i> Unpaid</span>
+                        {% endif %}
+                        {% if delegate.checked_in %}
+                        <br><small class="text-success"><i class="bi bi-check-circle"></i> Checked In</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.view_delegate', id=delegate.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% elif request.args %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>No delegates found matching your criteria.
+</div>
+{% else %}
+<div class="alert alert-secondary">
+    <i class="bi bi-search me-2"></i>Enter a search term or select filters to find delegates.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const archdeaconrySelect = document.getElementById('archdeaconry');
+    const parishSelect = document.getElementById('parish');
+    
+    archdeaconrySelect.addEventListener('change', function() {
+        const selectedArchdeaconry = this.value;
+        
+        // Reset parish
+        parishSelect.innerHTML = '<option value="">All Parishes</option>';
+        
+        if (selectedArchdeaconry) {
+            fetch(`/api/parishes/${encodeURIComponent(selectedArchdeaconry)}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.parishes.forEach(parish => {
+                        const option = document.createElement('option');
+                        option.value = parish;
+                        option.textContent = parish;
+                        parishSelect.appendChild(option);
+                    });
+                });
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+
+{% block title %}WhatsApp Messages - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fab fa-whatsapp text-success me-2"></i>WhatsApp Messages</h2>
+                    <p class="text-muted mb-0">Send bulk WhatsApp messages to delegates</p>
+                </div>
+                <a href="{{ url_for('communications.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fab fa-whatsapp me-2"></i>Compose WhatsApp Message</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="whatsappForm">
+                        <!-- Event Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Event</label>
+                            <select name="event_id" class="form-select" id="eventSelect">
+                                <option value="">All Events</option>
+                                {% for event in events %}
+                                <option value="{{ event.id }}">{{ event.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Target Group -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Target Group</label>
+                            <div class="row g-3">
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check target-option">
+                                        <input class="form-check-input" type="radio" name="target_group" 
+                                               value="all" id="targetAll" checked>
+                                        <label class="form-check-label" for="targetAll">
+                                            <i class="fas fa-users text-primary me-1"></i>
+                                            All Delegates
+                                            <span class="badge bg-primary ms-1">{{ delegate_counts.all }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check target-option">
+                                        <input class="form-check-input" type="radio" name="target_group" 
+                                               value="paid" id="targetPaid">
+                                        <label class="form-check-label" for="targetPaid">
+                                            <i class="fas fa-check-circle text-success me-1"></i>
+                                            Paid
+                                            <span class="badge bg-success ms-1">{{ delegate_counts.paid }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check target-option">
+                                        <input class="form-check-input" type="radio" name="target_group" 
+                                               value="unpaid" id="targetUnpaid">
+                                        <label class="form-check-label" for="targetUnpaid">
+                                            <i class="fas fa-clock text-warning me-1"></i>
+                                            Unpaid
+                                            <span class="badge bg-warning ms-1">{{ delegate_counts.unpaid }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check target-option">
+                                        <input class="form-check-input" type="radio" name="target_group" 
+                                               value="checked_in" id="targetCheckedIn">
+                                        <label class="form-check-label" for="targetCheckedIn">
+                                            <i class="fas fa-sign-in-alt text-info me-1"></i>
+                                            Checked In
+                                            <span class="badge bg-info ms-1">{{ delegate_counts.checked_in }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check target-option">
+                                        <input class="form-check-input" type="radio" name="target_group" 
+                                               value="not_checked_in" id="targetNotCheckedIn">
+                                        <label class="form-check-label" for="targetNotCheckedIn">
+                                            <i class="fas fa-user-clock text-secondary me-1"></i>
+                                            Not Checked In
+                                            <span class="badge bg-secondary ms-1">{{ delegate_counts.not_checked_in }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Message</label>
+                            <textarea name="message" class="form-control" rows="6" id="messageText"
+                                      placeholder="Type your WhatsApp message here...
+
+Use placeholders:
+{name} - Full name
+{first_name} - First name
+{ticket_number} - Ticket number
+{event_name} - Event name
+{payment_status} - Payment status"></textarea>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                WhatsApp supports rich text formatting: *bold*, _italic_, ~strikethrough~
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Preview</label>
+                            <div class="whatsapp-preview p-3 rounded" style="background: #e5ddd5;">
+                                <div class="message-bubble bg-white p-3 rounded shadow-sm" style="max-width: 80%;">
+                                    <div id="previewText" class="text-dark" style="white-space: pre-wrap;">
+                                        Your message preview will appear here...
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="text-muted">
+                                            <i class="fas fa-check-double text-primary"></i>
+                                            {{ "now" | default("Just now") }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recipients Count -->
+                        <div class="alert alert-info mb-4">
+                            <i class="fab fa-whatsapp me-2"></i>
+                            <strong>Recipients:</strong> 
+                            <span id="recipientCount">{{ delegate_counts.all }}</span> delegates will receive this message
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
+                                <i class="fas fa-eraser me-1"></i>Clear
+                            </button>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fab fa-whatsapp me-2"></i>Send WhatsApp Messages
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Quick Templates -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>Quick Templates</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action template-btn"
+                           data-template="👋 Hello {name}!
+
+Thank you for registering for *{event_name}*! 
+
+We're excited to have you join us. Stay tuned for more updates.
+
+🙏 God bless!">
+                            <i class="fas fa-hand-wave me-2"></i>Welcome Message
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action template-btn"
+                           data-template="📢 *Important Announcement*
+
+Dear {name},
+
+This is an important update regarding *{event_name}*.
+
+[Your message here]
+
+Thank you for your attention!">
+                            <i class="fas fa-bullhorn me-2"></i>Announcement
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action template-btn"
+                           data-template="⏰ *Event Reminder*
+
+Hi {name}!
+
+Just a friendly reminder that *{event_name}* is coming up soon!
+
+📍 Don't forget to bring your ticket: {ticket_number}
+
+See you there! 🎉">
+                            <i class="fas fa-bell me-2"></i>Event Reminder
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action template-btn"
+                           data-template="📍 *Venue Update*
+
+Dear {name},
+
+Important update about *{event_name}*:
+
+[Venue details here]
+
+Please note this change and plan accordingly.
+
+Questions? Reply to this message!">
+                            <i class="fas fa-map-marker-alt me-2"></i>Venue Update
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WhatsApp Tips -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>WhatsApp Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Use *asterisks* for <strong>bold</strong>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Use _underscores_ for <em>italic</em>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Use ~tildes~ for <del>strikethrough</del>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Emojis work great! 🎉👍🙏
+                        </li>
+                        <li>
+                            <i class="fas fa-check text-success me-2"></i>
+                            Keep messages concise and clear
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.target-option {
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+.target-option:hover {
+    background: #f8f9fa;
+}
+.target-option:has(input:checked) {
+    border-color: #25D366;
+    background: rgba(37, 211, 102, 0.1);
+}
+.whatsapp-preview {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.message-bubble {
+    border-radius: 8px 8px 8px 0 !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messageText = document.getElementById('messageText');
+    const previewText = document.getElementById('previewText');
+    const recipientCount = document.getElementById('recipientCount');
+    
+    // Live preview
+    messageText.addEventListener('input', function() {
+        let preview = this.value || 'Your message preview will appear here...';
+        // Replace placeholders with sample data
+        preview = preview.replace(/{name}/g, 'John Doe');
+        preview = preview.replace(/{first_name}/g, 'John');
+        preview = preview.replace(/{ticket_number}/g, 'KAYO-2024-001');
+        preview = preview.replace(/{event_name}/g, 'KAYO Annual Conference 2024');
+        preview = preview.replace(/{payment_status}/g, 'Paid');
+        // Format WhatsApp style
+        preview = preview.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+        preview = preview.replace(/_([^_]+)_/g, '<em>$1</em>');
+        preview = preview.replace(/~([^~]+)~/g, '<del>$1</del>');
+        previewText.innerHTML = preview;
+    });
+    
+    // Template buttons
+    document.querySelectorAll('.template-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            messageText.value = this.dataset.template;
+            messageText.dispatchEvent(new Event('input'));
+        });
+    });
+    
+    // Update recipient count
+    function updateRecipientCount() {
+        const eventId = document.getElementById('eventSelect').value;
+        const targetGroup = document.querySelector('input[name="target_group"]:checked').value;
+        
+        fetch(`{{ url_for('communications.preview_recipients') }}?event_id=${eventId}&target_group=${targetGroup}`)
+            .then(response => response.json())
+            .then(data => {
+                recipientCount.textContent = data.count;
+            });
+    }
+    
+    document.getElementById('eventSelect').addEventListener('change', updateRecipientCount);
+    document.querySelectorAll('input[name="target_group"]').forEach(radio => {
+        radio.addEventListener('change', updateRecipientCount);
+    });
+});
+
+function clearForm() {
+    document.getElementById('messageText').value = '';
+    document.getElementById('previewText').innerHTML = 'Your message preview will appear here...';
+}
+</script>
+{% endblock %}

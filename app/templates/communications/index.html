@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Communications - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-chat-dots me-2 text-primary"></i>Communications Center
+            </h2>
+            <p class="text-muted mb-0">Manage announcements, SMS, WhatsApp, and notifications</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('communications.create_announcement') }}" class="btn btn-primary">
+                <i class="bi bi-megaphone me-1"></i>New Announcement
+            </a>
+            <a href="{{ url_for('communications.bulk_sms') }}" class="btn btn-outline-primary">
+                <i class="bi bi-chat-square-text me-1"></i>Bulk SMS
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-6 text-primary mb-2">{{ stats.total_announcements }}</div>
+                    <div class="text-muted">Total Announcements</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-6 text-warning mb-2">{{ stats.pending_announcements }}</div>
+                    <div class="text-muted">Scheduled</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-6 text-success mb-2">{{ stats.sent_announcements }}</div>
+                    <div class="text-muted">Sent</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-6 text-info mb-2">{{ stats.total_reminders }}</div>
+                    <div class="text-muted">Payment Reminders</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Communication Channels -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3"><i class="bi bi-broadcast me-2"></i>Communication Channels</h5>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('communications.bulk_sms') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 hover-card">
+                    <div class="card-body text-center py-4">
+                        <i class="fas fa-sms fa-3x text-primary mb-3"></i>
+                        <h5>Bulk SMS</h5>
+                        <p class="text-muted small mb-0">Send SMS messages to delegates</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('communications.whatsapp_messages') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 hover-card">
+                    <div class="card-body text-center py-4">
+                        <i class="fab fa-whatsapp fa-3x text-success mb-3"></i>
+                        <h5>WhatsApp</h5>
+                        <p class="text-muted small mb-0">Send WhatsApp messages</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('communications.automated_reminders') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 hover-card">
+                    <div class="card-body text-center py-4">
+                        <i class="fas fa-bell fa-3x text-warning mb-3"></i>
+                        <h5>Payment Reminders</h5>
+                        <p class="text-muted small mb-0">Automated payment reminders</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('communications.thank_you_messages') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 hover-card">
+                    <div class="card-body text-center py-4">
+                        <i class="fas fa-heart fa-3x text-danger mb-3"></i>
+                        <h5>Thank You</h5>
+                        <p class="text-muted small mb-0">Post-event thank-you messages</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Quick Actions -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('communications.bulk_sms') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-sms me-2"></i>Send Bulk SMS
+                        </a>
+                        <a href="{{ url_for('communications.whatsapp_messages') }}" class="btn btn-outline-success">
+                            <i class="fab fa-whatsapp me-2"></i>Send WhatsApp
+                        </a>
+                        <a href="{{ url_for('communications.automated_reminders') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-bell me-2"></i>Payment Reminders
+                        </a>
+                        <a href="{{ url_for('communications.thank_you_messages') }}" class="btn btn-outline-danger">
+                            <i class="fas fa-heart me-2"></i>Thank You Messages
+                        </a>
+                        <a href="{{ url_for('communications.create_announcement') }}" class="btn btn-outline-info">
+                            <i class="bi bi-megaphone me-2"></i>Create Announcement
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message Templates -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Message Templates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item px-0">
+                            <strong>Payment Reminder</strong>
+                            <p class="text-muted small mb-0">Remind unpaid delegates to complete payment</p>
+                        </div>
+                        <div class="list-group-item px-0">
+                            <strong>Registration Confirmation</strong>
+                            <p class="text-muted small mb-0">Confirm successful registration</p>
+                        </div>
+                        <div class="list-group-item px-0">
+                            <strong>Event Reminder</strong>
+                            <p class="text-muted small mb-0">Remind delegates about upcoming event</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Announcements -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-megaphone me-2"></i>Recent Announcements</h5>
+                    <a href="{{ url_for('communications.list_announcements') }}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if announcements %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Channels</th>
+                                    <th>Target</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ann in announcements %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ ann.title }}</strong>
+                                    </td>
+                                    <td>
+                                        {% for channel in ann.channels %}
+                                        <span class="badge bg-secondary me-1">{{ channel }}</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>{{ ann.target_group|title }}</td>
+                                    <td>
+                                        <span class="badge {% if ann.status == 'sent' %}bg-success{% elif ann.status == 'scheduled' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ ann.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ ann.created_at.strftime('%b %d, %Y') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-megaphone display-4 text-muted"></i>
+                        <p class="text-muted mt-2">No announcements yet</p>
+                        <a href="{{ url_for('communications.create_announcement') }}" class="btn btn-primary">
+                            Create First Announcement
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-card {
+    transition: all 0.3s ease;
+}
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+}
+</style>
+{% endblock %}

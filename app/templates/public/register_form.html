@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register as Delegate - KAYO | ACK Diocese of Nambale</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-green: #1a5f2a;
+            --secondary-gold: #D4AF37;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-green) 0%, #0d4a1c 100%);
+            color: white;
+            padding: 30px 0;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            margin-top: 30px;
+        }
+        
+        .form-section {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+        
+        .form-section h5 {
+            color: var(--primary-green);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .form-section h5 i {
+            margin-right: 10px;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary-green), #0d4a1c);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(26, 95, 42, 0.3);
+            color: white;
+        }
+        
+        .required-star {
+            color: #dc3545;
+        }
+        
+        .form-text {
+            font-size: 0.85rem;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            color: #6c757d;
+        }
+        
+        .step.active {
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+        
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-weight: 600;
+        }
+        
+        .step.active .step-number {
+            background: var(--primary-green);
+            color: white;
+        }
+        
+        .step-divider {
+            width: 50px;
+            height: 2px;
+            background: #e9ecef;
+            margin: 0 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1"><i class="bi bi-people-fill me-2"></i>KAYO Registration</h4>
+                    <small class="opacity-75">ACK Diocese of Nambale</small>
+                </div>
+                <a href="{{ url_for('public.register_landing') }}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="form-card">
+                    <!-- Progress Steps -->
+                    <div class="progress-steps">
+                        <div class="step active">
+                            <span class="step-number">1</span>
+                            <span>Fill Form</span>
+                        </div>
+                        <div class="step-divider"></div>
+                        <div class="step">
+                            <span class="step-number">2</span>
+                            <span>Submit</span>
+                        </div>
+                        <div class="step-divider"></div>
+                        <div class="step">
+                            <span class="step-number">3</span>
+                            <span>Approval</span>
+                        </div>
+                    </div>
+                    
+                    <h4 class="text-center mb-4">Delegate Registration Form</h4>
+                    
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" action="{{ url_for('public.register_delegate') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <!-- Personal Information -->
+                        <div class="form-section">
+                            <h5><i class="bi bi-person"></i>Personal Information</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label class="form-label">Full Name <span class="required-star">*</span></label>
+                                    <input type="text" class="form-control" name="name" 
+                                           value="{{ form_data.get('name', '') }}" required
+                                           placeholder="Enter your full name">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Gender <span class="required-star">*</span></label>
+                                    <select class="form-select" name="gender" required>
+                                        <option value="">Select Gender</option>
+                                        <option value="male" {{ 'selected' if form_data.get('gender') == 'male' }}>Male</option>
+                                        <option value="female" {{ 'selected' if form_data.get('gender') == 'female' }}>Female</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Age Bracket <span class="required-star">*</span></label>
+                                    <select class="form-select" name="age_bracket" required>
+                                        <option value="">Select Age Bracket</option>
+                                        <option value="15_below" {{ 'selected' if form_data.get('age_bracket') == '15_below' }}>15 and Below</option>
+                                        <option value="15_19" {{ 'selected' if form_data.get('age_bracket') == '15_19' }}>15-19</option>
+                                        <option value="20_24" {{ 'selected' if form_data.get('age_bracket') == '20_24' }}>20-24</option>
+                                        <option value="25_29" {{ 'selected' if form_data.get('age_bracket') == '25_29' }}>25-29</option>
+                                        <option value="30_above" {{ 'selected' if form_data.get('age_bracket') == '30_above' }}>30 and Above</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" name="phone_number" 
+                                           value="{{ form_data.get('phone_number', '') }}"
+                                           placeholder="e.g., 0712345678">
+                                    <div class="form-text">For communication about your registration</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">ID Number</label>
+                                    <input type="text" class="form-control" name="id_number" 
+                                           value="{{ form_data.get('id_number', '') }}"
+                                           placeholder="National ID number">
+                                    <div class="form-text">Used to prevent duplicate registrations</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" name="email" 
+                                       value="{{ form_data.get('email', '') }}"
+                                       placeholder="your.email@example.com">
+                                <div class="form-text">Optional - for receiving registration updates</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Church Information -->
+                        <div class="form-section">
+                            <h5><i class="bi bi-building"></i>Church Information</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Archdeaconry <span class="required-star">*</span></label>
+                                    <select class="form-select" name="archdeaconry" id="archdeaconry" required>
+                                        <option value="">Select Archdeaconry</option>
+                                        {% for arch in church_data.keys() %}
+                                        <option value="{{ arch }}" {{ 'selected' if form_data.get('archdeaconry') == arch }}>{{ arch }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Parish <span class="required-star">*</span></label>
+                                    <select class="form-select" name="parish" id="parish" required>
+                                        <option value="">Select Parish</option>
+                                        {% if form_data.get('archdeaconry') %}
+                                            {% for parish in church_data.get(form_data.get('archdeaconry'), []) %}
+                                            <option value="{{ parish }}" {{ 'selected' if form_data.get('parish') == parish }}>{{ parish }}</option>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Local Church <span class="required-star">*</span></label>
+                                <input type="text" class="form-control" name="local_church" 
+                                       value="{{ form_data.get('local_church', '') }}" required
+                                       placeholder="Enter your local church name">
+                                <div class="form-text">Your specific local church within the parish</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Important Notice -->
+                        <div class="alert alert-info mb-4">
+                            <h6><i class="bi bi-info-circle me-2"></i>Important Information</h6>
+                            <ul class="mb-0 small">
+                                <li>Your registration will be reviewed by your local church chairperson</li>
+                                <li>You will receive a registration token to track your application status</li>
+                                <li>Once approved, your chairperson will handle payment processing</li>
+                                <li>Please ensure all information is accurate to avoid delays</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-submit">
+                                <i class="bi bi-send me-2"></i>Submit Registration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Church data from server
+        const churchData = {{ church_data | tojson | safe }};
+        
+        // Dynamic parish loading
+        document.getElementById('archdeaconry').addEventListener('change', function() {
+            const parishSelect = document.getElementById('parish');
+            const archdeaconry = this.value;
+            
+            // Clear current options
+            parishSelect.innerHTML = '<option value="">Select Parish</option>';
+            
+            // Add parishes for selected archdeaconry
+            if (archdeaconry && churchData[archdeaconry]) {
+                churchData[archdeaconry].forEach(function(parish) {
+                    const option = document.createElement('option');
+                    option.value = parish;
+                    option.textContent = parish;
+                    parishSelect.appendChild(option);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

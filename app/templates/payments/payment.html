@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}Payment - KAYO{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Make Payment</li>
+        </ol>
+    </nav>
+    <h2><i class="bi bi-wallet2 me-2"></i>Make Payment</h2>
+</div>
+
+{% if pending_approval_delegates %}
+<div class="alert alert-info mb-4">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-hourglass-split me-3" style="font-size: 1.5rem;"></i>
+        <div class="flex-grow-1">
+            <strong>{{ pending_approval_delegates|length }} delegate(s) awaiting Finance approval</strong>
+            <p class="mb-0 small">These delegates have been submitted for payment and are pending approval.</p>
+        </div>
+        <a href="{{ url_for('payments.my_submissions') }}" class="btn btn-info btn-sm ms-3">View Status</a>
+    </div>
+</div>
+{% endif %}
+
+{% if fee_exempt_delegates %}
+<div class="alert alert-success mb-4">
+    <i class="bi bi-check-circle me-2"></i>
+    <strong>{{ fee_exempt_delegates|length }} delegate(s) are fee-exempt</strong> (Worship Team/Arise Band) and do not require payment.
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Unpaid Delegates</h5>
+            </div>
+            <div class="card-body">
+                {% if unpaid_delegates %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Parish</th>
+                                <th>Fee</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for delegate in unpaid_delegates %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ delegate.name }}</td>
+                                <td>
+                                    {% if delegate.category == 'nav' %}
+                                    <span class="badge bg-info">Worship Team</span>
+                                    {% elif delegate.category == 'arise_band' %}
+                                    <span class="badge bg-info">Arise Band</span>
+                                    {% else %}
+                                    {{ delegate.category|replace('_', ' ')|title }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ delegate.parish }}</td>
+                                <td>KSh {{ delegate.get_registration_fee()|int }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-primary">
+                                <td colspan="4" class="text-end fw-bold">Total Amount:</td>
+                                <td class="fw-bold">KSh {{ total_amount | int }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3 mb-0">
+                        {% if pending_approval_delegates %}
+                        All your delegates have been submitted for payment!
+                        {% elif fee_exempt_delegates %}
+                        All your delegates are fee-exempt.
+                        {% else %}
+                        No unpaid delegates to process.
+                        {% endif %}
+                    </p>
+                    {% if pending_approval_delegates %}
+                    <a href="{{ url_for('payments.my_submissions') }}" class="btn btn-outline-primary mt-3">
+                        <i class="bi bi-eye me-1"></i>View Submission Status
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if unpaid_delegates %}
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>Process Payment</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" class="no-mask" action="{{ url_for('payments.initiate_payment') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Payment Method Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">{{ form.payment_method.label.text }} <span class="text-danger">*</span></label>
+                        {{ form.payment_method(class="form-select form-select-lg", id="paymentMethod") }}
+                    </div>
+                    
+                    <!-- M-Pesa Phone Number (shown for mpesa and mpesa_paybill) -->
+                    <div class="mb-4" id="phoneGroup">
+                        <label class="form-label">{{ form.phone_number.label.text }}</label>
+                        {{ form.phone_number(class="form-control form-control-lg", placeholder="e.g., 0712345678", id="phoneNumber") }}
+                        <small class="text-muted" id="phoneHelp">Enter the phone number registered with M-Pesa</small>
+                        {% for error in form.phone_number.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Receipt/Reference Number (shown for manual payments) -->
+                    <div class="mb-4" id="receiptGroup" style="display: none;">
+                        <label class="form-label">{{ form.receipt_number.label.text }} <span class="text-danger">*</span></label>
+                        {{ form.receipt_number(class="form-control form-control-lg", placeholder="e.g., QJK2ABC345", id="receiptNumber") }}
+                        <small class="text-muted" id="receiptHelp">Enter the transaction reference number</small>
+                        {% for error in form.receipt_number.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Payment method info alerts -->
+                    <div class="alert alert-info mb-4" id="mpesaAlert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>M-Pesa STK Push:</strong> You will receive a prompt on your phone to enter your M-Pesa PIN.
+                    </div>
+                    
+                    <div class="alert alert-warning mb-4" id="cashAlert" style="display: none;">
+                        <i class="bi bi-cash me-2"></i>
+                        <strong>Cash Payment:</strong> Confirm that you have received cash payment for these delegates.
+                        {% if can_confirm_cash %}
+                        <br><small class="text-success">You can confirm cash payments for your delegates.</small>
+                        {% else %}
+                        <br><small class="text-danger">You are not authorized to confirm cash payments.</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="alert alert-info mb-4" id="paybillAlert" style="display: none;">
+                        <i class="bi bi-phone me-2"></i>
+                        <strong>M-Pesa Paybill:</strong> Enter the M-Pesa confirmation code after paying via paybill.
+                    </div>
+                    
+                    <div class="alert alert-info mb-4" id="bankAlert" style="display: none;">
+                        <i class="bi bi-bank me-2"></i>
+                        <strong>Bank Transfer:</strong> Enter the bank transaction reference after completing the transfer.
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                            <i class="bi bi-credit-card me-2"></i>Pay KSh {{ total_amount | int }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card bg-light mb-4">
+            <div class="card-body">
+                <h6><i class="bi bi-info-circle me-2"></i>Payment Summary</h6>
+                <hr>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Delegates:</span>
+                    <strong>{{ unpaid_delegates | length }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Fee per delegate:</span>
+                    <span>KSh {{ delegate_fee | int }}</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <strong>Total:</strong>
+                    <strong class="text-success">KSh {{ total_amount | int }}</strong>
+                </div>
+            </div>
+        </div>
+        
+        {% if recent_payments %}
+        <div class="card">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Payment Attempts</h6>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for payment in recent_payments %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted">{{ payment.created_at.strftime('%d %b, %H:%M') }}</small><br>
+                        KSh {{ payment.amount | int }}
+                        <small class="text-muted">({{ payment.payment_mode or 'M-Pesa' }})</small>
+                    </div>
+                    <span class="badge bg-{{ 'success' if payment.status == 'completed' else 'warning' if payment.status == 'pending' else 'danger' }}">
+                        {{ payment.status | capitalize }}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if can_confirm_cash %}
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6><i class="bi bi-cash me-2"></i>Finance Options</h6>
+                <hr>
+                <a href="{{ url_for('payments.confirm_cash_payment') }}" class="btn btn-outline-success btn-sm w-100">
+                    <i class="bi bi-check-circle me-1"></i>Confirm Cash Payments
+                </a>
+                <small class="text-muted d-block mt-2">Confirm cash payments for any delegates</small>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var paymentMethod = document.getElementById('paymentMethod');
+    var phoneGroup = document.getElementById('phoneGroup');
+    var receiptGroup = document.getElementById('receiptGroup');
+    var phoneNumber = document.getElementById('phoneNumber');
+    var receiptNumber = document.getElementById('receiptNumber');
+    var submitBtn = document.getElementById('submitBtn');
+    
+    var mpesaAlert = document.getElementById('mpesaAlert');
+    var cashAlert = document.getElementById('cashAlert');
+    var paybillAlert = document.getElementById('paybillAlert');
+    var bankAlert = document.getElementById('bankAlert');
+    
+    var canConfirmCash = {{ 'true' if can_confirm_cash else 'false' }};
+    
+    function updateUI() {
+        var method = paymentMethod.value;
+        
+        // Hide all alerts first
+        mpesaAlert.style.display = 'none';
+        cashAlert.style.display = 'none';
+        paybillAlert.style.display = 'none';
+        bankAlert.style.display = 'none';
+        
+        // Reset required attributes
+        phoneNumber.required = false;
+        receiptNumber.required = false;
+        
+        if (method === 'mpesa') {
+            phoneGroup.style.display = 'block';
+            receiptGroup.style.display = 'none';
+            mpesaAlert.style.display = 'block';
+            phoneNumber.required = true;
+            submitBtn.innerHTML = '<i class="bi bi-phone me-2"></i>Pay via M-Pesa STK Push';
+            submitBtn.disabled = false;
+        } else if (method === 'cash') {
+            phoneGroup.style.display = 'none';
+            receiptGroup.style.display = 'none';
+            cashAlert.style.display = 'block';
+            submitBtn.innerHTML = '<i class="bi bi-cash me-2"></i>Confirm Cash Payment';
+            submitBtn.disabled = !canConfirmCash;
+        } else if (method === 'mpesa_paybill') {
+            phoneGroup.style.display = 'block';
+            receiptGroup.style.display = 'block';
+            paybillAlert.style.display = 'block';
+            receiptNumber.required = true;
+            submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Confirm Paybill Payment';
+            submitBtn.disabled = false;
+        } else if (method === 'bank_transfer') {
+            phoneGroup.style.display = 'none';
+            receiptGroup.style.display = 'block';
+            bankAlert.style.display = 'block';
+            receiptNumber.required = true;
+            submitBtn.innerHTML = '<i class="bi bi-bank me-2"></i>Confirm Bank Transfer';
+            submitBtn.disabled = false;
+        }
+    }
+    
+    paymentMethod.addEventListener('change', updateUI);
+    updateUI(); // Initial call
+});
+</script>
+{% endblock %}

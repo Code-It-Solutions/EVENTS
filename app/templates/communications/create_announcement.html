@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Create Announcement - KAYO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-megaphone me-2 text-primary"></i>Create Announcement
+            </h2>
+            <p class="text-muted mb-0">Create a new announcement for delegates</p>
+        </div>
+        <a href="{{ url_for('communications.list_announcements') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Title -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label fw-semibold">Announcement Title</label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                placeholder="e.g., Important Update for All Delegates" required>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="mb-4">
+                            <label for="content" class="form-label fw-semibold">Message Content</label>
+                            <textarea class="form-control" id="content" name="content" rows="6" 
+                                placeholder="Enter your announcement message here..." required></textarea>
+                            <small class="text-muted">
+                                Available placeholders: {name}, {phone}, {payment_status}, {ticket_number}
+                            </small>
+                        </div>
+
+                        <!-- Channels -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Delivery Channels</label>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-check card p-3 border">
+                                        <input class="form-check-input" type="checkbox" name="channels" value="sms" id="channelSms" checked>
+                                        <label class="form-check-label" for="channelSms">
+                                            <i class="bi bi-chat-square-text me-2 text-primary"></i>SMS
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check card p-3 border">
+                                        <input class="form-check-input" type="checkbox" name="channels" value="email" id="channelEmail">
+                                        <label class="form-check-label" for="channelEmail">
+                                            <i class="bi bi-envelope me-2 text-info"></i>Email
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check card p-3 border">
+                                        <input class="form-check-input" type="checkbox" name="channels" value="in_app" id="channelInApp">
+                                        <label class="form-check-label" for="channelInApp">
+                                            <i class="bi bi-bell me-2 text-warning"></i>In-App
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Target Group -->
+                        <div class="mb-4">
+                            <label for="target_group" class="form-label fw-semibold">Target Audience</label>
+                            <select class="form-select" id="target_group" name="target_group">
+                                <option value="all">All Delegates</option>
+                                <option value="paid">Paid Delegates Only</option>
+                                <option value="unpaid">Unpaid Delegates</option>
+                                <option value="checked_in">Checked-In Delegates</option>
+                            </select>
+                        </div>
+
+                        <!-- Event -->
+                        {% if events %}
+                        <div class="mb-4">
+                            <label for="event_id" class="form-label fw-semibold">Associated Event (Optional)</label>
+                            <select class="form-select" id="event_id" name="event_id">
+                                <option value="">All Events</option>
+                                {% for event in events %}
+                                <option value="{{ event.id }}">{{ event.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <!-- Scheduling -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Scheduling</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="schedule_type" value="now" id="scheduleNow" checked>
+                                <label class="form-check-label" for="scheduleNow">
+                                    Save as draft (send manually later)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="schedule_type" value="later" id="scheduleLater">
+                                <label class="form-check-label" for="scheduleLater">
+                                    Schedule for later
+                                </label>
+                            </div>
+                            <div class="mt-2" id="scheduleDateTime" style="display: none;">
+                                <input type="datetime-local" class="form-control" name="scheduled_for" id="scheduledFor">
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('communications.list_announcements') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>Create Announcement
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Sidebar -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-transparent border-0">
+                    <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Preview</h6>
+                </div>
+                <div class="card-body">
+                    <div class="bg-light rounded p-3">
+                        <h6 id="previewTitle" class="fw-bold">Announcement Title</h6>
+                        <p id="previewContent" class="mb-0 text-muted">
+                            Your announcement content will appear here...
+                        </p>
+                    </div>
+                    <hr>
+                    <div class="small text-muted">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Channels:</span>
+                            <span id="previewChannels">SMS</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Target:</span>
+                            <span id="previewTarget">All Delegates</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Preview updates
+    document.getElementById('title').addEventListener('input', function() {
+        document.getElementById('previewTitle').textContent = this.value || 'Announcement Title';
+    });
+
+    document.getElementById('content').addEventListener('input', function() {
+        document.getElementById('previewContent').textContent = this.value || 'Your announcement content will appear here...';
+    });
+
+    // Schedule toggle
+    document.querySelectorAll('input[name="schedule_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('scheduleDateTime').style.display = 
+                this.value === 'later' ? 'block' : 'none';
+        });
+    });
+
+    // Channel preview
+    document.querySelectorAll('input[name="channels"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const channels = [];
+            document.querySelectorAll('input[name="channels"]:checked').forEach(cb => {
+                channels.push(cb.value.toUpperCase());
+            });
+            document.getElementById('previewChannels').textContent = channels.join(', ') || 'None';
+        });
+    });
+
+    // Target preview
+    document.getElementById('target_group').addEventListener('change', function() {
+        document.getElementById('previewTarget').textContent = 
+            this.options[this.selectedIndex].text;
+    });
+</script>
+{% endblock %}

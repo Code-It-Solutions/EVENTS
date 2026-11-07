@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} User - KAYO Admin{% endblock %}
+
+{% block content %}
+<div class="mb-4 mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.all_users') }}">Users</a></li>
+            <li class="breadcrumb-item active">{{ action }} User</li>
+        </ol>
+    </nav>
+    <h2><i class="bi bi-person-{{ 'plus' if action == 'Create' else 'gear' }} me-2"></i>{{ action }} User</h2>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('admin.create_user') if action == 'Create' else url_for('admin.edit_user', id=user.id) }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <h6 class="text-muted mb-3">Account Information</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.name.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.name(class="form-control") }}
+                            {% for error in form.name.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.role.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.role(class="form-select") }}
+                            {% for error in form.role.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.email.label.text }} <span class="text-danger">*</span></label>
+                            {{ form.email(class="form-control") }}
+                            {% for error in form.email.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.phone.label.text }}</label>
+                            {{ form.phone(class="form-control") }}
+                            {% for error in form.phone.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h6 class="text-muted mb-3">Church Details (Optional)</h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.local_church.label.text }}</label>
+                        {{ form.local_church(class="form-control") }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.archdeaconry.label.text }}</label>
+                            {{ form.archdeaconry(class="form-select", id="archdeaconry") }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.parish.label.text }}</label>
+                            {{ form.parish(class="form-select", id="parish") }}
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h6 class="text-muted mb-3">Security</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.password.label.text }}{% if action == 'Create' %} <span class="text-danger">*</span>{% endif %}</label>
+                            {{ form.password(class="form-control") }}
+                            {% for error in form.password.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.all_users') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancel
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const archdeaconrySelect = document.getElementById('archdeaconry');
+    const parishSelect = document.getElementById('parish');
+    const currentParish = "{{ user.parish if user and user.parish else '' }}";
+    
+    function loadParishes(archdeaconry, selectedParish = null) {
+        // Clear existing parish options
+        parishSelect.innerHTML = '<option value="">-- Select Parish --</option>';
+        
+        if (archdeaconry) {
+            // Fetch parishes for the selected archdeaconry
+            fetch(`/api/parishes/${encodeURIComponent(archdeaconry)}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.parishes.forEach(parish => {
+                        const option = document.createElement('option');
+                        option.value = parish;
+                        option.textContent = parish;
+                        if (selectedParish && parish === selectedParish) {
+                            option.selected = true;
+                        }
+                        parishSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching parishes:', error);
+                });
+        }
+    }
+    
+    // Load parishes for the current archdeaconry on page load (for edit mode)
+    if (archdeaconrySelect.value) {
+        loadParishes(archdeaconrySelect.value, currentParish);
+    }
+    
+    archdeaconrySelect.addEventListener('change', function() {
+        loadParishes(this.value);
+    });
+});
+</script>
+{% endblock %}

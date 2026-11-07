@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Payment Confirmations{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Pending Payment Confirmations</h1>
+            <p class="text-muted mb-0">Review and confirm pledge payments</p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Pledge</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Reference</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in pending_payments %}
+                        <tr>
+                            <td>
+                                <strong>{{ payment.pledge.source_name }}</strong>
+                                <br><small class="text-muted">{{ payment.pledge.source_type.replace('_', ' ').title() }}</small>
+                            </td>
+                            <td><strong class="text-success">KSh {{ "{:,.2f}".format(payment.amount) }}</strong></td>
+                            <td>{{ payment.payment_method.replace('_', ' ').title() }}</td>
+                            <td>{{ payment.reference or '-' }}</td>
+                            <td>{{ payment.created_at.strftime('%d %b %Y %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('fund_management.confirm_payment', payment_id=payment.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-check me-1"></i>Review
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                                <p class="mb-0">No payments pending confirmation</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

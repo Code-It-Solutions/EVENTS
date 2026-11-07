@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Transfer {{ transfer.reference_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exchange-alt me-2 text-primary"></i>
+                        Fund Transfer
+                    </h4>
+                    <span class="badge bg-{{ 'success' if transfer.status == 'completed' else 'info' if transfer.status == 'approved' else 'warning' if transfer.status == 'pending' else 'danger' }} fs-6">
+                        {{ transfer.status.title() }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <!-- Reference -->
+                    <div class="text-center mb-4">
+                        <small class="text-muted">Reference Number</small>
+                        <h3 class="font-monospace">{{ transfer.reference_number }}</h3>
+                    </div>
+                    
+                    <!-- Amount -->
+                    <div class="text-center mb-4 py-4 bg-light rounded">
+                        <small class="text-muted d-block">Amount</small>
+                        <h1 class="text-primary mb-0">KSh {{ "{:,.2f}".format(transfer.amount) }}</h1>
+                    </div>
+                    
+                    <!-- Transfer Flow -->
+                    <div class="row text-center mb-4">
+                        <div class="col-5">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-user-circle fa-2x text-muted mb-2"></i>
+                                <h6 class="mb-0">{{ transfer.from_user.name }}</h6>
+                                <small class="text-muted">{{ transfer.from_role.replace('_', ' ').title() }}</small>
+                                {% if transfer.local_church %}
+                                <br><small class="text-muted">{{ transfer.local_church }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-arrow-right fa-2x text-primary"></i>
+                        </div>
+                        <div class="col-5">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-user-circle fa-2x text-success mb-2"></i>
+                                <h6 class="mb-0">{{ transfer.to_user.name }}</h6>
+                                <small class="text-muted">{{ transfer.to_role.replace('_', ' ').title() }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Transfer Stage -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Transfer Stage</h6>
+                        <div class="progress" style="height: 30px;">
+                            <div class="progress-bar bg-success" style="width: 100%;">Chair → Finance</div>
+                        </div>
+                    </div>
+                    
+                    {% if transfer.description %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-1">Description</h6>
+                        <p class="mb-0">{{ transfer.description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <!-- Dates -->
+                    <div class="row">
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-1">Created</h6>
+                            <p class="mb-2">{{ transfer.created_at.strftime('%d %b %Y %H:%M') }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-1">Submitted</h6>
+                            <p class="mb-2">{{ transfer.submitted_at.strftime('%d %b %Y %H:%M') if transfer.submitted_at else '-' }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-1">Approved</h6>
+                            <p class="mb-2">{{ transfer.approved_at.strftime('%d %b %Y %H:%M') if transfer.approved_at else '-' }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-1">Completed</h6>
+                            <p class="mb-2">{{ transfer.completed_at.strftime('%d %b %Y %H:%M') if transfer.completed_at else '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <div class="d-flex gap-2 flex-wrap">
+                        {% if transfer.status == 'pending' and (transfer.to_user_id == current_user.id or current_user.role in ['admin', 'super_admin']) %}
+                        <a href="{{ url_for('fund_management.approve_transfer', transfer_id=transfer.id) }}" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i>Approve/Reject
+                        </a>
+                        {% endif %}
+                        
+                        {% if transfer.status == 'approved' and current_user.role in ['finance', 'admin', 'super_admin'] %}
+                        <a href="{{ url_for('fund_management.complete_transfer', transfer_id=transfer.id) }}" class="btn btn-primary">
+                            <i class="fas fa-check-double me-2"></i>Confirm Receipt
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('fund_management.list_transfers') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Approval History -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Approval History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for approval in approvals %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge bg-{{ 'success' if approval.action == 'completed' else 'info' if approval.action == 'approved' else 'danger' }} mb-1">
+                                        {{ approval.action.title() }}
+                                    </span>
+                                    <br><strong>{{ approval.approver.name }}</strong>
+                                    {% if approval.notes %}
+                                    <br><small class="text-muted">{{ approval.notes }}</small>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">{{ approval.created_at.strftime('%d %b %H:%M') }}</small>
+                            </div>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center text-muted py-4">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p class="mb-0">Awaiting action</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Status Timeline -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Status Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item {{ 'active' if transfer.status in ['pending', 'approved', 'completed'] else '' }}">
+                            <div class="timeline-marker bg-{{ 'success' if transfer.status in ['pending', 'approved', 'completed'] else 'secondary' }}"></div>
+                            <div class="timeline-content">
+                                <strong>Submitted</strong>
+                                <br><small class="text-muted">{{ transfer.submitted_at.strftime('%d %b %Y') if transfer.submitted_at else 'Pending' }}</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item {{ 'active' if transfer.status in ['approved', 'completed'] else '' }}">
+                            <div class="timeline-marker bg-{{ 'success' if transfer.status in ['approved', 'completed'] else 'secondary' }}"></div>
+                            <div class="timeline-content">
+                                <strong>Approved</strong>
+                                <br><small class="text-muted">{{ transfer.approved_at.strftime('%d %b %Y') if transfer.approved_at else 'Pending' }}</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item {{ 'active' if transfer.status == 'completed' else '' }}">
+                            <div class="timeline-marker bg-{{ 'success' if transfer.status == 'completed' else 'secondary' }}"></div>
+                            <div class="timeline-content">
+                                <strong>Completed</strong>
+                                <br><small class="text-muted">{{ transfer.completed_at.strftime('%d %b %Y') if transfer.completed_at else 'Pending' }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+    border-left: 2px solid #dee2e6;
+    padding-left: 20px;
+}
+.timeline-item:last-child {
+    border-left: 2px solid transparent;
+    padding-bottom: 0;
+}
+.timeline-item.active {
+    border-left-color: #198754;
+}
+.timeline-marker {
+    position: absolute;
+    left: -8px;
+    top: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+}
+</style>
+{% endblock %}

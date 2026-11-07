@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}Check-in Dashboard - KAYO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .arrival-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #198754;
+    }
+    
+    .arrival-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .arrival-card.unpaid {
+        border-left-color: #ffc107;
+    }
+    
+    .stats-card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .stats-card .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .live-indicator {
+        width: 10px;
+        height: 10px;
+        background: #dc3545;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse-live 2s infinite;
+    }
+    
+    @keyframes pulse-live {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.2); }
+    }
+    
+    .session-badge {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+    }
+    
+    .time-badge {
+        font-family: monospace;
+        font-size: 0.85rem;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 200px;
+    }
+    
+    .arrivals-list {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    .category-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h2>
+                        <i class="fas fa-clipboard-check me-2"></i>Check-in Dashboard
+                        <span class="live-indicator ms-2" title="Live updates"></span>
+                    </h2>
+                    <p class="text-muted mb-0">Real-time attendance tracking</p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{{ url_for('checkin.qr_scanner') }}" class="btn btn-primary">
+                        <i class="fas fa-qrcode me-1"></i>QR Scanner
+                    </a>
+                    <a href="{{ url_for('checkin.session_attendance') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-layer-group me-1"></i>Sessions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body py-2">
+                    <form method="GET" class="row g-2 align-items-center">
+                        <div class="col-md-3">
+                            <label class="form-label small mb-0">Event</label>
+                            <select name="event_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                                {% for event in events %}
+                                <option value="{{ event.id }}" {% if event.id == selected_event_id %}selected{% endif %}>
+                                    {{ event.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small mb-0">Date</label>
+                            <input type="date" name="date" class="form-control form-control-sm" 
+                                   value="{{ selected_date.strftime('%Y-%m-%d') }}" onchange="this.form.submit()">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small mb-0">Session</label>
+                            <select name="session" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">All Sessions</option>
+                                {% for session in sessions %}
+                                <option value="{{ session }}" {% if session == selected_session %}selected{% endif %}>
+                                    {{ session }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-sm btn-primary me-2">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <a href="{{ url_for('checkin.dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                                Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-value" id="totalArrivedStat">{{ total_arrived }}</div>
+                            <div>Checked In Today</div>
+                        </div>
+                        <i class="fas fa-user-check fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-0 shadow-sm bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-value">{{ unique_delegates }}</div>
+                            <div>Unique Attendees</div>
+                        </div>
+                        <i class="fas fa-users fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-0 shadow-sm bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-value">{{ total_registered }}</div>
+                            <div>Total Registered</div>
+                        </div>
+                        <i class="fas fa-clipboard-list fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-0 shadow-sm bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {% set attendance_rate = (unique_delegates / total_registered * 100) if total_registered > 0 else 0 %}
+                            <div class="stat-value">{{ "%.0f"|format(attendance_rate) }}%</div>
+                            <div>Attendance Rate</div>
+                        </div>
+                        <i class="fas fa-chart-pie fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Arrivals List -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Arrivals
+                        <span class="badge bg-primary ms-2">{{ arrivals|length }}</span>
+                    </h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary active" data-view="list">
+                            <i class="fas fa-list"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" data-view="compact">
+                            <i class="fas fa-th"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="arrivals-list" id="arrivalsList">
+                        {% if arrivals %}
+                            {% for arrival in arrivals %}
+                            <div class="arrival-card p-3 border-bottom {{ 'unpaid' if arrival.payment_status != 'paid' }}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-3">
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center"
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="fas fa-user text-secondary"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">{{ arrival.name }}</h6>
+                                            <p class="mb-1 small text-muted">
+                                                <i class="fas fa-ticket-alt me-1"></i>{{ arrival.ticket_number or 'N/A' }}
+                                                {% if arrival.session %}
+                                                <span class="badge bg-info session-badge ms-2">{{ arrival.session }}</span>
+                                                {% endif %}
+                                            </p>
+                                            <p class="mb-0 small text-muted">
+                                                <i class="fas fa-church me-1"></i>{{ arrival.parish or 'N/A' }}
+                                                {% if arrival.archdeaconry %}
+                                                • {{ arrival.archdeaconry }}
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{{ 'success' if arrival.payment_status == 'paid' else 'warning' }} mb-1">
+                                            {{ arrival.payment_status|upper }}
+                                        </span>
+                                        <br>
+                                        <span class="time-badge text-muted">
+                                            <i class="far fa-clock me-1"></i>{{ arrival.arrival_time.strftime('%I:%M %p') }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-{{ 'qrcode' if arrival.method == 'qr_scan' else 'keyboard' }} me-1"></i>
+                                            {{ arrival.method|replace('_', ' ')|title }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                                <h5 class="text-muted">No arrivals yet</h5>
+                                <p class="text-muted">Check-ins will appear here in real-time</p>
+                                <a href="{{ url_for('checkin.qr_scanner') }}" class="btn btn-primary">
+                                    <i class="fas fa-qrcode me-1"></i>Start Scanning
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="col-lg-4">
+            <!-- Session Breakdown -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-layer-group me-2"></i>Session Breakdown</h6>
+                </div>
+                <div class="card-body">
+                    {% if session_counts %}
+                        {% for session, count in session_counts.items() %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>{{ session or 'General' }}</span>
+                            <span class="badge bg-primary">{{ count }}</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar" style="width: {{ (count / total_arrived * 100) if total_arrived > 0 else 0 }}%"></div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center mb-0">No session data</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Category Breakdown -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-tags me-2"></i>By Category</h6>
+                </div>
+                <div class="card-body">
+                    {% if category_counts %}
+                        {% set colors = ['primary', 'success', 'info', 'warning', 'danger', 'secondary'] %}
+                        {% for category, count in category_counts.items() %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>
+                                <span class="category-dot bg-{{ colors[loop.index0 % colors|length] }} me-2"></span>
+                                {{ category }}
+                            </span>
+                            <span class="badge bg-{{ colors[loop.index0 % colors|length] }}">{{ count }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center mb-0">No category data</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Hourly Chart -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Arrivals by Hour</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Hourly Chart
+    const hourlyData = {{ hourly_counts|tojson }};
+    const hours = Object.keys(hourlyData);
+    const counts = Object.values(hourlyData);
+    
+    if (hours.length > 0) {
+        new Chart(document.getElementById('hourlyChart'), {
+            type: 'bar',
+            data: {
+                labels: hours,
+                datasets: [{
+                    label: 'Check-ins',
+                    data: counts,
+                    backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Auto-refresh every 30 seconds
+    setInterval(refreshArrivals, 30000);
+});
+
+async function refreshArrivals() {
+    try {
+        const eventId = '{{ selected_event_id or "" }}';
+        const response = await fetch(`{{ url_for('checkin.live_arrivals') }}?event_id=${eventId}`);
+        const data = await response.json();
+        
+        // Update total count
+        document.getElementById('totalArrivedStat').textContent = data.total_today;
+    } catch (err) {
+        console.error('Failed to refresh:', err);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Approvals - Finance{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-clock text-warning me-2"></i>
+                Pending Payment Approvals
+            </h2>
+            <p class="text-muted mb-0">Review and approve cash payments submitted by parish chairs</p>
+        </div>
+        <div>
+            <a href="{{ url_for('finance.approved_payments') }}" class="btn btn-outline-success me-2">
+                <i class="fas fa-check-circle me-1"></i> Approved
+            </a>
+            <a href="{{ url_for('finance.rejected_payments') }}" class="btn btn-outline-danger">
+                <i class="fas fa-times-circle me-1"></i> Rejected
+            </a>
+        </div>
+    </div>
+
+    <!-- Workflow Info -->
+    <div class="alert alert-info mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Payment Approval Workflow</h6>
+                <p class="mb-0 small">
+                    <strong>Step 1:</strong> Chair confirms receipt of cash from delegates<br>
+                    <strong>Step 2:</strong> Chair delivers the cash to you (Finance)<br>
+                    <strong>Step 3:</strong> Once you receive the cash, approve the payment below to issue tickets
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                <a href="{{ url_for('payments.receive_payment') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i> Direct Payment Entry
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Total Pending</h6>
+                            <h3 class="mb-0">KES {{ "{:,.2f}".format(total_pending) }}</h3>
+                        </div>
+                        <div>
+                            <i class="fas fa-hourglass-half fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Pending Payments</h6>
+                            <h3 class="mb-0">{{ pending_payments|length }}</h3>
+                        </div>
+                        <div>
+                            <i class="fas fa-file-invoice fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Payments Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>
+                Payments Awaiting Approval
+            </h5>
+            {% if pending_payments %}
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small me-2">
+                    <span id="selectedCount">0</span> of {{ pending_payments|length }} selected
+                </span>
+                <button type="button" class="btn btn-success btn-sm" id="bulkApproveBtn" disabled
+                        data-bs-toggle="modal" data-bs-target="#bulkApproveModal">
+                    <i class="fas fa-check-double me-1"></i> Approve Selected
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-body p-0">
+            {% if pending_payments %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px;">
+                                <input type="checkbox" class="form-check-input" id="selectAll" title="Select All">
+                            </th>
+                            <th>Reference</th>
+                            <th>Submitted By</th>
+                            <th>Date</th>
+                            <th>Delegates</th>
+                            <th>Amount</th>
+                            <th>Payment Method</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in pending_payments %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input payment-checkbox" 
+                                       value="{{ payment.id }}" 
+                                       data-amount="{{ payment.amount }}"
+                                       data-delegates="{{ payment.delegates.count() }}">
+                            </td>
+                            <td>
+                                <strong>{{ payment.mpesa_receipt_number or ('PAY-' ~ payment.id) }}</strong>
+                            </td>
+                            <td>
+                                {% if payment.confirmed_by_chair %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-user me-1"></i>
+                                    {{ payment.confirmed_by_chair.name }}
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ payment.confirmed_by_chair.parish or 'Unknown Parish' }}</small>
+                                {% else %}
+                                <span class="text-muted">Unknown</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ payment.created_at.strftime('%d %b %Y') }}
+                                <br>
+                                <small class="text-muted">{{ payment.created_at.strftime('%H:%M') }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    {{ payment.delegates.count() }} delegate(s)
+                                </span>
+                                {% for delegate in payment.delegates.limit(3) %}
+                                <br><small class="text-muted">{{ delegate.name }}</small>
+                                {% endfor %}
+                                {% if payment.delegates.count() > 3 %}
+                                <br><small class="text-muted">+{{ payment.delegates.count() - 3 }} more...</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong class="text-success">KES {{ "{:,.2f}".format(payment.amount) }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if 'M-Pesa' in (payment.payment_mode or '') else 'secondary' }}">
+                                    {{ payment.payment_mode or 'CASH' }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group">
+                                    <a href="{{ url_for('finance.payment_details', payment_id=payment.id) }}" 
+                                       class="btn btn-sm btn-outline-info" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-success" 
+                                            data-bs-toggle="modal" data-bs-target="#approveModal{{ payment.id }}"
+                                            title="Approve">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            data-bs-toggle="modal" data-bs-target="#rejectModal{{ payment.id }}"
+                                            title="Reject">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                <h5>No Pending Approvals</h5>
+                <p class="text-muted">All payments have been processed. Great job!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modals placed completely outside all containers -->
+{% if pending_payments %}
+{% for payment in pending_payments %}
+<!-- Approve Modal -->
+<div class="modal fade" id="approveModal{{ payment.id }}" tabindex="-1" data-bs-backdrop="true" data-bs-keyboard="true" aria-labelledby="approveModalLabel{{ payment.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="transform: none !important;">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="approveModalLabel{{ payment.id }}">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Approve Payment
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('finance.approve_payment', payment_id=payment.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Confirm you have received the cash from the chair!</strong>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>Amount:</strong> KES {{ "{:,.2f}".format(payment.amount) }}<br>
+                        <strong>Delegates:</strong> {{ payment.delegates.count() }}<br>
+                        <strong>Submitted by:</strong> {{ payment.confirmed_by_chair.name if payment.confirmed_by_chair else 'Unknown' }}
+                    </div>
+                    <p>Approving this payment will:</p>
+                    <ul>
+                        <li>Mark {{ payment.delegates.count() }} delegate(s) as <strong>PAID</strong></li>
+                        <li><strong>Issue tickets</strong> to delegates</li>
+                        <li>Complete the payment transaction</li>
+                    </ul>
+                    <div class="mb-3">
+                        <label class="form-label" for="approveNotes{{ payment.id }}">Notes (optional)</label>
+                        <textarea name="notes" id="approveNotes{{ payment.id }}" class="form-control" rows="2" 
+                                  placeholder="e.g., Cash received in full"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i> Confirm Receipt & Approve
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal{{ payment.id }}" tabindex="-1" data-bs-backdrop="true" data-bs-keyboard="true" aria-labelledby="rejectModalLabel{{ payment.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="transform: none !important;">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="rejectModalLabel{{ payment.id }}">
+                    <i class="fas fa-times-circle me-2"></i>
+                    Reject Payment
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('finance.reject_payment', payment_id=payment.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong>Amount:</strong> KES {{ "{:,.2f}".format(payment.amount) }}<br>
+                        <strong>Delegates:</strong> {{ payment.delegates.count() }}
+                    </div>
+                    <p class="text-danger">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Rejecting this payment will:
+                    </p>
+                    <ul>
+                        <li>Unlink all associated delegates</li>
+                        <li>Keep delegates marked as unpaid</li>
+                        <li>Notify the submitting chair</li>
+                    </ul>
+                    <div class="mb-3">
+                        <label class="form-label" for="rejectReason{{ payment.id }}">Reason for Rejection <span class="text-danger">*</span></label>
+                        <textarea name="reason" id="rejectReason{{ payment.id }}" class="form-control" rows="3" required
+                                  placeholder="Please provide a reason for rejecting this payment..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times me-1"></i> Reject Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Bulk Approve Modal -->
+<div class="modal fade" id="bulkApproveModal" tabindex="-1" aria-labelledby="bulkApproveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="bulkApproveModalLabel">
+                    <i class="fas fa-check-double me-2"></i>
+                    Bulk Approve Payments
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('finance.bulk_approve_payments') }}" method="POST" id="bulkApproveForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="payment_ids" id="bulkPaymentIds">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Confirm you have received the cash from all selected chairs!</strong>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>Selected Payments:</strong> <span id="bulkPaymentCount">0</span><br>
+                        <strong>Total Amount:</strong> KES <span id="bulkTotalAmount">0</span><br>
+                        <strong>Total Delegates:</strong> <span id="bulkDelegateCount">0</span>
+                    </div>
+                    <p>Approving these payments will:</p>
+                    <ul>
+                        <li>Mark all associated delegates as <strong>PAID</strong></li>
+                        <li><strong>Issue tickets</strong> to all delegates</li>
+                        <li>Complete all payment transactions</li>
+                    </ul>
+                    <div class="mb-3">
+                        <label class="form-label" for="bulkApproveNotes">Notes (optional)</label>
+                        <textarea name="notes" id="bulkApproveNotes" class="form-control" rows="2" 
+                                  placeholder="e.g., Cash received in full for all payments"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="bulkApproveSubmit">
+                        <i class="fas fa-check-double me-1"></i> Confirm & Approve All
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Select All functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const paymentCheckboxes = document.querySelectorAll('.payment-checkbox');
+    const selectedCountEl = document.getElementById('selectedCount');
+    const bulkApproveBtn = document.getElementById('bulkApproveBtn');
+    const bulkPaymentIds = document.getElementById('bulkPaymentIds');
+    const bulkPaymentCount = document.getElementById('bulkPaymentCount');
+    const bulkTotalAmount = document.getElementById('bulkTotalAmount');
+    const bulkDelegateCount = document.getElementById('bulkDelegateCount');
+    
+    function updateSelection() {
+        const checked = document.querySelectorAll('.payment-checkbox:checked');
+        const count = checked.length;
+        let totalAmount = 0;
+        let totalDelegates = 0;
+        const ids = [];
+        
+        checked.forEach(cb => {
+            ids.push(cb.value);
+            totalAmount += parseFloat(cb.dataset.amount) || 0;
+            totalDelegates += parseInt(cb.dataset.delegates) || 0;
+        });
+        
+        // Update UI
+        if (selectedCountEl) selectedCountEl.textContent = count;
+        if (bulkApproveBtn) bulkApproveBtn.disabled = count === 0;
+        
+        // Update modal info
+        if (bulkPaymentIds) bulkPaymentIds.value = ids.join(',');
+        if (bulkPaymentCount) bulkPaymentCount.textContent = count;
+        if (bulkTotalAmount) bulkTotalAmount.textContent = totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2});
+        if (bulkDelegateCount) bulkDelegateCount.textContent = totalDelegates;
+        
+        // Update select all checkbox state
+        if (selectAllCheckbox) {
+            if (count === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (count === paymentCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+    }
+    
+    // Select All checkbox handler
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            paymentCheckboxes.forEach(cb => {
+                cb.checked = this.checked;
+            });
+            updateSelection();
+        });
+    }
+    
+    // Individual checkbox handlers
+    paymentCheckboxes.forEach(cb => {
+        cb.addEventListener('change', updateSelection);
+    });
+    
+    // Handle bulk approve form submission
+    const bulkApproveForm = document.getElementById('bulkApproveForm');
+    if (bulkApproveForm) {
+        bulkApproveForm.addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('bulkApproveSubmit');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
+            }
+        });
+    }
+    
+    // Handle individual form submissions with loading state
+    const forms = document.querySelectorAll('form[action*="/approve"], form[action*="/reject"]');
+    forms.forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
+            }
+        });
+    });
+    
+    // Initialize on page load
+    updateSelection();
+});
+</script>
+{% endblock %}
