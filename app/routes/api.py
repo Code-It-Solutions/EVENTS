@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+﻿from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 from app.church_data import CHURCH_DATA, get_parishes
 
@@ -22,10 +22,10 @@ def global_search():
     search_term = f'%{query}%'
     
     # Search Delegates
-    delegates = Delegate.query.filter(
-        (Delegate.full_name.ilike(search_term)) |
-        (Delegate.phone.ilike(search_term)) |
-        (Delegate.email.ilike(search_term)) |
+    delegates = Delegate.visible_to(current_user).filter(
+        (Delegate.name.ilike(search_term)) |
+        (Delegate.phone_number.ilike(search_term)) |
+        (Delegate.ticket_number.ilike(search_term)) |
         (Delegate.parish.ilike(search_term))
     ).limit(5).all()
     
@@ -33,10 +33,10 @@ def global_search():
         results.append({
             'type': 'delegate',
             'icon': 'bi-person',
-            'title': d.full_name,
-            'subtitle': f'{d.parish} • {d.phone or "No phone"}',
+            'title': d.name,
+            'subtitle': f'{d.parish or d.ticket_number} â€¢ {d.phone_number or "No phone"}',
             'url': f'/delegates/{d.id}',
-            'badge': d.registration_status
+            'badge': d.payment_status
         })
     
     # Search Users (admin only)
@@ -52,7 +52,7 @@ def global_search():
                 'type': 'user',
                 'icon': 'bi-person-badge',
                 'title': u.name,
-                'subtitle': f'{u.role.title()} • {u.email}',
+                'subtitle': f'{u.role.title()} â€¢ {u.email}',
                 'url': f'/admin/users/{u.id}',
                 'badge': u.role
             })
@@ -60,23 +60,23 @@ def global_search():
     # Search Payments
     if current_user.role in ['admin', 'super_admin', 'finance', 'treasurer']:
         payments = Payment.query.filter(
-            (Payment.transaction_code.ilike(search_term)) |
+            (Payment.mpesa_receipt_number.ilike(search_term)) |
             (Payment.phone_number.ilike(search_term))
         ).limit(5).all()
         
         for p in payments:
-            payer = p.delegate.full_name if p.delegate else (p.user.name if p.user else 'Unknown')
+            payer = p.user.name if p.user else 'Unknown'
             results.append({
                 'type': 'payment',
                 'icon': 'bi-cash-coin',
-                'title': f'KES {p.amount:,.0f} - {p.transaction_code or "No code"}',
-                'subtitle': f'{payer} • {p.payment_date.strftime("%d %b %Y")}',
+                'title': f'KES {p.amount:,.0f} - {p.mpesa_receipt_number or "No code"}',
+                'subtitle': f'{payer} â€¢ {p.payment_date.strftime("%d %b %Y")}',
                 'url': '/finance/',
                 'badge': p.status
             })
     
     # Search Events
-    events = Event.query.filter(
+    events = Event.managed_by(current_user).filter(
         (Event.name.ilike(search_term)) |
         (Event.venue.ilike(search_term))
     ).limit(3).all()
@@ -86,7 +86,7 @@ def global_search():
             'type': 'event',
             'icon': 'bi-calendar-event',
             'title': e.name,
-            'subtitle': f'{e.venue} • {e.start_date.strftime("%d %b %Y")}',
+            'subtitle': f'{e.venue} â€¢ {e.start_date.strftime("%d %b %Y")}',
             'url': f'/events/{e.id}',
             'badge': 'Active' if e.is_active else 'Inactive'
         })
@@ -108,7 +108,7 @@ def activity_feed():
         
         # Get recent delegates (last 7 days)
         try:
-            recent_delegates = Delegate.query.filter(
+            recent_delegates = Delegate.visible_to(current_user).filter(
                 Delegate.registered_at >= datetime.utcnow() - timedelta(days=7)
             ).order_by(Delegate.registered_at.desc()).limit(10).all()
             
@@ -118,7 +118,7 @@ def activity_feed():
                     'icon': 'bi-person-plus-fill',
                     'color': 'success',
                     'title': f'{d.name} registered',
-                    'subtitle': f'{d.parish} • {d.archdeaconry}',
+                    'subtitle': f'{d.parish} â€¢ {d.archdeaconry}',
                     'time': d.registered_at.isoformat() if d.registered_at else '',
                     'time_ago': time_ago(d.registered_at) if d.registered_at else 'Unknown',
                     'url': f'/delegates/{d.id}'
@@ -135,13 +135,13 @@ def activity_feed():
                 ).order_by(Payment.payment_date.desc()).limit(10).all()
                 
                 for p in recent_payments:
-                    payer = p.delegate.full_name if p.delegate else (p.user.name if p.user else 'Unknown')
+                    payer = p.user.name if p.user else 'Unknown'
                     activities.append({
                         'type': 'payment',
                         'icon': 'bi-cash-coin',
                         'color': 'primary',
                         'title': f'KES {p.amount:,.0f} received',
-                        'subtitle': f'From {payer} • {p.transaction_code or "Manual"}',
+                        'subtitle': f'From {payer} â€¢ {p.mpesa_receipt_number or "Manual"}',
                         'time': p.payment_date.isoformat() if p.payment_date else '',
                         'time_ago': time_ago(p.payment_date) if p.payment_date else 'Unknown',
                         'url': '/finance/'
@@ -152,8 +152,11 @@ def activity_feed():
         # Get recent check-ins (last 7 days)
         try:
             from app.models.operations import CheckInRecord
+            from app.models.event import Event
+            events = {e.id: e.name for e in Event.managed_by(current_user)}
             recent_checkins = CheckInRecord.query.filter(
-                CheckInRecord.checked_in_at >= datetime.utcnow() - timedelta(days=7)
+                CheckInRecord.checked_in_at >= datetime.utcnow() - timedelta(days=7),
+                CheckInRecord.event_id.in_(list(events))
             ).order_by(CheckInRecord.checked_in_at.desc()).limit(10).all()
             
             for c in recent_checkins:
@@ -162,7 +165,7 @@ def activity_feed():
                     'icon': 'bi-check-circle-fill',
                     'color': 'info',
                     'title': f'{c.delegate.name if c.delegate else "Unknown"} checked in',
-                    'subtitle': f'At {c.event.name if c.event else "Event"}',
+                    'subtitle': f'At {events.get(c.event_id, "Event")}',
                     'time': c.checked_in_at.isoformat() if c.checked_in_at else '',
                     'time_ago': time_ago(c.checked_in_at) if c.checked_in_at else 'Unknown',
                     'url': '/checkin/dashboard'
@@ -184,7 +187,7 @@ def activity_feed():
                         'icon': 'bi-person-check-fill',
                         'color': 'warning',
                         'title': f'{u.name} joined',
-                        'subtitle': f'{u.role.title()} • {u.parish or "No parish"}',
+                        'subtitle': f'{u.role.title()} â€¢ {u.parish or "No parish"}',
                         'time': u.created_at.isoformat() if u.created_at else '',
                         'time_ago': time_ago(u.created_at) if u.created_at else 'Unknown',
                         'url': f'/admin/users/{u.id}'
@@ -387,7 +390,7 @@ def check_duplicate():
         elif normalized_phone.startswith('+'):
             normalized_phone = normalized_phone[1:]
         
-        phone_matches = Delegate.query.filter(
+        phone_matches = Delegate.visible_to(current_user).filter(
             Delegate.phone_number.ilike(f'%{normalized_phone[-9:]}%')
         ).all()
         
@@ -396,7 +399,7 @@ def check_duplicate():
                 continue
             duplicates.append({
                 'id': d.id,
-                'name': d.full_name,
+                'name': d.name,
                 'phone': d.phone_number,
                 'parish': d.parish,
                 'match_type': 'phone',
@@ -406,7 +409,7 @@ def check_duplicate():
     # Check name similarity (fuzzy match)
     if name and len(name) >= 3:
         # Get all delegates for comparison
-        all_delegates = Delegate.query.all()
+        all_delegates = Delegate.visible_to(current_user).all()
         name_lower = name.lower()
         
         for d in all_delegates:
@@ -417,7 +420,7 @@ def check_duplicate():
             if any(dup['id'] == d.id for dup in duplicates):
                 continue
             
-            delegate_name = (d.full_name or '').lower()
+            delegate_name = (d.name or '').lower()
             
             # Calculate similarity ratio
             ratio = SequenceMatcher(None, name_lower, delegate_name).ratio()
@@ -425,7 +428,7 @@ def check_duplicate():
             if ratio >= 0.8:  # 80% similarity threshold
                 duplicates.append({
                     'id': d.id,
-                    'name': d.full_name,
+                    'name': d.name,
                     'phone': d.phone_number,
                     'parish': d.parish,
                     'match_type': 'name',

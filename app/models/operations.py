@@ -13,6 +13,7 @@ class CheckInRecord(db.Model):
     # Which day of the event
     check_in_date = db.Column(db.Date, nullable=False)
     check_in_time = db.Column(db.DateTime, default=datetime.utcnow)
+    checked_in_at = db.synonym('check_in_time')  # alias used by api activity feed
     
     # Who performed the check-in
     checked_in_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)

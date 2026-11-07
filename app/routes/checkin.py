@@ -21,13 +21,28 @@ def staff_required(f):
     return decorated_function
 
 
+def _event_ids():
+    """IDs of events the current user may run check-in for"""
+    return [row.id for row in Event.managed_by(current_user).with_entities(Event.id)]
+
+
+def _can_touch(delegate):
+    return Delegate.visible_to(current_user).filter_by(id=delegate.id).first() is not None
+
+
+def _pick_event(event_id):
+    """Requested event if allowed, else the user's first event; -1 matches nothing"""
+    ids = _event_ids()
+    return event_id if event_id in ids else (ids[0] if ids else -1)
+
+
 # ==================== QR SCANNER ====================
 
 @checkin_bp.route('/scanner')
 @login_required
 def qr_scanner():
     """Web-based QR code scanner"""
-    events = Event.query.filter_by(is_active=True).all()
+    events = Event.managed_by(current_user).filter_by(is_active=True).all()
     
     # Get sessions for today (can be configured per event)
     sessions = [
@@ -96,17 +111,19 @@ def process_scan():
             if not delegate:
                 delegate = Delegate.query.filter_by(delegate_number=search_value).first()
     
-    if not delegate:
+    if not delegate or not _can_touch(delegate):
         return jsonify({
             'success': False, 
             'error': f'Delegate not found for QR: {qr_data[:50]}',
             'qr_data': qr_data[:50]
         })
+    if event_id and str(event_id) not in map(str, _event_ids()):
+        return jsonify({'success': False, 'error': 'Event not found'})
     
     # Determine event
     if not event_id:
         # Use delegate's event or first active event
-        event_id = delegate.event_id or Event.query.filter_by(is_active=True).first()
+        event_id = delegate.event_id or Event.managed_by(current_user).filter_by(is_active=True).first()
         if hasattr(event_id, 'id'):
             event_id = event_id.id
     
@@ -154,7 +171,7 @@ def process_scan():
     
     # Update delegate's checked_in status
     delegate.checked_in = True
-    delegate.check_in_time = datetime.utcnow()
+    delegate.checked_in_at = datetime.utcnow()
     
     db.session.commit()
     
@@ -196,8 +213,10 @@ def manual_checkin():
         return jsonify({'success': False, 'error': 'Delegate ID required'})
     
     delegate = Delegate.query.get(delegate_id)
-    if not delegate:
+    if not delegate or not _can_touch(delegate):
         return jsonify({'success': False, 'error': 'Delegate not found'})
+    if event_id and str(event_id) not in map(str, _event_ids()):
+        return jsonify({'success': False, 'error': 'Event not found'})
     
     # Reuse scan logic
     request_data = {
@@ -213,7 +232,7 @@ def manual_checkin():
 def process_scan_internal(delegate, event_id, session_name):
     """Internal function to process check-in"""
     if not event_id:
-        event_id = delegate.event_id or Event.query.filter_by(is_active=True).first()
+        event_id = delegate.event_id or Event.managed_by(current_user).filter_by(is_active=True).first()
         if hasattr(event_id, 'id'):
             event_id = event_id.id
     
@@ -258,7 +277,7 @@ def process_scan_internal(delegate, event_id, session_name):
     db.session.add(check_in)
     
     delegate.checked_in = True
-    delegate.check_in_time = datetime.utcnow()
+    delegate.checked_in_at = datetime.utcnow()
     
     db.session.commit()
     
@@ -294,12 +313,8 @@ def dashboard():
     selected_date = request.args.get('date')
     session_filter = request.args.get('session')
     
-    # Get active events
-    events = Event.query.filter_by(is_active=True).all()
-    
-    # Default to first active event
-    if not event_id and events:
-        event_id = events[0].id
+    events = Event.managed_by(current_user).filter_by(is_active=True).all()
+    event_id = _pick_event(event_id)
     
     # Parse date or default to today
     if selected_date:
@@ -368,7 +383,7 @@ def dashboard():
     
     # Get sessions for filter
     sessions = db.session.query(CheckInRecord.session_name).filter(
-        CheckInRecord.session_name.isnot(None)
+        CheckInRecord.session_name.isnot(None), CheckInRecord.event_id == event_id
     ).distinct().all()
     sessions = [s[0] for s in sessions if s[0]]
     
@@ -394,12 +409,10 @@ def live_arrivals():
     """API for live arrival updates"""
     event_id = request.args.get('event_id', type=int)
     since = request.args.get('since')  # Timestamp
+    event_id = _pick_event(event_id)
     
     today = date.today()
-    query = CheckInRecord.query.filter_by(check_in_date=today)
-    
-    if event_id:
-        query = query.filter_by(event_id=event_id)
+    query = CheckInRecord.query.filter_by(check_in_date=today, event_id=event_id)
     
     if since:
         try:
@@ -429,7 +442,7 @@ def live_arrivals():
             })
     
     # Stats
-    total_today = CheckInRecord.query.filter_by(check_in_date=today).count()
+    total_today = CheckInRecord.query.filter_by(check_in_date=today, event_id=event_id).count()
     
     return jsonify({
         'arrivals': arrivals,
@@ -447,7 +460,7 @@ def search_delegate():
     if len(q) < 2:
         return jsonify({'results': []})
     
-    delegates = Delegate.query.filter(
+    delegates = Delegate.visible_to(current_user).filter(
         db.or_(
             Delegate.name.ilike(f'%{q}%'),
             Delegate.phone_number.ilike(f'%{q}%'),
@@ -501,7 +514,7 @@ def undo_checkin(checkin_id):
     
     if not other_checkins and delegate:
         delegate.checked_in = False
-        delegate.check_in_time = None
+        delegate.checked_in_at = None
     
     db.session.commit()
     
@@ -520,10 +533,8 @@ def session_attendance():
     event_id = request.args.get('event_id', type=int)
     selected_date = request.args.get('date')
     
-    events = Event.query.filter_by(is_active=True).all()
-    
-    if not event_id and events:
-        event_id = events[0].id
+    events = Event.managed_by(current_user).filter_by(is_active=True).all()
+    event_id = _pick_event(event_id)
     
     if selected_date:
         try:
@@ -556,7 +567,7 @@ def session_attendance():
         })
     
     # Get total registered delegates for the event
-    total_registered = Delegate.query.filter_by(event_id=event_id).count() if event_id else Delegate.query.count()
+    total_registered = Delegate.query.filter_by(event_id=event_id).count()
     
     return render_template('checkin/sessions.html',
         events=events,

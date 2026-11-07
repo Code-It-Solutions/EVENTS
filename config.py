@@ -14,6 +14,7 @@ else:
 
 # Database path - always in instance folder next to exe/script
 INSTANCE_PATH = os.path.join(BASE_DIR, 'instance')
+os.makedirs(INSTANCE_PATH, exist_ok=True)  # sqlite can't create the folder itself
 DB_PATH = os.path.join(INSTANCE_PATH, 'kayo.db')
 
 

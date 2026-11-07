@@ -19,14 +19,18 @@ badges_bp = Blueprint('badges', __name__, url_prefix='/badges')
 
 
 def admin_required(f):
-    """Decorator to require admin role"""
+    """Admins and organisers; routes scope delegates/events to what the user manages"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or not current_user.is_admin():
+        if not current_user.is_authenticated or not (current_user.is_admin() or current_user.role == 'organizer'):
             flash('You do not have permission to access this page.', 'danger')
             return redirect(url_for('main.dashboard'))
         return f(*args, **kwargs)
     return decorated_function
+
+
+def _managed_delegates():
+    return Delegate.visible_to(current_user)
 
 
 @badges_bp.route('/')
@@ -39,10 +43,10 @@ def index():
         return redirect(url_for('main.dashboard'))
     
     templates = BadgeDesigner.get_available_templates()
-    events = Event.query.filter_by(is_active=True).all()
+    events = Event.managed_by(current_user).filter_by(is_active=True).all()
     
     # Get some sample delegates for preview
-    sample_delegates = Delegate.query.limit(5).all()
+    sample_delegates = _managed_delegates().limit(5).all()
     
     return render_template('badges/index.html',
         templates=templates,
@@ -61,12 +65,11 @@ def preview_badge():
     delegate_id = request.args.get('delegate_id', type=int)
     
     # Get event for branding
-    event = Event.query.get(event_id) if event_id else None
+    event = Event.managed_by(current_user).filter_by(id=event_id).first() if event_id else None
     
     # Get delegate or create sample
-    if delegate_id:
-        delegate = Delegate.query.get(delegate_id)
-    else:
+    delegate = _managed_delegates().filter_by(id=delegate_id).first() if delegate_id else None
+    if not delegate:
         # Create a mock delegate for preview
         class MockDelegate:
             id = 0
@@ -103,7 +106,7 @@ def preview_badge():
 @admin_required
 def generate_badge(delegate_id):
     """Generate and download badge for a single delegate"""
-    delegate = Delegate.query.get_or_404(delegate_id)
+    delegate = _managed_delegates().filter_by(id=delegate_id).first_or_404()
     template = request.args.get('template', 'standard')
     
     # Get event
@@ -136,7 +139,7 @@ def bulk_generate():
     payment_filter = request.form.get('payment_filter', 'all')
     
     # Build query
-    query = Delegate.query
+    query = _managed_delegates()
     
     if event_id:
         query = query.filter_by(event_id=event_id)
@@ -151,7 +154,7 @@ def bulk_generate():
         return redirect(url_for('badges.index'))
     
     # Get event for branding
-    event = Event.query.get(event_id) if event_id else None
+    event = Event.managed_by(current_user).filter_by(id=event_id).first() if event_id else None
     
     # Create ZIP file with badges
     zip_buffer = BytesIO()
@@ -188,7 +191,7 @@ def bulk_generate():
 @admin_required  
 def print_badge(delegate_id):
     """Print-ready badge page"""
-    delegate = Delegate.query.get_or_404(delegate_id)
+    delegate = _managed_delegates().filter_by(id=delegate_id).first_or_404()
     template = request.args.get('template', 'standard')
     
     event = delegate.event if delegate.event_id else None
@@ -215,7 +218,7 @@ def bulk_print():
         flash('No delegates selected for printing.', 'warning')
         return redirect(url_for('badges.index'))
     
-    delegates = Delegate.query.filter(Delegate.id.in_(delegate_ids)).all()
+    delegates = _managed_delegates().filter(Delegate.id.in_(delegate_ids)).all()
     
     designer = BadgeDesigner()
     badges = []

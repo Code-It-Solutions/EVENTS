@@ -315,7 +315,7 @@ def export_delegates():
     
     # Apply filters
     if status != 'all':
-        query = query.filter_by(registration_status=status)
+        query = query.filter_by(payment_status=status)  # delegates have no registration_status column
     if event_id:
         query = query.filter_by(event_id=event_id)
     
@@ -327,9 +327,9 @@ def export_delegates():
     
     # Header row
     writer.writerow([
-        'ID', 'Full Name', 'Phone', 'Email', 'ID Number', 'Gender', 'Age Bracket',
+        'ID', 'Ticket', 'Full Name', 'Phone', 'ID Number', 'Gender', 'Age Bracket',
         'Category', 'Local Church', 'Parish', 'Archdeaconry',
-        'Registration Status', 'Payment Status', 'Amount Paid',
+        'Payment Status', 'Amount Paid',
         'Checked In', 'Registered By', 'Registration Date'
     ])
     
@@ -338,9 +338,9 @@ def export_delegates():
         registered_by = User.query.get(d.registered_by)
         writer.writerow([
             d.id,
-            d.full_name,
-            d.phone or '',
-            d.email or '',
+            d.ticket_number,
+            d.name,
+            d.phone_number or '',
             d.id_number or '',
             d.gender or '',
             d.age_bracket or '',
@@ -348,7 +348,6 @@ def export_delegates():
             d.local_church or '',
             d.parish or '',
             d.archdeaconry or '',
-            d.registration_status,
             d.payment_status,
             d.amount_paid or 0,
             'Yes' if d.checked_in else 'No',

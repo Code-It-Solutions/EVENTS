@@ -99,6 +99,21 @@ class Event(db.Model):
         return 1
     
     @staticmethod
+    def managed_by(user):
+        """Events this user may manage: admins all, organisers their own,
+        legacy KAYO roles everything not owned by an organiser."""
+        from app.models.user import User
+        if user.is_admin():
+            return Event.query
+        if user.role == 'organizer':
+            return Event.query.filter_by(created_by=user.id)
+        organizer_ids = db.session.query(User.id).filter_by(role='organizer')
+        return Event.query.filter(db.or_(Event.created_by.is_(None), ~Event.created_by.in_(organizer_ids)))
+
+    def can_be_managed_by(self, user):
+        return Event.managed_by(user).filter_by(id=self.id).first() is not None
+
+    @staticmethod
     def get_active_events():
         """Get all active events"""
         return Event.query.filter_by(is_active=True).order_by(Event.start_date.desc()).all()

@@ -20,12 +20,30 @@
             <a href="{{ url_for('events.edit_event', event_id=event.id) }}" class="btn btn-outline-primary">
                 <i class="fas fa-edit me-2"></i>Edit Event
             </a>
+            {% if current_user.is_admin() %}
             <a href="{{ url_for('events.manage_pricing', event_id=event.id) }}" class="btn btn-outline-secondary">
                 <i class="fas fa-tags me-2"></i>Pricing
             </a>
+            {% endif %}
             <a href="{{ url_for('events.custom_fields', event_id=event.id) }}" class="btn btn-outline-secondary">
                 <i class="fas fa-list me-2"></i>Custom Fields
             </a>
+        </div>
+    </div>
+
+    <!-- Public registration link -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <label for="publicLink" class="form-label fw-bold mb-1">Public registration link</label>
+            {% if event.is_published %}
+            <div class="input-group">
+                <input id="publicLink" class="form-control" readonly value="{{ url_for('public.event_register', slug=event.slug, _external=True) }}">
+                <button class="btn btn-outline-primary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('publicLink').value); this.textContent='Copied';">Copy</button>
+            </div>
+            <small class="text-muted">Share this with attendees. Registration is free; each person gets a ticket with a QR code for check-in.</small>
+            {% else %}
+            <p class="text-muted mb-0">This event isn't published yet. <a href="{{ url_for('events.edit_event', event_id=event.id) }}">Edit the event</a> and tick "Published" to get a shareable link.</p>
+            {% endif %}
         </div>
     </div>
     
@@ -165,6 +183,37 @@
                 </div>
             </div>
             
+            <!-- Attendees -->
+            <div class="card mb-4" id="attendees">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Attendees ({{ attendees|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr><th>Ticket</th><th>Name</th><th>Phone</th><th>Registered</th><th>Checked in</th><th><span class="visually-hidden">Badge</span></th></tr>
+                            </thead>
+                            <tbody>
+                                {% for a in attendees %}
+                                <tr>
+                                    <td>{{ a.ticket_number }}</td>
+                                    <td>{{ a.name }}</td>
+                                    <td>{{ a.phone_number or '' }}</td>
+                                    <td>{{ a.registered_at.strftime('%b %d, %H:%M') if a.registered_at else '' }}</td>
+                                    <td>{% if a.checked_in %}<span class="badge bg-success">Yes</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+                                    <td><a href="{{ url_for('badges.print_badge', delegate_id=a.id) }}">Badge</a></td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="6" class="text-center text-muted">No one has registered yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if current_user.is_admin() %}
             <!-- Pricing Tiers -->
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -223,6 +272,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
         
         <div class="col-md-4">
@@ -242,11 +292,14 @@
                             <i class="fas fa-check me-2"></i>Currently Active
                         </button>
                         {% endif %}
-                        <a href="{{ url_for('admin.all_delegates') }}?event_id={{ event.id }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-users me-2"></i>View Delegates
+                        <a href="#attendees" class="btn btn-outline-secondary">
+                            <i class="fas fa-users me-2"></i>View Attendees
                         </a>
-                        <a href="{{ url_for('admin.check_in') }}" class="btn btn-outline-info">
+                        <a href="{{ url_for('checkin.qr_scanner') }}" class="btn btn-outline-info">
                             <i class="fas fa-qrcode me-2"></i>Check-In
+                        </a>
+                        <a href="{{ url_for('badges.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-id-badge me-2"></i>Badges
                         </a>
                     </div>
                 </div>

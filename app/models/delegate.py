@@ -11,6 +11,7 @@ except ImportError:
     HAS_QRCODE = False
 
 from app import db
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 class Delegate(db.Model):
@@ -62,6 +63,31 @@ class Delegate(db.Model):
     amount_paid = db.Column(db.Float, default=0)
     payment_confirmed_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     payment_confirmed_at = db.Column(db.DateTime, nullable=True)
+
+    # Aliases used by communications/checkin/badges/delegates routes
+    created_at = db.synonym('registered_at')
+    delegate_category = db.synonym('category')  # used by check-in and badges
+    photo_url = None  # check-in scan response expects it; delegates have no photos
+
+    @staticmethod
+    def visible_to(user):
+        """Delegates a user may see: admins all; organisers only their events';
+        legacy KAYO roles everything except organisers' events."""
+        from app.models.event import Event
+        if user.is_admin():
+            return Delegate.query
+        ids = Event.managed_by(user).with_entities(Event.id)
+        if user.role == 'organizer':
+            return Delegate.query.filter(Delegate.event_id.in_(ids))
+        return Delegate.query.filter(db.or_(Delegate.event_id.is_(None), Delegate.event_id.in_(ids)))
+
+    @hybrid_property
+    def payment_status(self):
+        return 'paid' if self.is_paid else 'pending'
+
+    @payment_status.expression
+    def payment_status(cls):
+        return db.case((cls.is_paid == True, 'paid'), else_='pending')  # noqa: E712
     
     # Check-in tracking
     checked_in = db.Column(db.Boolean, default=False)
@@ -122,7 +148,8 @@ class Delegate(db.Model):
         """
         import random
         year = datetime.utcnow().year
-        prefix = event.slug.upper() if event and event.slug else 'KAYO'
+        # ticket_number is String(20): prefix(<=10) + '-YYYY-' + 4 digits
+        prefix = event.slug.upper()[:10] if event and event.slug else 'KAYO'
         
         for attempt in range(max_retries):
             # Find the highest ticket number for this prefix and year

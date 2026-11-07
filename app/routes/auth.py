@@ -230,6 +230,47 @@ def register():
     return render_template('auth/register.html', form=form)
 
 
+@auth_bp.route('/signup', methods=['GET', 'POST'])
+def organizer_signup():
+    """Open sign-up for anyone who wants to host their own events"""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+
+    if request.method == 'POST':
+        name = (request.form.get('name') or '').strip()
+        email = (request.form.get('email') or '').strip().lower()
+        password = request.form.get('password') or ''
+        error = None
+        try:
+            # same validator the login form uses, so every account created here can log in
+            from email_validator import validate_email
+            validate_email(email, check_deliverability=False)
+            email_ok = len(email) <= 120
+        except Exception:
+            email_ok = False
+        if not name or len(name) > 100:
+            error = 'Please enter your name.'
+        elif not email_ok:
+            error = 'Please enter a valid email address.'
+        elif len(password) < 8:
+            error = 'Password must be at least 8 characters.'
+        elif User.query.filter(db.func.lower(User.email) == email).first():
+            error = 'That email is already registered. Please log in.'
+        if error:
+            flash(error, 'danger')
+            return render_template('auth/signup.html', name=name, email=email)
+
+        user = User(name=name, email=email, role='organizer', oauth_provider='local',
+                    is_approved=True, approval_status='approved')
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        flash('Account created! Log in to create your first event.', 'success')
+        return redirect(url_for('auth.login'))
+
+    return render_template('auth/signup.html', name='', email='')
+
+
 @auth_bp.route('/logout')
 @login_required
 def logout():

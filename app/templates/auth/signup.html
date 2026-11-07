@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create an organiser account</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<main class="container py-5" style="max-width: 440px;">
+    <h1 class="h3 mb-1">Host your own event</h1>
+    <p class="text-muted mb-4">Create a free organiser account to set up events, share a registration link, check people in and print badges.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endwith %}
+
+    <form method="POST" class="card card-body shadow-sm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+            <label for="name" class="form-label">Your name or organisation</label>
+            <input id="name" name="name" class="form-control" value="{{ name }}" maxlength="100" required autocomplete="name">
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input id="email" name="email" type="email" class="form-control" value="{{ email }}" maxlength="120" required autocomplete="email">
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input id="password" name="password" type="password" class="form-control" minlength="8" required autocomplete="new-password">
+            <div class="form-text">At least 8 characters.</div>
+        </div>
+        <button class="btn btn-primary w-100">Create account</button>
+    </form>
+    <p class="text-center mt-3"><a href="{{ url_for('auth.login') }}">Already have an account? Log in</a></p>
+</main>
+</body>
+</html>

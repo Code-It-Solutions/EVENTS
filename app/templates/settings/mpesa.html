@@ -361,7 +361,8 @@ function testConnection() {
     fetch('{{ url_for("settings.test_mpesa_connection") }}', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
         }
     })
     .then(response => response.json())
@@ -390,7 +391,8 @@ function testStkPush() {
     fetch('{{ url_for("settings.test_stk_push") }}', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
         },
         body: JSON.stringify({ phone_number: phoneNumber })
     })

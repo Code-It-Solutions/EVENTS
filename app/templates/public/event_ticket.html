@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your ticket: {{ event.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .ticket { border-top: 6px solid {{ event.primary_color or '#4e73df' }}; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body class="bg-light">
+<main class="container py-4" style="max-width: 460px;">
+    <div class="card shadow-sm ticket text-center">
+        <div class="card-body">
+            <p class="text-success fw-bold mb-1">You're registered!</p>
+            <h1 class="h4 mb-1">{{ event.name }}</h1>
+            <p class="text-muted">
+                {{ event.start_date.strftime('%a %d %b %Y') }}{% if event.venue %} · {{ event.venue }}{% endif %}
+            </p>
+            {% if qr %}
+            <img src="data:image/png;base64,{{ qr }}" alt="Check-in QR code for ticket {{ delegate.ticket_number }}" class="img-fluid my-2" style="max-width: 240px;">
+            {% endif %}
+            <p class="h5 mb-0">{{ delegate.name }}</p>
+            <p class="font-monospace">{{ delegate.ticket_number }}</p>
+            <div class="alert alert-warning small text-start" role="note">
+                Save this ticket now: take a screenshot or print it. Show the QR code at the entrance to check in.
+            </div>
+            <button class="btn btn-outline-primary no-print" onclick="window.print()">Print / save as PDF</button>
+        </div>
+    </div>
+</main>
+</body>
+</html>

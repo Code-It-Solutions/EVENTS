@@ -31,6 +31,61 @@ def register_landing():
     return render_template('public/register_landing.html', event=event)
 
 
+@public_bp.route('/e/<slug>', methods=['GET', 'POST'])
+def event_register(slug):
+    """Free self-registration for any published event; issues a ticket immediately"""
+    event = Event.query.filter_by(slug=slug, is_published=True, is_active=True).first_or_404()
+    fields = event.get_custom_fields()
+    form = request.form
+
+    if request.method == 'POST' and event.is_registration_open():
+        name = (form.get('name') or '').strip()
+        phone = (form.get('phone') or '').strip()
+        errors = []
+        if not name or len(name) > 100:
+            errors.append('Please enter your full name.')
+        if len(phone) > 15:
+            errors.append('Phone number is too long.')
+        elif phone and Delegate.check_duplicate(phone_number=phone, event_id=event.id):
+            errors.append('This phone number is already registered for this event.')
+
+        values = {}
+        for i, f in enumerate(fields):
+            if f.get('type') == 'checkbox':
+                values[f['name']] = bool(form.get(f'cf_{i}'))
+                continue
+            v = (form.get(f'cf_{i}') or '').strip()[:500]
+            if f.get('required') and not v:
+                errors.append(f"{f['name']} is required.")
+            elif f.get('type') == 'select' and v and v not in f.get('options', []):
+                errors.append(f"Choose a valid option for {f['name']}.")
+            values[f['name']] = v
+
+        if not errors:
+            delegate = Delegate(
+                ticket_number=Delegate.generate_ticket_number(event),
+                delegate_number=Delegate.get_next_delegate_number(event.id),
+                name=name,
+                phone_number=phone or None,
+                # Church/gender columns are NOT NULL in the KAYO schema; generic events leave them blank
+                local_church='', parish='', archdeaconry='', gender='',
+                event_id=event.id,
+                registered_by=event.created_by,
+                is_paid=True,  # free events only for now
+                amount_paid=0,
+            )
+            delegate.set_custom_field_values(values)
+            db.session.add(delegate)
+            db.session.commit()
+            # Ticket shown once on this response; no public ticket URL, so tickets can't be enumerated
+            return render_template('public/event_ticket.html', event=event, delegate=delegate,
+                                   qr=delegate.generate_qr_code())
+        for e in errors:
+            flash(e, 'danger')
+
+    return render_template('public/event_register.html', event=event, fields=fields, form=form)
+
+
 @public_bp.route('/delegate', methods=['GET', 'POST'])
 def register_delegate():
     """Public delegate self-registration form"""

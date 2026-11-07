@@ -19,24 +19,53 @@ def admin_required(f):
     return decorated_function
 
 
+def organizer_required(f):
+    """Admins and organisers; each route must still scope to Event.managed_by"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not (current_user.is_admin() or current_user.role == 'organizer'):
+            flash('You do not have permission to access this page.', 'danger')
+            return redirect(url_for('main.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def _managed_event_or_404(event_id):
+    return Event.managed_by(current_user).filter_by(id=event_id).first_or_404()
+
+
+def _clean_slug(raw, event_id=None):
+    """Return a URL-safe slug, or None if empty or already taken by another event"""
+    import re
+    slug = re.sub(r'[^a-z0-9-]+', '-', (raw or '').lower()).strip('-')[:100]
+    if not slug:
+        return None
+    taken = Event.query.filter(Event.slug == slug, Event.id != event_id).first()
+    return None if taken else slug
+
+
 @events_bp.route('/')
 @login_required
-@admin_required
+@organizer_required
 def list_events():
-    """List all events"""
-    events = Event.query.order_by(Event.start_date.desc()).all()
+    """List events this user manages"""
+    events = Event.managed_by(current_user).order_by(Event.start_date.desc()).all()
     return render_template('events/list.html', events=events)
 
 
 @events_bp.route('/create', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@organizer_required
 def create_event():
     """Create a new event"""
     if request.method == 'POST':
+        slug = _clean_slug(request.form.get('slug') or request.form.get('name'))
+        if not slug:
+            flash('That event link (slug) is empty or already taken. Choose another.', 'danger')
+            return render_template('events/create.html')
         event = Event(
             name=request.form.get('name'),
-            slug=request.form.get('slug', '').lower().replace(' ', '-'),
+            slug=slug,
             description=request.form.get('description'),
             start_date=datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date(),
             end_date=datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date(),
@@ -70,10 +99,10 @@ def create_event():
 
 @events_bp.route('/<int:event_id>')
 @login_required
-@admin_required
+@organizer_required
 def view_event(event_id):
     """View event details"""
-    event = Event.query.get_or_404(event_id)
+    event = _managed_event_or_404(event_id)
     delegate_count = event.get_delegate_count()
     paid_count = event.get_paid_delegate_count()
     checked_in_count = event.get_checked_in_count()
@@ -82,18 +111,23 @@ def view_event(event_id):
         event=event,
         delegate_count=delegate_count,
         paid_count=paid_count,
-        checked_in_count=checked_in_count
+        checked_in_count=checked_in_count,
+        attendees=event.delegates.order_by(Delegate.registered_at.desc()).all()
     )
 
 
 @events_bp.route('/<int:event_id>/edit', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@organizer_required
 def edit_event(event_id):
     """Edit event"""
-    event = Event.query.get_or_404(event_id)
+    event = _managed_event_or_404(event_id)
     
     if request.method == 'POST':
+        slug = _clean_slug(request.form.get('slug') or request.form.get('name'), event.id)
+        if not slug:
+            flash('That event link (slug) is empty or already taken. Choose another.', 'danger')
+            return render_template('events/edit.html', event=event)
         # Store old values for audit
         old_values = {
             'name': event.name,
@@ -102,7 +136,7 @@ def edit_event(event_id):
         }
         
         event.name = request.form.get('name')
-        event.slug = request.form.get('slug', '').lower().replace(' ', '-')
+        event.slug = slug
         event.description = request.form.get('description')
         event.start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date()
         event.end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date()
@@ -201,7 +235,7 @@ def manage_pricing(event_id):
 @login_required
 def switch_event(event_id):
     """Switch to a different event"""
-    event = Event.query.get_or_404(event_id)
+    event = _managed_event_or_404(event_id)
     if not event.is_active:
         flash('Cannot switch to inactive event.', 'warning')
         return redirect(request.referrer or url_for('events.list_events'))
@@ -215,10 +249,10 @@ def switch_event(event_id):
 
 @events_bp.route('/<int:event_id>/custom-fields', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@organizer_required
 def custom_fields(event_id):
     """Manage custom registration fields"""
-    event = Event.query.get_or_404(event_id)
+    event = _managed_event_or_404(event_id)
     
     if request.method == 'POST':
         fields = []

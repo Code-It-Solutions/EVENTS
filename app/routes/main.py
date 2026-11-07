@@ -73,10 +73,15 @@ def dashboard():
     
     if current_user.is_admin():
         return redirect(url_for('admin.dashboard'))
+    if current_user.role == 'organizer':
+        return redirect(url_for('events.list_events'))
     
     # DYO (viewer) sees ALL delegates with detailed stats
     if current_user.role == 'viewer':
-        delegates = Delegate.query.order_by(Delegate.registered_at.desc()).all()
+        # Only KAYO-side events, never organisers' attendees
+        kayo_events = Event.managed_by(current_user).with_entities(Event.id)
+        delegates = Delegate.query.filter(db.or_(Delegate.event_id.is_(None), Delegate.event_id.in_(kayo_events))
+                                          ).order_by(Delegate.registered_at.desc()).all()
         
         # Get all payments
         payments = Payment.query.filter_by(

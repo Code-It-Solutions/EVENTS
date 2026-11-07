@@ -83,6 +83,8 @@ def create_app(config_class=Config):
     # Exempt API blueprints from CSRF (they use JWT authentication instead)
     csrf.exempt(api_bp)
     csrf.exempt(mobile_api_bp)
+    # Safaricom posts the STK callback server-to-server; it can't carry a CSRF token
+    csrf.exempt('app.routes.payments.mpesa_callback')
     
     # Import all models to ensure they are registered with SQLAlchemy
     from app.models import user, delegate, event, payment, audit, permission_request, fund_management, operations

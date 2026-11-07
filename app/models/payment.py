@@ -40,6 +40,9 @@ class Payment(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
+    # Aliases used by admin charts / api activity feed
+    payment_method = db.synonym('payment_mode')
+    payment_date = db.synonym('created_at')
     
     # Number of delegates this payment covers
     delegates_count = db.Column(db.Integer, nullable=False, default=0)

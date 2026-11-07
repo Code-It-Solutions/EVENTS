@@ -832,6 +832,27 @@
                                 <i class="bi bi-person-vcard"></i>Badges
                             </a>
                         </li>
+                        {% elif current_user.role == 'organizer' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'events.' in request.endpoint %}active{% endif %}" href="{{ url_for('events.list_events') }}">
+                                <i class="bi bi-calendar-event"></i>My Events
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'checkin.qr_scanner' in request.endpoint %}active{% endif %}" href="{{ url_for('checkin.qr_scanner') }}">
+                                <i class="bi bi-qrcode"></i>QR Scanner
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'checkin.dashboard' in request.endpoint %}active{% endif %}" href="{{ url_for('checkin.dashboard') }}">
+                                <i class="bi bi-clipboard-check"></i>Arrivals
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'badges.' in request.endpoint %}active{% endif %}" href="{{ url_for('badges.index') }}">
+                                <i class="bi bi-person-vcard"></i>Badges
+                            </a>
+                        </li>
                         {% else %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}" href="{{ url_for('main.dashboard') }}">
