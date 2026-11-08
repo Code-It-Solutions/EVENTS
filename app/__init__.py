@@ -165,4 +165,14 @@ def create_app(config_class=Config):
             flash('Please log in to access this page.', 'info')
         return redirect(url_for('auth.login', next=request.url))
 
+    # Graceful CSRF error handler (prevents raw 400 browser error on expired/missing token)
+    from flask_wtf.csrf import CSRFError
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        from flask import request, redirect, jsonify, flash
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.path.startswith('/api/'):
+            return jsonify({'error': 'CSRF verification failed', 'message': e.description}), 400
+        flash('Security verification token was missing or expired. Please submit the form again.', 'warning')
+        return redirect(request.referrer or request.url)
+
     return app

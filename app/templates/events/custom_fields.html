@@ -22,6 +22,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" class="no-mask" id="customFieldsForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div id="fieldsContainer">
                             {% for field in custom_fields %}
                             <div class="field-row card mb-3">

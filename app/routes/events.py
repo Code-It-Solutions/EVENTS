@@ -59,16 +59,35 @@ def list_events():
 def create_event():
     """Create a new event"""
     if request.method == 'POST':
-        slug = _clean_slug(request.form.get('slug') or request.form.get('name'))
+        name = (request.form.get('name') or '').strip()
+        if not name:
+            flash('Event name is required.', 'danger')
+            return render_template('events/create.html')
+
+        slug = _clean_slug(request.form.get('slug') or name)
         if not slug:
             flash('That event link (slug) is empty or already taken. Choose another.', 'danger')
             return render_template('events/create.html')
+
+        start_date_raw = request.form.get('start_date')
+        end_date_raw = request.form.get('end_date')
+        if not start_date_raw or not end_date_raw:
+            flash('Start date and end date are required.', 'danger')
+            return render_template('events/create.html')
+
+        try:
+            start_date = datetime.strptime(start_date_raw, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_raw, '%Y-%m-%d').date()
+        except ValueError:
+            flash('Invalid date format. Please choose valid dates.', 'danger')
+            return render_template('events/create.html')
+
         event = Event(
-            name=request.form.get('name'),
+            name=name,
             slug=slug,
             description=request.form.get('description'),
-            start_date=datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date(),
-            end_date=datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date(),
+            start_date=start_date,
+            end_date=end_date,
             venue=request.form.get('venue'),
             venue_address=request.form.get('venue_address'),
             max_delegates=request.form.get('max_delegates', type=int),
@@ -82,7 +101,10 @@ def create_event():
         # Registration deadline
         deadline = request.form.get('registration_deadline')
         if deadline:
-            event.registration_deadline = datetime.strptime(deadline, '%Y-%m-%dT%H:%M')
+            try:
+                event.registration_deadline = datetime.strptime(deadline, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                pass
         
         db.session.add(event)
         db.session.commit()
@@ -138,8 +160,19 @@ def edit_event(event_id):
         event.name = request.form.get('name')
         event.slug = slug
         event.description = request.form.get('description')
-        event.start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date()
-        event.end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date()
+        start_date_raw = request.form.get('start_date')
+        end_date_raw = request.form.get('end_date')
+        if not start_date_raw or not end_date_raw:
+            flash('Start date and end date are required.', 'danger')
+            return render_template('events/edit.html', event=event)
+
+        try:
+            event.start_date = datetime.strptime(start_date_raw, '%Y-%m-%d').date()
+            event.end_date = datetime.strptime(end_date_raw, '%Y-%m-%d').date()
+        except ValueError:
+            flash('Invalid date format. Please choose valid dates.', 'danger')
+            return render_template('events/edit.html', event=event)
+
         event.venue = request.form.get('venue')
         event.venue_address = request.form.get('venue_address')
         event.max_delegates = request.form.get('max_delegates', type=int)
@@ -149,7 +182,10 @@ def edit_event(event_id):
         
         deadline = request.form.get('registration_deadline')
         if deadline:
-            event.registration_deadline = datetime.strptime(deadline, '%Y-%m-%dT%H:%M')
+            try:
+                event.registration_deadline = datetime.strptime(deadline, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                pass
         
         # Log the action
         new_values = {

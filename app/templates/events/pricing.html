@@ -82,6 +82,7 @@
                                     </td>
                                     <td>
                                         <form method="POST" class="d-inline no-mask">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="action" value="toggle">
                                             <input type="hidden" name="tier_id" value="{{ tier.id }}">
                                             <button type="submit" class="btn btn-sm btn-outline-{{ 'warning' if tier.is_active else 'success' }}"
@@ -91,6 +92,7 @@
                                         </form>
                                         <form method="POST" class="d-inline no-mask" 
                                               onsubmit="return confirm('Are you sure you want to delete this pricing tier?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="tier_id" value="{{ tier.id }}">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -121,6 +123,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" class="no-mask">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="add">
                         
                         <div class="mb-3">

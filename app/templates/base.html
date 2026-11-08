@@ -1117,6 +1117,65 @@
     
     <!-- Scripts -->
     <script>
+        // Automatic CSRF protection for all POST forms & AJAX requests
+        (function() {
+            function getCsrfToken() {
+                var meta = document.querySelector('meta[name="csrf-token"]');
+                return meta ? meta.getAttribute('content') : '';
+            }
+
+            function injectCsrf(form) {
+                if (!form || (form.method || '').toUpperCase() !== 'POST') return;
+                if (form.querySelector('input[name="csrf_token"]')) return;
+                var token = getCsrfToken();
+                if (!token) return;
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'csrf_token';
+                input.value = token;
+                form.prepend(input);
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('form').forEach(injectCsrf);
+            });
+
+            document.addEventListener('submit', function(e) {
+                if (e.target && e.target.tagName === 'FORM') {
+                    injectCsrf(e.target);
+                }
+            }, true);
+
+            // Wrap window.fetch to automatically include X-CSRFToken header on mutation methods
+            var originalFetch = window.fetch;
+            if (originalFetch) {
+                window.fetch = function(url, options) {
+                    options = options || {};
+                    var method = (options.method || 'GET').toUpperCase();
+                    if (['POST', 'PUT', 'PATCH', 'DELETE'].indexOf(method) !== -1) {
+                        var token = getCsrfToken();
+                        if (token) {
+                            if (options.headers instanceof Headers) {
+                                if (!options.headers.has('X-CSRFToken')) {
+                                    options.headers.set('X-CSRFToken', token);
+                                }
+                            } else if (Array.isArray(options.headers)) {
+                                if (!options.headers.some(function(h) { return (h[0] || '').toLowerCase() === 'x-csrftoken'; })) {
+                                    options.headers.push(['X-CSRFToken', token]);
+                                }
+                            } else {
+                                options.headers = options.headers || {};
+                                if (!options.headers['X-CSRFToken'] && !options.headers['x-csrftoken']) {
+                                    options.headers['X-CSRFToken'] = token;
+                                }
+                            }
+                        }
+                    }
+                    return originalFetch.call(this, url, options);
+                };
+            }
+        })();
+
         // Global Search Functionality
         (function() {
             const searchInput = document.getElementById('globalSearch');
