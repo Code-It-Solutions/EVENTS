@@ -32,7 +32,23 @@
             <button class="btn btn-outline-primary no-print" onclick="window.print()">Print / save as PDF</button>
         </div>
     </div>
-    <p class="text-center small text-muted mt-4 mb-0">Powered by <a href="{{ url_for('auth.organizer_signup') }}" class="text-reset fw-semibold">Afrionex Events</a></p>
+
+    <!-- Networking with Afrionex Connect Card -->
+    <div class="card mt-3 border-0 shadow-sm p-3 text-start no-print" style="background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%); border-radius: 14px;">
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-teal text-white" style="background-color: #0d9488; font-size: 0.65rem;">NETWORKING</span>
+            <strong style="color: #0f172a; font-size: 0.88rem;">Network at {{ event.name }}</strong>
+        </div>
+        <p class="small text-muted mb-2" style="font-size: 0.8rem;">
+            Ditch paper cards. Create your free smart digital business card on <strong>Afrionex Connect</strong> to exchange contact info in one tap with attendees.
+        </p>
+        <a href="https://connect.afrionexsolutions.com" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-dark text-white fw-bold d-inline-flex align-items-center gap-1" style="border-radius: 999px; font-size: 0.78rem; width: fit-content;">
+            <span>Get Free Digital Card</span>
+            <span>↗</span>
+        </a>
+    </div>
+
+    <p class="text-center small text-muted mt-4 mb-0">Powered by <a href="{{ url_for('auth.organizer_signup') }}" class="text-reset fw-semibold">Afrionex Events</a> · <a href="https://connect.afrionexsolutions.com" target="_blank" class="text-reset fw-semibold">Afrionex Connect</a></p>
 </main>
 </body>
 </html>

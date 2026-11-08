@@ -482,18 +482,29 @@ def google_callback():
 def complete_profile():
     """Allow OAuth users to complete their profile"""
     if request.method == 'POST':
-        current_user.phone = request.form.get('phone') or None
-        current_user.local_church = request.form.get('local_church')
-        current_user.parish = request.form.get('parish')
-        current_user.archdeaconry = request.form.get('archdeaconry')
-        
-        # Update role if provided and user is new
         role = request.form.get('role')
-        if role and current_user.role == 'user':
+        if role:
             current_user.role = role
+
+        phone = request.form.get('phone')
+        if phone:
+            current_user.phone = phone.strip()
+
+        organization = request.form.get('organization')
+        if organization:
+            current_user.local_church = organization.strip()
+        elif request.form.get('local_church'):
+            current_user.local_church = request.form.get('local_church').strip()
+
+        if request.form.get('archdeaconry'):
+            current_user.archdeaconry = request.form.get('archdeaconry')
+        if request.form.get('parish'):
+            current_user.parish = request.form.get('parish')
         
         db.session.commit()
         flash('Profile updated successfully!', 'success')
+        if current_user.role == 'organizer':
+            return redirect(url_for('events.list_events'))
         return redirect(url_for('main.dashboard'))
     
     # Get church hierarchy data

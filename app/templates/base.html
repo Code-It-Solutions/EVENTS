@@ -677,6 +677,14 @@
                 {% endif %}
                 
                 <ul class="navbar-nav ms-auto align-items-center">
+                    <!-- Afrionex Connect Marketplace Link -->
+                    <li class="nav-item me-2 d-none d-sm-block">
+                        <a href="https://connect.afrionexsolutions.com/market?kind=GIG" target="_blank" rel="noopener noreferrer" class="btn btn-sm text-white d-flex align-items-center gap-1" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; font-size: 0.78rem; padding: 4px 12px;" title="Find Event DJs, MCs, Photographers & Vendors on Connect">
+                            <i class="bi bi-briefcase-fill text-warning"></i>
+                            <span>Marketplace &amp; Gigs</span>
+                            <span class="badge bg-warning text-dark px-1 py-0 ms-1" style="font-size: 0.6rem;">↗</span>
+                        </a>
+                    </li>
                     <!-- Dark Mode Toggle -->
                     <li class="nav-item">
                         <button class="nav-link btn" id="darkModeToggle" title="Toggle Dark Mode">
@@ -721,6 +729,9 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><span class="dropdown-item-text text-muted small">{{ current_user.email }}</span></li>
                             <li><span class="dropdown-item-text"><span class="badge bg-primary">{% if current_user.role == 'viewer' %}SUPER DYO{% else %}{{ current_user.role|title }}{% endif %}</span></span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="https://connect.afrionexsolutions.com/market?kind=GIG" target="_blank" rel="noopener noreferrer"><i class="bi bi-briefcase text-warning me-2"></i>Hire Gigs &amp; Talent ↗</a></li>
+                            <li><a class="dropdown-item" href="https://connect.afrionexsolutions.com" target="_blank" rel="noopener noreferrer"><i class="bi bi-person-vcard text-success me-2"></i>My Digital Card (Connect) ↗</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('settings.my_sessions') }}"><i class="bi bi-laptop me-2"></i>Active Sessions</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
@@ -927,6 +938,28 @@
                         <li class="nav-item">
                             <a class="nav-link {% if 'budget.' in request.endpoint %}active{% endif %}" href="{{ url_for('budget.index') }}">
                                 <i class="bi bi-calculator"></i>Budgets
+                            </a>
+                        </li>
+                        <!-- Afrionex Connect Marketplace -->
+                        <li class="nav-item mt-3 pt-2" style="border-top: 1px solid rgba(255,255,255,0.12);">
+                            <div class="px-3 pb-1 d-flex align-items-center justify-content-between">
+                                <span class="text-uppercase fw-bold text-white-50" style="font-size: 0.68rem; letter-spacing: 0.08em;">Marketplace</span>
+                                <span class="badge bg-warning text-dark" style="font-size: 0.6rem; padding: 2px 6px;">Connect</span>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white-75" href="https://connect.afrionexsolutions.com/market?kind=GIG" target="_blank" rel="noopener noreferrer" title="Find Event DJs, MCs, Photographers & Talent">
+                                <i class="bi bi-briefcase text-warning"></i>Event Gigs &amp; Talent <span class="small text-white-50 ms-auto">↗</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white-75" href="https://connect.afrionexsolutions.com/market?kind=SERVICE" target="_blank" rel="noopener noreferrer" title="Catering, Sound, Decor & Logistics">
+                                <i class="bi bi-shop text-info"></i>Vendors &amp; Services <span class="small text-white-50 ms-auto">↗</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white-75" href="https://connect.afrionexsolutions.com" target="_blank" rel="noopener noreferrer" title="Smart NFC Attendee Badges & Digital Cards">
+                                <i class="bi bi-person-vcard text-success"></i>Smart NFC Cards <span class="small text-white-50 ms-auto">↗</span>
                             </a>
                         </li>
                         {% else %}
